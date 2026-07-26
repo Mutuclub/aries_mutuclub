@@ -1600,7 +1600,9 @@ async function cargarHistorial() {
       <td style="text-align:right;color:var(--red)">${fmtMonto(r.gasolina_monto)}</td>
       <td style="text-align:right;font-weight:700;color:var(--navy)">${fmtMonto(r.efectivo_caja)}</td>
       <td style="font-size:12px;color:var(--gray600)">${esc(r.usuario)}</td>
-      <td>
+      <td style="white-space:nowrap">
+        <button class="btn-accion btn-gris" style="padding:4px 10px;font-size:12px;margin-right:4px"
+          onclick="imprimirRecepcion(${r.id})">🖨 Imprimir</button>
         ${r.anulado
           ? `<span style="font-size:11px;color:var(--red)">Anulada<br><span style="color:var(--gray300)">${esc(r.anulado_por||'')}</span></span>`
           : `<button class="btn-accion btn-rojo" style="padding:4px 10px;font-size:12px"
@@ -1675,6 +1677,121 @@ async function anularRecepcion(id, cobrador) {
   } else {
     alerta(res.error, 'rojo');
   }
+}
+
+
+// ── IMPRIMIR RECEPCIÓN ────────────────────────────────────
+async function imprimirRecepcion(id_recepcion) {
+  // Buscar la recepción en el historial ya cargado
+  const tbody = document.getElementById('tbody-historial');
+  
+  // Obtener datos de la recepción via API
+  const res = await api({ 
+    accion: 'detalle_recepcion', 
+    access_token: sesion.access_token, 
+    id_recepcion 
+  });
+  
+  if (!res.ok) { alerta(res.error, 'rojo'); return; }
+  const r = res.recepcion;
+  const pagos = res.pagos;
+
+  const win = window.open('', '_blank', 'width=800,height=600');
+  win.document.write(`<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Recepción de Cobranza — ${r.nombre_cobrador}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 12px; padding: 24px; color: #000; }
+    h1 { font-size: 16px; text-align: center; margin-bottom: 4px; }
+    h2 { font-size: 13px; text-align: center; color: #444; margin-bottom: 20px; }
+    .encabezado { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; border: 1px solid #ccc; padding: 10px; }
+    .enc-item { display: flex; gap: 6px; }
+    .enc-lbl { font-weight: bold; white-space: nowrap; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+    th { background: #1B2A6B; color: white; padding: 6px 8px; text-align: left; font-size: 11px; }
+    td { padding: 5px 8px; border-bottom: 1px solid #eee; font-size: 11px; }
+    tr:nth-child(even) td { background: #f8f8f8; }
+    .resumen { border: 2px solid #1B2A6B; padding: 12px; margin-bottom: 24px; }
+    .resumen table { margin: 0; }
+    .resumen td { border: none; padding: 4px 8px; }
+    .resumen .lbl { font-weight: bold; color: #444; }
+    .resumen .total { font-size: 16px; font-weight: bold; color: #1B2A6B; }
+    .firmas { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px; }
+    .firma { text-align: center; }
+    .firma-linea { border-top: 1px solid #000; padding-top: 6px; margin-top: 40px; }
+    .anulado-banner { background: #fee; border: 2px solid red; color: red; text-align: center; 
+                      padding: 8px; font-weight: bold; margin-bottom: 12px; }
+    @media print { body { padding: 12px; } }
+  </style>
+</head>
+<body>
+  <h1>ARTS NOVA MUTUCLUB</h1>
+  <h2>Recepción de Cobranza</h2>
+  
+  ${r.anulado ? '<div class="anulado-banner">⚠ RECEPCIÓN ANULADA — ' + (r.anulado_por||'') + '</div>' : ''}
+
+  <div class="encabezado">
+    <div class="enc-item"><span class="enc-lbl">Cobrador:</span> ${r.nombre_cobrador}</div>
+    <div class="enc-item"><span class="enc-lbl">Fecha:</span> ${r.fecha}</div>
+    <div class="enc-item"><span class="enc-lbl">Total recibos:</span> ${r.num_recibos}</div>
+    <div class="enc-item"><span class="enc-lbl">Registró:</span> ${r.usuario}</div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Póliza</th>
+        <th>Fecha Recibo</th>
+        <th>No. Recibo</th>
+        <th style="text-align:right">Monto</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${pagos.map((p, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${p.id_poliza || '—'}</td>
+          <td>${p.fecha_pago || '—'}</td>
+          <td>${p.numero_recibo || '—'}</td>
+          <td style="text-align:right">$${Number(p.monto).toLocaleString('es-MX', {minimumFractionDigits:2})}</td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>
+
+  <div class="resumen">
+    <table>
+      <tr><td class="lbl">Efectivo cobrado:</td>
+          <td style="text-align:right;color:green;font-weight:bold">$${Number(r.total_cobrado).toLocaleString('es-MX',{minimumFractionDigits:2})}</td></tr>
+      <tr><td class="lbl">Comisión (${r.porcentaje||''}%):</td>
+          <td style="text-align:right;color:red">-$${Number(r.comision).toLocaleString('es-MX',{minimumFractionDigits:2})}</td></tr>
+      <tr><td class="lbl">Apoyo gasolina:</td>
+          <td style="text-align:right;color:red">-$${Number(r.gasolina_monto).toLocaleString('es-MX',{minimumFractionDigits:2})}</td></tr>
+      <tr style="border-top:2px solid #1B2A6B">
+          <td class="lbl total">Efectivo en caja:</td>
+          <td class="total" style="text-align:right">$${Number(r.efectivo_caja).toLocaleString('es-MX',{minimumFractionDigits:2})}</td></tr>
+    </table>
+  </div>
+
+  <div class="firmas">
+    <div class="firma">
+      <div class="firma-linea">${r.nombre_cobrador}</div>
+      <div>Cobrador</div>
+    </div>
+    <div class="firma">
+      <div class="firma-linea">${r.usuario}</div>
+      <div>Recibió</div>
+    </div>
+  </div>
+
+  <script>window.onload = () => window.print();<\/script>
+</body>
+</html>`);
+  win.document.close();
 }
 
 </script>

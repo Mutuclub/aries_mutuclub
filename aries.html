@@ -736,6 +736,7 @@ tr:hover td { background: var(--gray50); }
                   <th>#</th>
                   <th>Póliza</th>
                   <th>Cliente</th>
+                  <th>Fecha Recibo</th>
                   <th>No. Recibo</th>
                   <th>Monto</th>
                   <th></th>
@@ -1442,12 +1443,16 @@ function agregarRenglon() {
     <td style="color:var(--gray600);font-size:13px;width:30px">${n}</td>
     <td><input class="rec-input" id="pol-${n}" placeholder="Póliza" onblur="buscarClienteRenglon(${n})" style="width:90px"></td>
     <td><span id="cli-${n}" style="font-size:12px;color:var(--gray600)">—</span></td>
+    <td><input class="rec-input" id="frec-${n}" type="date" style="width:130px"></td>
     <td><input class="rec-input" id="rec-${n}" placeholder="No. Recibo" style="width:100px"></td>
     <td><input class="rec-input" id="monto-${n}" type="number" placeholder="0.00" step="0.01"
       oninput="actualizarResumen()" style="width:90px;text-align:right"></td>
     <td><button onclick="eliminarRenglon(${n})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px">✕</button></td>
   `;
   document.getElementById('tbody-recibos').appendChild(tr);
+  // Default fecha recibo = fecha recepción
+  const fechaRec = document.getElementById('cob-fecha').value;
+  if (fechaRec) document.getElementById('frec-' + n).value = fechaRec;
   document.getElementById('pol-' + n).focus();
   actualizarResumen();
 }

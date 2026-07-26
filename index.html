@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aries — MutuClub</title>
+<style>
+/* ── TOKENS ──────────────────────────────────────────────── */
+:root {
+  --navy:    #1B2A6B;
+  --navy2:   #243585;
+  --ice:     #C8DEFF;
+  --amber:   #F5A623;
+  --white:   #FFFFFF;
+  --gray50:  #F4F6FB;
+  --gray100: #E8ECF5;
+  --gray300: #B0BAD0;
+  --gray600: #4A5568;
+  --gray800: #1E2533;
+  --green:   #1A6B3C;
+  --red:     #C0392B;
+
+  --radius:  10px;
+  --shadow:  0 4px 24px rgba(27,42,107,.13);
+  --trans:   .18s ease;
+}
+
+/* ── RESET ───────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--gray50);
+  color: var(--gray800);
+  min-height: 100vh;
+}
+
+/* ── PANTALLAS ───────────────────────────────────────────── */
+.pantalla { display: none; }
+.pantalla.activa { display: flex; }
+
+/* ═══════════════════════════════════════════════════════════
+   LOGIN
+═══════════════════════════════════════════════════════════ */
+#p-login {
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, var(--navy) 0%, var(--navy2) 60%, #0D1A4A 100%);
+}
+
+.login-card {
+  background: var(--white);
+  border-radius: 18px;
+  padding: 48px 44px 40px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 24px 80px rgba(0,0,0,.35);
+}
+
+.login-logo {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.login-logo .logo-signo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px; height: 64px;
+  border-radius: 16px;
+  background: var(--navy);
+  margin-bottom: 14px;
+}
+.login-logo .logo-signo svg { width: 36px; height: 36px; }
+.login-logo h1 {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--navy);
+}
+.login-logo p {
+  font-size: 13px;
+  color: var(--gray300);
+  margin-top: 4px;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+
+.campo { margin-bottom: 18px; }
+.campo label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray600);
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  margin-bottom: 6px;
+}
+.campo input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--gray100);
+  border-radius: var(--radius);
+  font-size: 15px;
+  color: var(--gray800);
+  background: var(--gray50);
+  transition: border-color var(--trans), box-shadow var(--trans);
+  outline: none;
+}
+.campo input:focus {
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(27,42,107,.12);
+  background: var(--white);
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 14px;
+  background: var(--navy);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--trans), transform var(--trans);
+  margin-top: 6px;
+}
+.btn-primary:hover  { background: var(--navy2); }
+.btn-primary:active { transform: scale(.98); }
+.btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+
+.login-error {
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: #FEF0EF;
+  border: 1px solid #F5C6C2;
+  border-radius: var(--radius);
+  color: var(--red);
+  font-size: 13.5px;
+  display: none;
+}
+.login-error.visible { display: block; }
+
+/* ═══════════════════════════════════════════════════════════
+   APP PRINCIPAL
+═══════════════════════════════════════════════════════════ */
+#p-app {
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ── TOPBAR ──────────────────────────────────────────────── */
+.topbar {
+  background: var(--navy);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  height: 56px;
+  gap: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 10px rgba(0,0,0,.25);
+}
+.topbar-logo {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -.3px;
+  color: var(--white);
+}
+.topbar-logo span { color: var(--amber); }
+.topbar-sep { flex: 1; }
+.topbar-usuario {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+.topbar-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--amber);
+  color: var(--navy);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.topbar-info { line-height: 1.3; }
+.topbar-nombre { font-weight: 600; }
+.topbar-rol {
+  font-size: 11px;
+  color: var(--ice);
+  text-transform: capitalize;
+}
+.btn-logout {
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.2);
+  color: var(--white);
+  padding: 6px 12px;
+  border-radius: 7px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background var(--trans);
+}
+.btn-logout:hover { background: rgba(255,255,255,.22); }
+
+/* ── LAYOUT ──────────────────────────────────────────────── */
+.app-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── SIDEBAR ─────────────────────────────────────────────── */
+.sidebar {
+  width: 220px;
+  background: var(--white);
+  border-right: 1px solid var(--gray100);
+  padding: 16px 0;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+.sidebar-section {
+  padding: 6px 16px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--gray300);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-top: 8px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  font-size: 14px;
+  color: var(--gray600);
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: all var(--trans);
+  user-select: none;
+}
+.nav-item:hover { background: var(--gray50); color: var(--navy); }
+.nav-item.activo {
+  background: var(--gray50);
+  color: var(--navy);
+  border-left-color: var(--amber);
+  font-weight: 600;
+}
+.nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+/* ── CONTENIDO ───────────────────────────────────────────── */
+.contenido {
+  flex: 1;
+  padding: 28px 32px;
+  overflow-y: auto;
+  min-width: 0;
+}
+.vista { display: none; }
+.vista.activa { display: block; }
+
+.vista-titulo {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 6px;
+}
+.vista-sub {
+  font-size: 14px;
+  color: var(--gray600);
+  margin-bottom: 28px;
+}
+
+/* ── TARJETAS DASHBOARD ──────────────────────────────────── */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+.card-ico { font-size: 28px; margin-bottom: 10px; }
+.card-num {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1;
+}
+.card-lbl {
+  font-size: 13px;
+  color: var(--gray600);
+  margin-top: 4px;
+}
+
+/* ── TABLA USUARIOS ──────────────────────────────────────── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.btn-accion {
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity var(--trans);
+}
+.btn-accion:hover { opacity: .85; }
+.btn-verde  { background: var(--green);  color: var(--white); }
+.btn-gris   { background: var(--gray100); color: var(--gray600); }
+.btn-rojo   { background: var(--red);    color: var(--white); }
+
+.tabla-wrap {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+table { width: 100%; border-collapse: collapse; }
+th {
+  background: var(--gray50);
+  padding: 11px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--gray600);
+  border-bottom: 1px solid var(--gray100);
+}
+td {
+  padding: 12px 16px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--gray100);
+  vertical-align: middle;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--gray50); }
+
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+.badge-administrador { background: #E8ECF5; color: var(--navy); }
+.badge-agente        { background: #E8F5EE; color: var(--green); }
+.badge-cobrador      { background: #FFF3E0; color: #7B3900; }
+.badge-operaciones   { background: #F3E8FF; color: #4A0080; }
+.badge-activo        { background: #E8F5EE; color: var(--green); }
+.badge-inactivo      { background: #FEEEEE; color: var(--red); }
+
+/* ── MODAL ───────────────────────────────────────────────── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.modal-overlay.visible { display: flex; }
+.modal {
+  background: var(--white);
+  border-radius: 14px;
+  padding: 32px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.3);
+}
+.modal h3 { font-size: 18px; color: var(--navy); margin-bottom: 20px; }
+.modal .campo { margin-bottom: 14px; }
+.modal-btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px; }
+.modal select {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid var(--gray100);
+  border-radius: var(--radius);
+  font-size: 15px;
+  color: var(--gray800);
+  background: var(--gray50);
+  outline: none;
+}
+.modal select:focus { border-color: var(--navy); background: var(--white); }
+
+/* ── ALERT ───────────────────────────────────────────────── */
+.alert-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--navy);
+  color: var(--white);
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  z-index: 500;
+  box-shadow: 0 8px 24px rgba(0,0,0,.25);
+  display: none;
+  max-width: 90vw;
+}
+.alert-bar.verde  { background: var(--green); }
+.alert-bar.rojo   { background: var(--red); }
+.alert-bar.visible { display: block; }
+
+/* ── RESPONSIVE ──────────────────────────────────────────── */
+@media (max-width: 700px) {
+  .sidebar { display: none; }
+  .contenido { padding: 16px; }
+  .cards-grid { grid-template-columns: 1fr 1fr; }
+  td, th { padding: 9px 10px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════ LOGIN ═══════════════════════════════════════════ -->
+<div id="p-login" class="pantalla">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-signo">
+        <!-- Símbolo Aries ♈ simplificado -->
+        <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6 C10 6 5 12 5 19 C5 24 8 28 12 30" stroke="#F5A623" stroke-width="3" stroke-linecap="round" fill="none"/>
+          <path d="M18 6 C26 6 31 12 31 19 C31 24 28 28 24 30" stroke="#F5A623" stroke-width="3" stroke-linecap="round" fill="none"/>
+          <line x1="18" y1="6" x2="18" y2="30" stroke="#C8DEFF" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h1>Aries</h1>
+      <p>MutuClub · Sistema de Pólizas</p>
+    </div>
+
+    <div class="campo">
+      <label>Correo electrónico</label>
+      <input type="email" id="l-email" placeholder="usuario@mutuclub.com" autocomplete="username">
+    </div>
+    <div class="campo">
+      <label>Contraseña</label>
+      <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+
+    <button class="btn-primary" id="btn-login" onclick="iniciarSesion()">Entrar</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- ═══════ APP ══════════════════════════════════════════════ -->
+<div id="p-app" class="pantalla">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-logo">Ari<span>es</span></div>
+    <div class="topbar-sep"></div>
+    <div class="topbar-usuario">
+      <div class="topbar-avatar" id="top-avatar">?</div>
+      <div class="topbar-info">
+        <div class="topbar-nombre" id="top-nombre">—</div>
+        <div class="topbar-rol" id="top-rol">—</div>
+      </div>
+      <button class="btn-logout" onclick="cerrarSesion()">Salir</button>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <!-- SIDEBAR -->
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-section">General</div>
+      <div class="nav-item activo" onclick="irA('inicio')" id="nav-inicio">
+        <span class="nav-icon">🏠</span> Inicio
+      </div>
+
+      <div class="sidebar-section" id="sec-polizas">Operación</div>
+      <div class="nav-item" onclick="irA('polizas')" id="nav-polizas">
+        <span class="nav-icon">📋</span> Pólizas
+      </div>
+      <div class="nav-item" onclick="irA('clientes')" id="nav-clientes">
+        <span class="nav-icon">👥</span> Clientes
+      </div>
+      <div class="nav-item" onclick="irA('cobranza')" id="nav-cobranza">
+        <span class="nav-icon">💰</span> Cobranza
+      </div>
+      <div class="nav-item" onclick="irA('siniestros')" id="nav-siniestros">
+        <span class="nav-icon">🚗</span> Siniestros
+      </div>
+
+      <div class="sidebar-section" id="sec-admin" style="display:none">Administración</div>
+      <div class="nav-item" onclick="irA('usuarios')" id="nav-usuarios" style="display:none">
+        <span class="nav-icon">🔑</span> Usuarios
+      </div>
+      <div class="nav-item" onclick="irA('reportes')" id="nav-reportes" style="display:none">
+        <span class="nav-icon">📊</span> Reportes
+      </div>
+    </nav>
+
+    <!-- CONTENIDO -->
+    <main class="contenido">
+
+      <!-- INICIO -->
+      <div class="vista activa" id="v-inicio">
+        <div class="vista-titulo" id="bienvenida-titulo">Bienvenido</div>
+        <div class="vista-sub">Sistema Aries — Arts Nova MutuClub</div>
+        <div class="cards-grid">
+          <div class="card"><div class="card-ico">📋</div><div class="card-num" id="stat-polizas">—</div><div class="card-lbl">Pólizas</div></div>
+          <div class="card"><div class="card-ico">👥</div><div class="card-num" id="stat-clientes">—</div><div class="card-lbl">Clientes</div></div>
+          <div class="card"><div class="card-ico">💰</div><div class="card-num" id="stat-pagos">—</div><div class="card-lbl">Pagos registrados</div></div>
+          <div class="card"><div class="card-ico">🚗</div><div class="card-num" id="stat-siniestros">—</div><div class="card-lbl">Siniestros</div></div>
+        </div>
+        <div class="vista-sub" style="color:#B0BAD0;font-size:13px">
+          Los módulos de consulta se habilitarán en las siguientes fases del proyecto Aries.
+        </div>
+      </div>
+
+      <!-- PÓLIZAS (próxima fase) -->
+      <div class="vista" id="v-polizas">
+        <div class="vista-titulo">Pólizas</div>
+        <div class="vista-sub">Módulo en construcción — Fase 3</div>
+        <div class="card" style="max-width:420px;text-align:center;padding:40px">
+          <div style="font-size:48px;margin-bottom:16px">📋</div>
+          <div style="font-size:16px;font-weight:600;color:var(--navy)">Próximamente</div>
+          <div style="font-size:14px;color:var(--gray600);margin-top:8px">Consulta, alta, renovación y cancelación de pólizas.</div>
+        </div>
+      </div>
+
+      <!-- CLIENTES -->
+      <div class="vista" id="v-clientes">
+        <div class="vista-titulo">Clientes</div>
+        <div class="vista-sub">Módulo en construcción — Fase 3</div>
+        <div class="card" style="max-width:420px;text-align:center;padding:40px">
+          <div style="font-size:48px;margin-bottom:16px">👥</div>
+          <div style="font-size:16px;font-weight:600;color:var(--navy)">Próximamente</div>
+          <div style="font-size:14px;color:var(--gray600);margin-top:8px">Expediente completo con historial de pólizas y pagos.</div>
+        </div>
+      </div>
+
+      <!-- COBRANZA -->
+      <div class="vista" id="v-cobranza">
+        <div class="vista-titulo">Cobranza</div>
+        <div class="vista-sub">Módulo en construcción — Fase 3</div>
+        <div class="card" style="max-width:420px;text-align:center;padding:40px">
+          <div style="font-size:48px;margin-bottom:16px">💰</div>
+          <div style="font-size:16px;font-weight:600;color:var(--navy)">Próximamente</div>
+          <div style="font-size:14px;color:var(--gray600);margin-top:8px">Registro de pagos, saldos y gestiones de cobro.</div>
+        </div>
+      </div>
+
+      <!-- SINIESTROS -->
+      <div class="vista" id="v-siniestros">
+        <div class="vista-titulo">Siniestros</div>
+        <div class="vista-sub">Módulo en construcción — Fase 3</div>
+        <div class="card" style="max-width:420px;text-align:center;padding:40px">
+          <div style="font-size:48px;margin-bottom:16px">🚗</div>
+          <div style="font-size:16px;font-weight:600;color:var(--navy)">Próximamente</div>
+          <div style="font-size:14px;color:var(--gray600);margin-top:8px">Accidentes, grúas, ajustadores y talleres.</div>
+        </div>
+      </div>
+
+      <!-- USUARIOS (solo admin) -->
+      <div class="vista" id="v-usuarios">
+        <div class="vista-titulo">Usuarios del sistema</div>
+        <div class="vista-sub">Alta, edición y desactivación de cuentas</div>
+
+        <div class="toolbar">
+          <button class="btn-accion btn-verde" onclick="abrirModalCrear()">+ Nuevo usuario</button>
+          <button class="btn-accion btn-gris"  onclick="cargarUsuarios()">↺ Actualizar</button>
+        </div>
+
+        <div class="tabla-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Correo</th>
+                <th>Rol</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-usuarios">
+              <tr><td colspan="5" style="text-align:center;color:var(--gray300);padding:32px">Cargando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- REPORTES (solo admin) -->
+      <div class="vista" id="v-reportes">
+        <div class="vista-titulo">Reportes</div>
+        <div class="vista-sub">Módulo en construcción — Fase 4</div>
+        <div class="card" style="max-width:420px;text-align:center;padding:40px">
+          <div style="font-size:48px;margin-bottom:16px">📊</div>
+          <div style="font-size:16px;font-weight:600;color:var(--navy)">Próximamente</div>
+          <div style="font-size:14px;color:var(--gray600);margin-top:8px">Cartera por empresa, vencimientos y cobranza.</div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ═══════ MODAL CREAR USUARIO ═══════════════════════════ -->
+<div class="modal-overlay" id="modal-crear">
+  <div class="modal">
+    <h3>Nuevo usuario</h3>
+    <div class="campo">
+      <label>Nombre completo</label>
+      <input type="text" id="m-nombre" placeholder="Nombre Apellido">
+    </div>
+    <div class="campo">
+      <label>Correo electrónico</label>
+      <input type="email" id="m-email" placeholder="correo@mutuclub.com">
+    </div>
+    <div class="campo">
+      <label>Contraseña inicial</label>
+      <input type="password" id="m-pass" placeholder="Mínimo 8 caracteres">
+    </div>
+    <div class="campo">
+      <label>Rol</label>
+      <select id="m-rol">
+        <option value="agente">Agente / Asesor</option>
+        <option value="cobrador">Cobrador</option>
+        <option value="operaciones">Operaciones</option>
+        <option value="administrador">Administrador</option>
+      </select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-accion btn-gris" onclick="cerrarModal('modal-crear')">Cancelar</button>
+      <button class="btn-accion btn-verde" onclick="crearUsuario()">Crear usuario</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ MODAL EDITAR USUARIO ════════════════════════════ -->
+<div class="modal-overlay" id="modal-editar">
+  <div class="modal">
+    <h3>Editar usuario</h3>
+    <input type="hidden" id="e-id">
+    <div class="campo">
+      <label>Nombre completo</label>
+      <input type="text" id="e-nombre">
+    </div>
+    <div class="campo">
+      <label>Rol</label>
+      <select id="e-rol">
+        <option value="agente">Agente / Asesor</option>
+        <option value="cobrador">Cobrador</option>
+        <option value="operaciones">Operaciones</option>
+        <option value="administrador">Administrador</option>
+      </select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-accion btn-gris" onclick="cerrarModal('modal-editar')">Cancelar</button>
+      <button class="btn-accion btn-verde" onclick="guardarEdicion()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ ALERT BAR ════════════════════════════════════════ -->
+<div class="alert-bar" id="alert-bar"></div>
+
+<script>
+// ── CONFIGURACIÓN ─────────────────────────────────────────
+const BACKEND_URL = 'https://script.google.com/macros/s/TU_DEPLOYMENT_ID/exec'; // ← reemplaza
+
+// ── ESTADO ────────────────────────────────────────────────
+let sesion = null;
+
+// ── INIT ──────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  const token = sessionStorage.getItem('aries_token');
+  if (token) restaurarSesion(token);
+  else mostrarPantalla('p-login');
+
+  document.getElementById('l-pass').addEventListener('keydown', e => {
+    if (e.key === 'Enter') iniciarSesion();
+  });
+});
+
+// ── PANTALLAS ─────────────────────────────────────────────
+function mostrarPantalla(id) {
+  document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+  document.getElementById(id).classList.add('activa');
+}
+
+// ── LOGIN ─────────────────────────────────────────────────
+async function iniciarSesion() {
+  const email    = document.getElementById('l-email').value.trim();
+  const password = document.getElementById('l-pass').value;
+  const errEl    = document.getElementById('login-error');
+  const btn      = document.getElementById('btn-login');
+
+  errEl.classList.remove('visible');
+  if (!email || !password) {
+    errEl.textContent = 'Ingresa tu correo y contraseña.';
+    errEl.classList.add('visible');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Entrando…';
+
+  try {
+    const res = await api({ accion: 'login', email, password });
+    if (!res.ok) {
+      errEl.textContent = res.error;
+      errEl.classList.add('visible');
+      return;
+    }
+    guardarSesion(res);
+  } catch(e) {
+    errEl.textContent = 'Error de conexión. Intenta de nuevo.';
+    errEl.classList.add('visible');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Entrar';
+  }
+}
+
+async function restaurarSesion(token) {
+  try {
+    const res = await api({ accion: 'verificar_token', access_token: token });
+    if (res.ok) guardarSesion({ ...res, access_token: token });
+    else mostrarPantalla('p-login');
+  } catch {
+    mostrarPantalla('p-login');
+  }
+}
+
+function guardarSesion(data) {
+  sesion = data;
+  sessionStorage.setItem('aries_token', data.access_token);
+  configurarUI(data.usuario);
+  mostrarPantalla('p-app');
+  irA('inicio');
+  cargarStats();
+}
+
+function cerrarSesion() {
+  sesion = null;
+  sessionStorage.removeItem('aries_token');
+  mostrarPantalla('p-login');
+  document.getElementById('login-error').classList.remove('visible');
+  document.getElementById('l-pass').value = '';
+}
+
+// ── UI SEGÚN ROL ──────────────────────────────────────────
+function configurarUI(usuario) {
+  document.getElementById('top-nombre').textContent = usuario.nombre;
+  document.getElementById('top-rol').textContent    = usuario.rol;
+  document.getElementById('top-avatar').textContent = usuario.nombre.charAt(0).toUpperCase();
+  document.getElementById('bienvenida-titulo').textContent = `Bienvenido, ${usuario.nombre.split(' ')[0]}`;
+
+  const esAdmin = usuario.rol === 'administrador';
+
+  // Módulos según rol
+  const cobrador = ['cobrador','administrador'].includes(usuario.rol);
+  const ops      = ['operaciones','administrador'].includes(usuario.rol);
+
+  setVisible('nav-cobranza',  cobrador);
+  setVisible('nav-siniestros', ops || usuario.rol === 'agente');
+  setVisible('sec-admin',  esAdmin);
+  setVisible('nav-usuarios', esAdmin);
+  setVisible('nav-reportes', esAdmin);
+}
+
+function setVisible(id, visible) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = visible ? '' : 'none';
+}
+
+// ── NAVEGACIÓN ────────────────────────────────────────────
+function irA(vista) {
+  document.querySelectorAll('.vista').forEach(v => v.classList.remove('activa'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('activo'));
+
+  const v = document.getElementById('v-' + vista);
+  const n = document.getElementById('nav-' + vista);
+  if (v) v.classList.add('activa');
+  if (n) n.classList.add('activo');
+
+  if (vista === 'usuarios') cargarUsuarios();
+}
+
+// ── STATS DASHBOARD ───────────────────────────────────────
+async function cargarStats() {
+  // Placeholder — se conectarán en Fase 3
+  document.getElementById('stat-polizas').textContent   = '10,747';
+  document.getElementById('stat-clientes').textContent  = '10,747';
+  document.getElementById('stat-pagos').textContent     = '44,926';
+  document.getElementById('stat-siniestros').textContent = '900';
+}
+
+// ── USUARIOS ──────────────────────────────────────────────
+async function cargarUsuarios() {
+  const tbody = document.getElementById('tbody-usuarios');
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--gray300);padding:24px">Cargando…</td></tr>';
+
+  const res = await api({ accion: 'listar_usuarios', access_token: sesion.access_token });
+  if (!res.ok) { alerta(res.error, 'rojo'); return; }
+
+  tbody.innerHTML = res.usuarios.map(u => `
+    <tr>
+      <td><strong>${esc(u.nombre)}</strong></td>
+      <td style="color:var(--gray600)">${esc(u.email)}</td>
+      <td><span class="badge badge-${u.rol}">${u.rol}</span></td>
+      <td><span class="badge badge-${u.activo ? 'activo' : 'inactivo'}">${u.activo ? 'Activo' : 'Inactivo'}</span></td>
+      <td>
+        <button class="btn-accion btn-gris" style="padding:5px 12px;font-size:12px"
+          onclick='abrirModalEditar(${JSON.stringify(u)})'>Editar</button>
+        ${u.activo && u.id !== sesion.usuario.id
+          ? `<button class="btn-accion btn-rojo" style="padding:5px 12px;font-size:12px;margin-left:6px"
+              onclick="desactivar('${u.id}','${esc(u.nombre)}')">Desactivar</button>`
+          : ''}
+      </td>
+    </tr>
+  `).join('') || '<tr><td colspan="5" style="text-align:center;padding:24px">Sin usuarios</td></tr>';
+}
+
+function abrirModalCrear() {
+  ['m-nombre','m-email','m-pass'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('m-rol').value = 'agente';
+  document.getElementById('modal-crear').classList.add('visible');
+}
+
+function abrirModalEditar(u) {
+  document.getElementById('e-id').value     = u.id;
+  document.getElementById('e-nombre').value = u.nombre;
+  document.getElementById('e-rol').value    = u.rol;
+  document.getElementById('modal-editar').classList.add('visible');
+}
+
+function cerrarModal(id) {
+  document.getElementById(id).classList.remove('visible');
+}
+
+async function crearUsuario() {
+  const nombre = document.getElementById('m-nombre').value.trim();
+  const email  = document.getElementById('m-email').value.trim();
+  const pass   = document.getElementById('m-pass').value;
+  const rol    = document.getElementById('m-rol').value;
+
+  if (!nombre || !email || !pass) { alerta('Completa todos los campos', 'rojo'); return; }
+  if (pass.length < 8) { alerta('La contraseña debe tener al menos 8 caracteres', 'rojo'); return; }
+
+  const res = await api({ accion: 'crear_usuario', access_token: sesion.access_token,
+                          nombre, email, password: pass, rol });
+  if (res.ok) {
+    cerrarModal('modal-crear');
+    alerta(res.mensaje, 'verde');
+    cargarUsuarios();
+  } else {
+    alerta(res.error, 'rojo');
+  }
+}
+
+async function guardarEdicion() {
+  const id     = document.getElementById('e-id').value;
+  const nombre = document.getElementById('e-nombre').value.trim();
+  const rol    = document.getElementById('e-rol').value;
+
+  if (!nombre) { alerta('El nombre no puede estar vacío', 'rojo'); return; }
+
+  const res = await api({ accion: 'actualizar_usuario', access_token: sesion.access_token,
+                          id, nombre, rol });
+  if (res.ok) {
+    cerrarModal('modal-editar');
+    alerta(res.mensaje, 'verde');
+    cargarUsuarios();
+    // Actualizar topbar si se editó el propio usuario
+    if (id === sesion.usuario.id) {
+      sesion.usuario.nombre = nombre;
+      sesion.usuario.rol    = rol;
+      configurarUI(sesion.usuario);
+    }
+  } else {
+    alerta(res.error, 'rojo');
+  }
+}
+
+async function desactivar(id, nombre) {
+  if (!confirm(`¿Desactivar a ${nombre}? No podrá iniciar sesión.`)) return;
+  const res = await api({ accion: 'desactivar_usuario', access_token: sesion.access_token, id });
+  if (res.ok) { alerta(res.mensaje, 'verde'); cargarUsuarios(); }
+  else alerta(res.error, 'rojo');
+}
+
+// ── UTILIDADES ────────────────────────────────────────────
+// Usamos JSONP para evitar el bloqueo CORS de Apps Script
+function api(payload) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'cb_' + Date.now();
+    const script = document.createElement('script');
+
+    window[cbName] = function(data) {
+      delete window[cbName];
+      document.body.removeChild(script);
+      resolve(data);
+    };
+
+    const params = encodeURIComponent(JSON.stringify(payload));
+    script.src = `${BACKEND_URL}?callback=${cbName}&data=${params}`;
+    script.onerror = () => {
+      delete window[cbName];
+      document.body.removeChild(script);
+      reject(new Error('Error de conexión'));
+    };
+    document.body.appendChild(script);
+  });
+}
+
+function alerta(msg, tipo = '') {
+  const el = document.getElementById('alert-bar');
+  el.textContent = msg;
+  el.className   = `alert-bar ${tipo} visible`;
+  setTimeout(() => el.classList.remove('visible'), 4000);
+}
+
+function esc(str) {
+  return String(str ?? '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

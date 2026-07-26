@@ -798,6 +798,7 @@ tr:hover td { background: var(--gray50); }
                   <th>Gasolina</th>
                   <th>En caja</th>
                   <th>Registró</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody id="tbody-historial">
@@ -1585,7 +1586,7 @@ async function cargarHistorial() {
   }
 
   tbody.innerHTML = res.recepciones.map(r => `
-    <tr>
+    <tr style="${r.anulado ? 'opacity:.45;text-decoration:line-through' : ''}">
       <td>${fmtFecha(r.fecha)}</td>
       <td><strong>${esc(r.nombre_cobrador)}</strong></td>
       <td style="text-align:center">${r.num_recibos}</td>
@@ -1594,6 +1595,13 @@ async function cargarHistorial() {
       <td style="text-align:right;color:var(--red)">${fmtMonto(r.gasolina_monto)}</td>
       <td style="text-align:right;font-weight:700;color:var(--navy)">${fmtMonto(r.efectivo_caja)}</td>
       <td style="font-size:12px;color:var(--gray600)">${esc(r.usuario)}</td>
+      <td>
+        ${r.anulado
+          ? `<span style="font-size:11px;color:var(--red)">Anulada<br><span style="color:var(--gray300)">${esc(r.anulado_por||'')}</span></span>`
+          : `<button class="btn-accion btn-rojo" style="padding:4px 10px;font-size:12px"
+              onclick="anularRecepcion(${r.id},'${esc(r.nombre_cobrador)}')">Anular</button>`
+        }
+      </td>
     </tr>
   `).join('');
 }
@@ -1646,6 +1654,19 @@ async function guardarCobrador() {
     alerta(res.mensaje, 'verde');
     cargarCatalogoCob();
     iniciarCobranza(); // refrescar selector
+  } else {
+    alerta(res.error, 'rojo');
+  }
+}
+
+
+async function anularRecepcion(id, cobrador) {
+  if (!confirm(`¿Anular la recepción de ${cobrador}?\nEsta acción marcará los pagos como anulados y no se puede deshacer.`)) return;
+
+  const res = await api({ accion: 'anular_recepcion', access_token: sesion.access_token, id_recepcion: id });
+  if (res.ok) {
+    alerta(res.mensaje, 'verde');
+    cargarHistorial();
   } else {
     alerta(res.error, 'rojo');
   }

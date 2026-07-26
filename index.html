@@ -425,6 +425,22 @@ tr:hover td { background: var(--gray50); }
   .cards-grid { grid-template-columns: 1fr 1fr; }
   td, th { padding: 9px 10px; }
 }
+
+/* ── DETALLE GRID ────────────────────────────────────────── */
+.detalle-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 14px;
+  font-size: 13.5px;
+}
+.dl {
+  color: var(--gray600);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.estatus-vigente  { background: #E8F5EE; color: var(--green); }
+.estatus-vencida  { background: #FEEEEE; color: var(--red); }
+.estatus-cancelada { background: var(--gray100); color: var(--gray600); }
 </style>
 </head>
 <body>
@@ -528,13 +544,122 @@ tr:hover td { background: var(--gray50); }
       <!-- PÓLIZAS (próxima fase) -->
       <div class="vista" id="v-polizas">
         <div class="vista-titulo">Pólizas</div>
-        <div class="vista-sub">Módulo en construcción — Fase 3</div>
-        <div class="card" style="max-width:420px;text-align:center;padding:40px">
-          <div style="font-size:48px;margin-bottom:16px">📋</div>
-          <div style="font-size:16px;font-weight:600;color:var(--navy)">Próximamente</div>
-          <div style="font-size:14px;color:var(--gray600);margin-top:8px">Consulta, alta, renovación y cancelación de pólizas.</div>
+        <div class="vista-sub">Busca por nombre, número de póliza o placas</div>
+
+        <!-- BUSCADOR -->
+        <div style="display:flex;gap:10px;margin-bottom:20px">
+          <input type="text" id="poliza-busqueda" placeholder="Nombre, póliza o placas…"
+            style="flex:1;padding:11px 16px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:15px;outline:none"
+            onkeydown="if(event.key==='Enter') buscarPolizas()">
+          <button class="btn-accion btn-verde" onclick="buscarPolizas()" style="padding:11px 22px">Buscar</button>
+        </div>
+
+        <!-- RESULTADOS -->
+        <div id="polizas-resultados" style="display:none">
+          <div style="font-size:13px;color:var(--gray600);margin-bottom:10px" id="polizas-conteo"></div>
+          <div class="tabla-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Póliza</th>
+                  <th>Cliente</th>
+                  <th>Vehículo</th>
+                  <th>Placas</th>
+                  <th>Empresa</th>
+                  <th>Vigencia</th>
+                  <th>Estatus</th>
+                  <th>Saldo</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="tbody-polizas"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- DETALLE PÓLIZA -->
+        <div id="poliza-detalle" style="display:none">
+          <button onclick="cerrarDetalle()" style="margin-bottom:16px;background:none;border:none;color:var(--navy);font-size:14px;cursor:pointer;font-weight:600">← Volver a resultados</button>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+
+            <!-- Card Póliza -->
+            <div class="card">
+              <div style="font-size:11px;font-weight:700;color:var(--gray300);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Póliza</div>
+              <div style="font-size:22px;font-weight:700;color:var(--navy);margin-bottom:12px" id="d-id-poliza">—</div>
+              <div class="detalle-grid">
+                <span class="dl">Empresa</span><span id="d-empresa">—</span>
+                <span class="dl">Asesor</span><span id="d-asesor">—</span>
+                <span class="dl">Cobrador</span><span id="d-cobrador">—</span>
+                <span class="dl">Tipo cobertura</span><span id="d-cobertura">—</span>
+                <span class="dl">Tipo póliza</span><span id="d-tipo-poliza">—</span>
+                <span class="dl">Tipo cobro</span><span id="d-tipo-cobro">—</span>
+                <span class="dl">Inicio vigencia</span><span id="d-inicio">—</span>
+                <span class="dl">Término vigencia</span><span id="d-termino">—</span>
+                <span class="dl">Estatus</span><span id="d-estatus">—</span>
+              </div>
+            </div>
+
+            <!-- Card Financiero -->
+            <div class="card">
+              <div style="font-size:11px;font-weight:700;color:var(--gray300);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Finanzas</div>
+              <div class="detalle-grid">
+                <span class="dl">Costo</span><span id="d-costo">—</span>
+                <span class="dl">Pago inicial</span><span id="d-pago-inicial">—</span>
+                <span class="dl">Pagos de</span><span id="d-pagos-de">—</span>
+                <span class="dl">Pagado</span><span id="d-pagado">—</span>
+                <span class="dl">Saldo</span><span id="d-saldo">—</span>
+                <span class="dl">Saldo por pagar</span><span id="d-saldo-por-pagar">—</span>
+                <span class="dl">Meses atraso</span><span id="d-meses-atraso">—</span>
+                <span class="dl">Próx. pago</span><span id="d-prox-pago">—</span>
+              </div>
+            </div>
+
+            <!-- Card Cliente -->
+            <div class="card">
+              <div style="font-size:11px;font-weight:700;color:var(--gray300);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Cliente</div>
+              <div style="font-size:17px;font-weight:700;color:var(--navy);margin-bottom:12px" id="d-nombre">—</div>
+              <div class="detalle-grid">
+                <span class="dl">Teléfono 1</span><span id="d-tel1">—</span>
+                <span class="dl">Teléfono 2</span><span id="d-tel2">—</span>
+                <span class="dl">Correo</span><span id="d-correo">—</span>
+                <span class="dl">Domicilio</span><span id="d-domicilio">—</span>
+                <span class="dl">Colonia</span><span id="d-colonia">—</span>
+                <span class="dl">Municipio</span><span id="d-municipio">—</span>
+                <span class="dl">Dom. cobro</span><span id="d-dom-cobro">—</span>
+              </div>
+            </div>
+
+            <!-- Card Vehículo -->
+            <div class="card">
+              <div style="font-size:11px;font-weight:700;color:var(--gray300);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Vehículo</div>
+              <div id="d-vehiculos-lista"></div>
+            </div>
+
+          </div>
+
+          <!-- Últimos pagos -->
+          <div class="card">
+            <div style="font-size:11px;font-weight:700;color:var(--gray300);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px">Últimos 20 pagos</div>
+            <div class="tabla-wrap" style="box-shadow:none">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Monto</th>
+                    <th>Recibo</th>
+                    <th>Origen</th>
+                    <th>Notas</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-pagos"></tbody>
+              </table>
+            </div>
+          </div>
+
         </div>
       </div>
+
 
       <!-- CLIENTES -->
       <div class="vista" id="v-clientes">
@@ -674,7 +799,7 @@ tr:hover td { background: var(--gray50); }
 
 <script>
 // ── CONFIGURACIÓN ─────────────────────────────────────────
-const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbxYNmbCKa6ZwBY5gORQ7kdrhlkqOBIdTtoYy35oVSoMFXjOi2YUZoPzP9vi5GYSy3p0NA/exec';
+const BACKEND_URL = 'https://script.google.com/macros/s/TU_DEPLOYMENT_ID/exec'; // ← reemplaza
 
 // ── ESTADO ────────────────────────────────────────────────
 let sesion = null;
@@ -934,6 +1059,166 @@ function esc(str) {
     .replace(/&/g,'&amp;').replace(/</g,'&lt;')
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
+// ── PÓLIZAS ───────────────────────────────────────────────
+let ultimosBusqueda = [];
+
+async function buscarPolizas() {
+  const termino = document.getElementById('poliza-busqueda').value.trim();
+  if (termino.length < 2) { alerta('Escribe al menos 2 caracteres', 'rojo'); return; }
+
+  document.getElementById('polizas-resultados').style.display = 'none';
+  document.getElementById('poliza-detalle').style.display = 'none';
+  document.getElementById('tbody-polizas').innerHTML =
+    '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--gray300)">Buscando…</td></tr>';
+  document.getElementById('polizas-resultados').style.display = 'block';
+
+  const res = await api({ accion: 'buscar_polizas', access_token: sesion.access_token, termino });
+  if (!res.ok) { alerta(res.error, 'rojo'); return; }
+
+  ultimosBusqueda = res.polizas;
+  document.getElementById('polizas-conteo').textContent =
+    res.polizas.length === 0 ? 'Sin resultados' : `${res.polizas.length} póliza(s) encontrada(s)`;
+
+  if (res.polizas.length === 0) {
+    document.getElementById('tbody-polizas').innerHTML =
+      '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--gray300)">No se encontraron pólizas</td></tr>';
+    return;
+  }
+
+  document.getElementById('tbody-polizas').innerHTML = res.polizas.map(p => {
+    const estatus = estatusPoliza(p);
+    return `<tr>
+      <td><strong>${esc(p.id_poliza)}</strong></td>
+      <td>${esc(p.nombre_cliente)}</td>
+      <td style="font-size:12px">${esc(p.vehiculo)} ${p.modelo || ''}</td>
+      <td>${esc(p.placas)}</td>
+      <td style="font-size:12px">${esc(p.empresa_codigo)}</td>
+      <td style="font-size:12px">${fmtFecha(p.fecha_termino)}</td>
+      <td><span class="badge estatus-${estatus.clase}">${estatus.label}</span></td>
+      <td style="text-align:right">${fmtMonto(p.saldo_por_pagar)}</td>
+      <td><button class="btn-accion btn-gris" style="padding:5px 12px;font-size:12px"
+        onclick="verDetalle('${esc(p.id_poliza)}')">Ver</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function verDetalle(id_poliza) {
+  document.getElementById('polizas-resultados').style.display = 'none';
+  document.getElementById('poliza-detalle').style.display = 'block';
+
+  // Limpiar
+  ['d-id-poliza','d-empresa','d-asesor','d-cobrador','d-cobertura','d-tipo-poliza','d-tipo-cobro',
+   'd-inicio','d-termino','d-estatus','d-costo','d-pago-inicial','d-pagos-de','d-pagado',
+   'd-saldo','d-saldo-por-pagar','d-meses-atraso','d-prox-pago','d-nombre','d-tel1','d-tel2',
+   'd-correo','d-domicilio','d-colonia','d-municipio','d-dom-cobro']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.textContent = 'Cargando…'; });
+
+  const res = await api({ accion: 'detalle_poliza', access_token: sesion.access_token, id_poliza });
+  if (!res.ok) { alerta(res.error, 'rojo'); cerrarDetalle(); return; }
+
+  const p = res.poliza;
+  const c = res.cliente;
+  const e = res.empresa;
+  const estatus = estatusPoliza(p);
+
+  // Póliza
+  document.getElementById('d-id-poliza').textContent  = p.id_poliza;
+  document.getElementById('d-empresa').textContent    = e.nombre || '—';
+  document.getElementById('d-asesor').textContent     = p.asesor || '—';
+  document.getElementById('d-cobrador').textContent   = p.cobrador || '—';
+  document.getElementById('d-cobertura').textContent  = p.tipo_cobertura || p.tipo_de_cobertura || '—';
+  document.getElementById('d-tipo-poliza').textContent = p.tipo_poliza || '—';
+  document.getElementById('d-tipo-cobro').textContent = p.tipo_cobro || '—';
+  document.getElementById('d-inicio').textContent     = fmtFecha(p.fecha_inicio_vigencia);
+  document.getElementById('d-termino').textContent    = fmtFecha(p.fecha_termino_vigencia);
+  document.getElementById('d-estatus').innerHTML      = `<span class="badge estatus-${estatus.clase}">${estatus.label}</span>`;
+
+  // Financiero
+  document.getElementById('d-costo').textContent          = fmtMonto(p.costo);
+  document.getElementById('d-pago-inicial').textContent   = fmtMonto(p.pago_inicial);
+  document.getElementById('d-pagos-de').textContent       = fmtMonto(p.pagos_de);
+  document.getElementById('d-pagado').textContent         = fmtMonto(p.pagado);
+  document.getElementById('d-saldo').textContent          = fmtMonto(p.saldo);
+  document.getElementById('d-saldo-por-pagar').textContent = fmtMonto(p.saldo_por_pagar);
+  document.getElementById('d-meses-atraso').textContent   = p.meses_atraso != null ? p.meses_atraso : '—';
+  document.getElementById('d-prox-pago').textContent      = fmtFecha(p.fecha_proximo_pago);
+
+  // Cliente
+  document.getElementById('d-nombre').textContent    = c.nombre || '—';
+  document.getElementById('d-tel1').textContent      = c.telefono_01 || '—';
+  document.getElementById('d-tel2').textContent      = c.telefono_02 || '—';
+  document.getElementById('d-correo').textContent    = c.correo_electronico || '—';
+  document.getElementById('d-domicilio').textContent = c.domicilio_particular || '—';
+  document.getElementById('d-colonia').textContent   = c.colonia || '—';
+  document.getElementById('d-municipio').textContent = c.municipio || '—';
+  document.getElementById('d-dom-cobro').textContent = c.domicilio_cobro || '—';
+
+  // Vehículos
+  const vLista = document.getElementById('d-vehiculos-lista');
+  if (res.vehiculos.length === 0) {
+    vLista.innerHTML = '<div style="color:var(--gray300)">Sin vehículos registrados</div>';
+  } else {
+    vLista.innerHTML = res.vehiculos.map(v => `
+      <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--gray100)">
+        <div style="font-weight:700;color:var(--navy);margin-bottom:6px">${esc(v.vehiculo || '—')} ${v.modelo || ''}</div>
+        <div class="detalle-grid">
+          <span class="dl">Placas</span><span>${esc(v.placas || '—')}</span>
+          <span class="dl">Color</span><span>${esc(v.color || '—')}</span>
+          <span class="dl">Motor</span><span>${esc(v.motor || '—')}</span>
+          <span class="dl">Serie</span><span>${esc(v.numero_serie || '—')}</span>
+          <span class="dl">Tipo</span><span>${esc(v.tipo || '—')}</span>
+          <span class="dl">Vigente</span><span>${v.vigente ? 'Sí' : 'No'}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Pagos
+  const tbody = document.getElementById('tbody-pagos');
+  if (res.pagos.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--gray300)">Sin pagos registrados</td></tr>';
+  } else {
+    tbody.innerHTML = res.pagos.map(pg => `
+      <tr>
+        <td>${fmtFecha(pg.fecha_pago)}</td>
+        <td style="text-align:right;font-weight:600">${fmtMonto(pg.monto)}</td>
+        <td>${esc(pg.numero_recibo || '—')}</td>
+        <td><span class="badge ${pg.origen === 'HISTORICO' ? 'badge-cobrador' : 'badge-agente'}"
+          style="font-size:10px">${esc(pg.origen || '—')}</span></td>
+        <td style="font-size:12px;color:var(--gray600)">${esc(pg.notas || '')}</td>
+      </tr>
+    `).join('');
+  }
+}
+
+function cerrarDetalle() {
+  document.getElementById('poliza-detalle').style.display = 'none';
+  document.getElementById('polizas-resultados').style.display = ultimosBusqueda.length > 0 ? 'block' : 'none';
+}
+
+// ── HELPERS DE FORMATO ────────────────────────────────────
+function estatusPoliza(p) {
+  if (p.cancelada) return { label: 'Cancelada', clase: 'cancelada' };
+  const hoy    = new Date();
+  const termino = p.fecha_termino_vigencia ? new Date(p.fecha_termino_vigencia) : null;
+  if (!termino) return { label: 'Sin fecha', clase: 'cancelada' };
+  return termino >= hoy
+    ? { label: 'Vigente',  clase: 'vigente' }
+    : { label: 'Vencida',  clase: 'vencida' };
+}
+
+function fmtFecha(f) {
+  if (!f) return '—';
+  const d = new Date(f + 'T12:00:00');
+  return d.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function fmtMonto(m) {
+  if (m == null || m === '') return '—';
+  return '$' + Number(m).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 </script>
 </body>
 </html>

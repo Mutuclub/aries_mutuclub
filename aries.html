@@ -674,7 +674,7 @@ tr:hover td { background: var(--gray50); }
 
 <script>
 // ── CONFIGURACIÓN ─────────────────────────────────────────
-const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbxYNmbCKa6ZwBY5gORQ7kdrhlkqOBIdTtoYy35oVSoMFXjOi2YUZoPzP9vi5GYSy3p0NA/exec';
+const BACKEND_URL = 'https://script.google.com/macros/s/TU_DEPLOYMENT_ID/exec'; // ← reemplaza
 
 // ── ESTADO ────────────────────────────────────────────────
 let sesion = null;
@@ -899,13 +899,27 @@ async function desactivar(id, nombre) {
 }
 
 // ── UTILIDADES ────────────────────────────────────────────
-async function api(payload) {
-  const r = await fetch(BACKEND_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
+// Usamos JSONP para evitar el bloqueo CORS de Apps Script
+function api(payload) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'cb_' + Date.now();
+    const script = document.createElement('script');
+
+    window[cbName] = function(data) {
+      delete window[cbName];
+      document.body.removeChild(script);
+      resolve(data);
+    };
+
+    const params = encodeURIComponent(JSON.stringify(payload));
+    script.src = `${BACKEND_URL}?callback=${cbName}&data=${params}`;
+    script.onerror = () => {
+      delete window[cbName];
+      document.body.removeChild(script);
+      reject(new Error('Error de conexión'));
+    };
+    document.body.appendChild(script);
   });
-  return r.json();
 }
 
 function alerta(msg, tipo = '') {

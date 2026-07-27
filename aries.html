@@ -614,7 +614,11 @@ tr:hover td { background: var(--gray50); }
             <!-- Card Póliza -->
             <div class="card">
               <div style="font-size:11px;font-weight:700;color:var(--gray300);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Póliza</div>
-              <div style="font-size:22px;font-weight:700;color:var(--navy);margin-bottom:12px" id="d-id-poliza">—</div>
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+                <div style="font-size:22px;font-weight:700;color:var(--navy)" id="d-id-poliza">—</div>
+                <span id="d-estatus-header" style="font-size:22px;font-weight:700"></span>
+                <span id="d-expira-header" style="font-size:22px;font-weight:700"></span>
+              </div>
               <div class="detalle-grid">
                 <span class="dl">Empresa</span><span id="d-empresa">—</span>
                 <span class="dl">Asesor</span><span id="d-asesor">—</span>
@@ -1283,7 +1287,8 @@ async function verDetalle(id_poliza) {
 
   // Limpiar
   ['d-id-poliza','d-empresa','d-asesor','d-cobrador','d-cobertura','d-tipo-poliza','d-tipo-cobro',
-   'd-inicio','d-termino','d-estatus','d-costo','d-pago-inicial','d-pagos-de','d-pagado',
+   'd-inicio','d-termino','d-estatus','d-estatus-header','d-expira-header',
+   'd-costo','d-pago-inicial','d-pagos-de','d-pagado',
    'd-saldo','d-saldo-por-pagar','d-meses-atraso','d-prox-pago','d-nombre','d-tel1','d-tel2',
    'd-correo','d-domicilio','d-colonia','d-municipio','d-dom-cobro']
     .forEach(id => { const el = document.getElementById(id); if (el) el.textContent = 'Cargando…'; });
@@ -1307,6 +1312,18 @@ async function verDetalle(id_poliza) {
   document.getElementById('d-inicio').textContent     = fmtFecha(p.fecha_inicio_vigencia);
   document.getElementById('d-termino').textContent    = fmtFecha(p.fecha_termino_vigencia);
   document.getElementById('d-estatus').innerHTML      = `<span class="badge estatus-${estatus.clase}">${estatus.label}</span>`;
+
+  // Badges grandes junto al número de póliza
+  const colorEstatus = { vigente: { bg:'#E8F5EE', color:'#1A6B3C' }, vencida: { bg:'#FEEEEE', color:'#C0392B' }, cancelada: { bg:'#E8ECF5', color:'#4A5568' } };
+  const ce = colorEstatus[estatus.clase] || colorEstatus.cancelada;
+  document.getElementById('d-estatus-header').innerHTML =
+    `<span style="background:${ce.bg};color:${ce.color};padding:3px 14px;border-radius:20px;font-size:22px;font-weight:700">${estatus.label}</span>`;
+
+  const hoyExp = new Date(); hoyExp.setHours(0,0,0,0);
+  const termino2 = p.fecha_termino_vigencia ? new Date(p.fecha_termino_vigencia + 'T12:00:00') : null;
+  const expirada = termino2 ? termino2 < hoyExp : true;
+  document.getElementById('d-expira-header').innerHTML =
+    `<span style="background:${expirada ? '#FEEEEE' : '#E8F5EE'};color:${expirada ? '#C0392B' : '#1A6B3C'};padding:3px 14px;border-radius:20px;font-size:22px;font-weight:700">${expirada ? '🔴 Expirada' : '🟢 No expirada'}</span>`;
 
   // ── Finanzas calculadas en tiempo real ───────────────────
   const costo        = Number(p.costo)        || 0;

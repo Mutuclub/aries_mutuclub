@@ -1269,11 +1269,28 @@ async function buscarPolizas() {
   }
 
   document.getElementById('tbody-polizas').innerHTML = res.polizas.map(p => {
-    // Estatus con meses_atraso de Supabase (disponible en buscar_polizas)
-    const mesesDB = Number(p.meses_atraso) || 0;
-    const saldoDB = Number(p.saldo_por_pagar ?? p.saldo ?? 0);
-    const pagadaDB = saldoDB <= 0 && !p.cancelada;
-    const estatus = estatusPoliza(p, { pagada: pagadaDB, mesesAtraso: mesesDB });
+    // Calcular en tiempo real con los datos que ahora regresa buscar_polizas
+    const costo       = Number(p.costo)        || 0;
+    const pagoIni     = Number(p.pago_inicial) || 0;
+    const pagoMens    = Number(p.pagos_de)     || 0;
+    const sumPagosR   = Number(p.suma_pagos)   || 0;   // suma real de pagos desde Supabase
+    const totalPag    = pagoIni + sumPagosR;
+    const saldoReal   = Math.max(0, costo - totalPag);
+    const pagadaReal  = saldoReal <= 0;
+
+    // Meses de atraso calculados igual que en el detalle
+    let mesesAtrasoR = 0;
+    if (!pagadaReal && p.fecha_inicio_vigencia && pagoMens > 0) {
+      const hoyM = new Date(); hoyM.setHours(0,0,0,0);
+      const fi   = new Date(p.fecha_inicio_vigencia + 'T12:00:00');
+      const msDesde = (hoyM.getFullYear() - fi.getFullYear()) * 12
+                    + (hoyM.getMonth()    - fi.getMonth());
+      const mensEsperadas = Math.max(0, msDesde);
+      const mensPagadas   = Math.round(sumPagosR / pagoMens);
+      mesesAtrasoR = Math.max(0, mensEsperadas - mensPagadas);
+    }
+
+    const estatus = estatusPoliza(p, { pagada: pagadaReal, mesesAtraso: mesesAtrasoR });
     return `<tr>
       <td><strong>${esc(p.id_poliza)}</strong></td>
       <td>${esc(p.nombre_cliente)}</td>
@@ -1282,7 +1299,7 @@ async function buscarPolizas() {
       <td style="font-size:12px">${esc(p.empresa_codigo)}</td>
       <td style="font-size:12px">${fmtFecha(p.fecha_termino)}</td>
       <td><span class="badge estatus-${estatus.clase}">${estatus.label}</span></td>
-      <td style="text-align:right">${fmtMonto(saldoDB)}</td>
+      <td style="text-align:right">${fmtMonto(saldoReal)}</td>
       <td><button class="btn-accion btn-gris" style="padding:5px 12px;font-size:12px"
         onclick="verDetalle('${esc(p.id_poliza)}')">Ver</button></td>
     </tr>`;

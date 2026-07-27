@@ -1688,7 +1688,8 @@ async function guardarRecepcion() {
     const numRec = document.getElementById('rec-' + n)?.value.trim();
     const monto  = parseFloat(document.getElementById('monto-' + n)?.value) || 0;
     if (monto > 0) {
-      recibos.push({ id_poliza: poliza || null, numero_recibo: numRec || null, monto });
+    const fechaRec = document.getElementById('frec-' + n)?.value || '';
+      recibos.push({ id_poliza: poliza || null, numero_recibo: numRec || null, monto, fecha_recibo: fechaRec || null });
     }
   });
 
@@ -1897,18 +1898,22 @@ async function imprimirRecepcion(id_recepcion) {
   <table>
     <thead>
       <tr>
-        <th>#</th>
+        <th style="width:30px">#</th>
         <th>Póliza</th>
+        <th>Cliente</th>
         <th>Fecha Recibo</th>
         <th>No. Recibo</th>
         <th style="text-align:right">Monto</th>
       </tr>
     </thead>
     <tbody>
-      ${pagos.map((p, i) => `
+      ${pagos.length === 0
+        ? `<tr><td colspan="6" style="text-align:center;color:#999;padding:12px">Sin detalle de recibos disponible</td></tr>`
+        : pagos.map((p, i) => `
         <tr>
           <td>${i + 1}</td>
           <td>${p.id_poliza || '—'}</td>
+          <td style="font-size:10px">${p.nombre_cliente || '—'}</td>
           <td>${p.fecha_pago || '—'}</td>
           <td>${p.numero_recibo || '—'}</td>
           <td style="text-align:right">$${Number(p.monto).toLocaleString('es-MX', {minimumFractionDigits:2})}</td>

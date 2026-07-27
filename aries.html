@@ -1206,26 +1206,15 @@ async function desactivar(id, nombre) {
 }
 
 // ── UTILIDADES ────────────────────────────────────────────
-// API: POST para acciones que envían datos, JSONP para consultas simples
+// API: JSONP para todas las acciones (compatibilidad CORS con Apps Script)
 function api(payload) {
-  // Acciones con datos grandes van siempre por POST
-  const postActions = ['guardar_recepcion', 'crear_usuario', 'actualizar_usuario',
-                       'guardar_cobrador', 'buscar_polizas'];
-  if (postActions.includes(payload.accion)) {
-    return fetch(BACKEND_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    }).then(r => r.json());
-  }
-  // El resto usa JSONP (GET) para compatibilidad CORS
   return new Promise((resolve, reject) => {
-    const cbName = 'cb_' + Date.now();
+    const cbName = 'cb_' + Date.now() + '_' + Math.floor(Math.random()*9999);
     const script = document.createElement('script');
 
     window[cbName] = function(data) {
       delete window[cbName];
-      document.body.removeChild(script);
+      if (document.body.contains(script)) document.body.removeChild(script);
       resolve(data);
     };
 
@@ -1233,9 +1222,17 @@ function api(payload) {
     script.src = `${BACKEND_URL}?callback=${cbName}&data=${params}`;
     script.onerror = () => {
       delete window[cbName];
-      document.body.removeChild(script);
+      if (document.body.contains(script)) document.body.removeChild(script);
       reject(new Error('Error de conexión'));
     };
+    // Timeout de seguridad: 30 segundos
+    setTimeout(() => {
+      if (window[cbName]) {
+        delete window[cbName];
+        if (document.body.contains(script)) document.body.removeChild(script);
+        resolve({ ok: false, error: 'Tiempo de espera agotado. Intenta de nuevo.' });
+      }
+    }, 30000);
     document.body.appendChild(script);
   });
 }

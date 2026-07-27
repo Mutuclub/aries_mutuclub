@@ -668,11 +668,12 @@ tr:hover td { background: var(--gray50); }
 
           <!-- Últimos pagos -->
           <div class="card">
-            <div style="font-size:11px;font-weight:700;color:var(--gray300);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px">Últimos 20 pagos</div>
+            <div style="font-size:11px;font-weight:700;color:var(--gray300);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px">Historial y plan de pagos</div>
             <div class="tabla-wrap" style="box-shadow:none">
               <table>
                 <thead>
                   <tr>
+                    <th>#</th>
                     <th>Fecha</th>
                     <th>Monto</th>
                     <th>Recibo</th>
@@ -1307,15 +1308,57 @@ async function verDetalle(id_poliza) {
   document.getElementById('d-termino').textContent    = fmtFecha(p.fecha_termino_vigencia);
   document.getElementById('d-estatus').innerHTML      = `<span class="badge estatus-${estatus.clase}">${estatus.label}</span>`;
 
-  // Financiero
-  document.getElementById('d-costo').textContent          = fmtMonto(p.costo);
-  document.getElementById('d-pago-inicial').textContent   = fmtMonto(p.pago_inicial);
-  document.getElementById('d-pagos-de').textContent       = fmtMonto(p.pagos_de);
-  document.getElementById('d-pagado').textContent         = fmtMonto(p.pagado);
-  document.getElementById('d-saldo').textContent          = fmtMonto(p.saldo);
-  document.getElementById('d-saldo-por-pagar').textContent = fmtMonto(p.saldo_por_pagar);
-  document.getElementById('d-meses-atraso').textContent   = p.meses_atraso != null ? p.meses_atraso : '—';
-  document.getElementById('d-prox-pago').textContent      = fmtFecha(p.fecha_proximo_pago);
+  // ── Finanzas calculadas en tiempo real ───────────────────
+  const costo        = Number(p.costo)        || 0;
+  const pagoInicial  = Number(p.pago_inicial) || 0;
+  const pagoMensual  = Number(p.pagos_de)     || 0;
+  const hoyFin       = new Date(); hoyFin.setHours(0,0,0,0);
+
+  // Suma de pagos registrados (excluye $0)
+  const pagosReales  = (res.pagos || []).filter(pg => Number(pg.monto) !== 0);
+  const sumPagos     = pagosReales.reduce((s, pg) => s + Number(pg.monto), 0);
+  // Total pagado = enganche + mensualidades
+  const totalPagado  = pagoInicial + sumPagos;
+  // Saldo = lo que aún debe
+  const saldo        = Math.max(0, costo - totalPagado);
+  // Saldo por pagar = cuotas futuras pendientes (>= 0)
+  const saldoPorPagar = saldo;
+  // Póliza pagada
+  const pagada = saldo <= 0;
+
+  // Fecha de inicio de vigencia (día de contratación)
+  const fechaInicio = p.fecha_inicio_vigencia ? new Date(p.fecha_inicio_vigencia + 'T12:00:00') : null;
+
+  // Próximo pago: siguiente día-del-mes igual al de contratación, >= hoy
+  let proxPago = null;
+  let mesesAtraso = 0;
+  if (!pagada && fechaInicio && pagoMensual > 0) {
+    const diaCorte = fechaInicio.getDate();
+    // ¿Cuántas mensualidades debieron haberse cubierto ya?
+    // mes 0 = pago inicial (día contratación), mes 1 = primer mensualidad (un mes después), etc.
+    const msDesde = (hoyFin.getFullYear() - fechaInicio.getFullYear()) * 12
+                  + (hoyFin.getMonth()    - fechaInicio.getMonth());
+    // Mensualidades esperadas hasta hoy (sin contar el enganche)
+    const mensualidadesEsperadas = Math.max(0, msDesde);
+    const mensualidadesPagadas   = Math.round(sumPagos / pagoMensual);
+    mesesAtraso = Math.max(0, mensualidadesEsperadas - mensualidadesPagadas);
+
+    // Próximo pago: partimos del mes siguiente al último pago esperado
+    const mesProximo = mensualidadesPagadas + 1; // 1-based desde fecha inicio
+    const d = new Date(fechaInicio.getFullYear(), fechaInicio.getMonth() + mesProximo, diaCorte);
+    // Si ya pasó, avanzar mes a mes hasta >= hoy
+    while (d < hoyFin) d.setMonth(d.getMonth() + 1);
+    proxPago = d;
+  }
+
+  document.getElementById('d-costo').textContent           = fmtMonto(costo);
+  document.getElementById('d-pago-inicial').textContent    = fmtMonto(pagoInicial);
+  document.getElementById('d-pagos-de').textContent        = fmtMonto(pagoMensual);
+  document.getElementById('d-pagado').textContent          = fmtMonto(totalPagado);
+  document.getElementById('d-saldo').textContent           = fmtMonto(saldo);
+  document.getElementById('d-saldo-por-pagar').textContent = fmtMonto(saldoPorPagar);
+  document.getElementById('d-meses-atraso').textContent    = mesesAtraso;
+  document.getElementById('d-prox-pago').textContent       = pagada ? '—' : (proxPago ? fmtFechaObj(proxPago) : '—');
 
   // Cliente
   document.getElementById('d-nombre').textContent    = c.nombre || '—';
@@ -1347,21 +1390,67 @@ async function verDetalle(id_poliza) {
     `).join('');
   }
 
-  // Pagos
+  // ── Tabla de pagos: inicial + reales + plan futuro ───────
   const tbody = document.getElementById('tbody-pagos');
-  if (res.pagos.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--gray300)">Sin pagos registrados</td></tr>';
-  } else {
-    tbody.innerHTML = res.pagos.map(pg => `
+  const filasHTML = [];
+  let numFila = 0;
+
+  // 0. Fila del pago inicial (enganche)
+  if (pagoInicial > 0 && fechaInicio) {
+    numFila++;
+    filasHTML.push(`
+      <tr style="background:var(--gray50)">
+        <td style="font-size:11px;color:var(--gray300)">${numFila}</td>
+        <td>${fmtFechaObj(fechaInicio)}</td>
+        <td style="text-align:right;font-weight:600">${fmtMonto(pagoInicial)}</td>
+        <td><span style="font-size:10px;font-weight:700;color:var(--navy)">INICIAL</span></td>
+        <td><span class="badge badge-cobrador" style="font-size:10px">ENGANCHE</span></td>
+        <td style="font-size:12px;color:var(--gray600)">Pago inicial / enganche</td>
+      </tr>`);
+  }
+
+  // 1. Pagos registrados (excluye $0), ordenados por fecha
+  const pagosOrdenados = pagosReales.slice().sort((a,b) => (a.fecha_pago||'').localeCompare(b.fecha_pago||''));
+  for (const pg of pagosOrdenados) {
+    numFila++;
+    filasHTML.push(`
       <tr>
+        <td style="font-size:11px;color:var(--gray300)">${numFila}</td>
         <td>${fmtFecha(pg.fecha_pago)}</td>
         <td style="text-align:right;font-weight:600">${fmtMonto(pg.monto)}</td>
         <td>${esc(pg.numero_recibo || '—')}</td>
         <td><span class="badge ${pg.origen === 'HISTORICO' ? 'badge-cobrador' : 'badge-agente'}"
           style="font-size:10px">${esc(pg.origen || '—')}</span></td>
         <td style="font-size:12px;color:var(--gray600)">${esc(pg.notas || '')}</td>
-      </tr>
-    `).join('');
+      </tr>`);
+  }
+
+  // 2. Plan de pagos futuros (si no está pagada)
+  if (!pagada && fechaInicio && pagoMensual > 0) {
+    const diaCorte = fechaInicio.getDate();
+    const mensualidadesPagadas = Math.round(sumPagos / pagoMensual);
+    const mensualidadesTotales = pagoMensual > 0 ? Math.round((costo - pagoInicial) / pagoMensual) : 0;
+    let futuros = 0;
+    for (let m = mensualidadesPagadas + 1; m <= mensualidadesTotales && futuros < 24; m++) {
+      const d = new Date(fechaInicio.getFullYear(), fechaInicio.getMonth() + m, diaCorte);
+      numFila++;
+      futuros++;
+      filasHTML.push(`
+        <tr style="opacity:.5;font-style:italic">
+          <td style="font-size:11px;color:var(--gray300)">${numFila}</td>
+          <td>${fmtFechaObj(d)}</td>
+          <td style="text-align:right;font-weight:600">${fmtMonto(pagoMensual)}</td>
+          <td>—</td>
+          <td><span class="badge" style="font-size:10px;background:var(--gray100);color:var(--gray600)">PENDIENTE</span></td>
+          <td style="font-size:12px;color:var(--gray300)">Pago programado</td>
+        </tr>`);
+    }
+  }
+
+  if (filasHTML.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--gray300)">Sin pagos registrados</td></tr>';
+  } else {
+    tbody.innerHTML = filasHTML.join('');
   }
 }
 
@@ -1384,6 +1473,11 @@ function estatusPoliza(p) {
 function fmtFecha(f) {
   if (!f) return '—';
   const d = new Date(f + 'T12:00:00');
+  return d.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function fmtFechaObj(d) {
+  if (!d) return '—';
   return d.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 

@@ -438,9 +438,14 @@ tr:hover td { background: var(--gray50); }
   font-weight: 600;
   white-space: nowrap;
 }
-.estatus-vigente  { background: #E8F5EE; color: var(--green); }
-.estatus-vencida  { background: #FEEEEE; color: var(--red); }
-.estatus-cancelada { background: var(--gray100); color: var(--gray600); }
+.estatus-pagada            { background: #E8F5EE; color: #1A6B3C; }
+.estatus-vigente           { background: #E0F0FF; color: #1B2A6B; }
+.estatus-atrasada          { background: #FFF3E0; color: #7B3900; }
+.estatus-problema          { background: #FEEEEE; color: #C0392B; }
+.estatus-cancelada-pago    { background: #F3E8FF; color: #4A0080; }
+.estatus-cancelada-manual  { background: var(--gray100); color: var(--gray600); }
+.estatus-vencida           { background: #FEEEEE; color: var(--red); }
+.estatus-cancelada         { background: var(--gray100); color: var(--gray600); }
 
 /* ── TABS ────────────────────────────────────────────────── */
 .tab-btn {
@@ -617,7 +622,7 @@ tr:hover td { background: var(--gray50); }
               <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px">
                 <div style="font-size:22px;font-weight:700;color:var(--navy)" id="d-id-poliza">—</div>
                 <span id="d-estatus-header" style="font-size:22px;font-weight:700"></span>
-                <span id="d-expira-header" style="font-size:22px;font-weight:700"></span>
+                <span id="d-expira-header" style="font-size:22px;font-weight:700;margin-left:auto"></span>
               </div>
               <div class="detalle-grid">
                 <span class="dl">Empresa</span><span id="d-empresa">—</span>
@@ -628,7 +633,6 @@ tr:hover td { background: var(--gray50); }
                 <span class="dl">Tipo cobro</span><span id="d-tipo-cobro">—</span>
                 <span class="dl">Inicio vigencia</span><span id="d-inicio">—</span>
                 <span class="dl">Término vigencia</span><span id="d-termino">—</span>
-                <span class="dl">Estatus</span><span id="d-estatus">—</span>
               </div>
             </div>
 
@@ -1265,7 +1269,11 @@ async function buscarPolizas() {
   }
 
   document.getElementById('tbody-polizas').innerHTML = res.polizas.map(p => {
-    const estatus = estatusPoliza(p);
+    // Estatus con meses_atraso de Supabase (disponible en buscar_polizas)
+    const mesesDB = Number(p.meses_atraso) || 0;
+    const saldoDB = Number(p.saldo_por_pagar ?? p.saldo ?? 0);
+    const pagadaDB = saldoDB <= 0 && !p.cancelada;
+    const estatus = estatusPoliza(p, { pagada: pagadaDB, mesesAtraso: mesesDB });
     return `<tr>
       <td><strong>${esc(p.id_poliza)}</strong></td>
       <td>${esc(p.nombre_cliente)}</td>
@@ -1274,7 +1282,7 @@ async function buscarPolizas() {
       <td style="font-size:12px">${esc(p.empresa_codigo)}</td>
       <td style="font-size:12px">${fmtFecha(p.fecha_termino)}</td>
       <td><span class="badge estatus-${estatus.clase}">${estatus.label}</span></td>
-      <td style="text-align:right">${fmtMonto(p.saldo_por_pagar)}</td>
+      <td style="text-align:right">${fmtMonto(saldoDB)}</td>
       <td><button class="btn-accion btn-gris" style="padding:5px 12px;font-size:12px"
         onclick="verDetalle('${esc(p.id_poliza)}')">Ver</button></td>
     </tr>`;
@@ -1287,7 +1295,7 @@ async function verDetalle(id_poliza) {
 
   // Limpiar
   ['d-id-poliza','d-empresa','d-asesor','d-cobrador','d-cobertura','d-tipo-poliza','d-tipo-cobro',
-   'd-inicio','d-termino','d-estatus','d-estatus-header','d-expira-header',
+   'd-inicio','d-termino','d-estatus-header','d-expira-header',
    'd-costo','d-pago-inicial','d-pagos-de','d-pagado',
    'd-saldo','d-saldo-por-pagar','d-meses-atraso','d-prox-pago','d-nombre','d-tel1','d-tel2',
    'd-correo','d-domicilio','d-colonia','d-municipio','d-dom-cobro']
@@ -1299,81 +1307,80 @@ async function verDetalle(id_poliza) {
   const p = res.poliza;
   const c = res.cliente;
   const e = res.empresa;
-  const estatus = estatusPoliza(p);
 
-  // Póliza
-  document.getElementById('d-id-poliza').textContent  = p.id_poliza;
-  document.getElementById('d-empresa').textContent    = e.nombre || '—';
-  document.getElementById('d-asesor').textContent     = p.asesor || '—';
-  document.getElementById('d-cobrador').textContent   = p.cobrador || '—';
-  document.getElementById('d-cobertura').textContent  = p.tipo_cobertura || p.tipo_de_cobertura || '—';
+  // ── Finanzas calculadas en tiempo real (se necesitan antes del estatus) ──
+  const costo       = Number(p.costo)        || 0;
+  const pagoInicial = Number(p.pago_inicial) || 0;
+  const pagoMensual = Number(p.pagos_de)     || 0;
+  const hoyFin      = new Date(); hoyFin.setHours(0,0,0,0);
+
+  const pagosReales = (res.pagos || []).filter(pg => Number(pg.monto) !== 0);
+  const sumPagos    = pagosReales.reduce((s, pg) => s + Number(pg.monto), 0);
+  const totalPagado = pagoInicial + sumPagos;
+  const saldo       = Math.max(0, costo - totalPagado);
+  const pagada      = saldo <= 0;
+
+  const fechaInicio = p.fecha_inicio_vigencia ? new Date(p.fecha_inicio_vigencia + 'T12:00:00') : null;
+
+  let proxPago   = null;
+  let mesesAtraso = 0;
+  if (!pagada && fechaInicio && pagoMensual > 0) {
+    const diaCorte = fechaInicio.getDate();
+    const msDesde  = (hoyFin.getFullYear() - fechaInicio.getFullYear()) * 12
+                   + (hoyFin.getMonth()    - fechaInicio.getMonth());
+    const mensualidadesEsperadas = Math.max(0, msDesde);
+    const mensualidadesPagadas   = Math.round(sumPagos / pagoMensual);
+    mesesAtraso = Math.max(0, mensualidadesEsperadas - mensualidadesPagadas);
+
+    const mesProximo = mensualidadesPagadas + 1;
+    const d = new Date(fechaInicio.getFullYear(), fechaInicio.getMonth() + mesProximo, diaCorte);
+    while (d < hoyFin) d.setMonth(d.getMonth() + 1);
+    proxPago = d;
+  }
+
+  // ── Estatus calculado con datos financieros reales ────────
+  const estatus = estatusPoliza(p, { pagada, mesesAtraso });
+
+  // ── Paleta de colores por clase de estatus ────────────────
+  const paletaEstatus = {
+    'pagada':           { bg:'#E8F5EE', color:'#1A6B3C' },
+    'vigente':          { bg:'#E0F0FF', color:'#1B2A6B' },
+    'atrasada':         { bg:'#FFF3E0', color:'#7B3900' },
+    'problema':         { bg:'#FEEEEE', color:'#C0392B' },
+    'cancelada-pago':   { bg:'#F3E8FF', color:'#4A0080' },
+    'cancelada-manual': { bg:'#E8ECF5', color:'#4A5568' },
+  };
+  const ce = paletaEstatus[estatus.clase] || paletaEstatus['cancelada-manual'];
+
+  // ── Póliza ────────────────────────────────────────────────
+  document.getElementById('d-id-poliza').textContent   = p.id_poliza;
+  document.getElementById('d-empresa').textContent     = e.nombre || '—';
+  document.getElementById('d-asesor').textContent      = p.asesor || '—';
+  document.getElementById('d-cobrador').textContent    = p.cobrador || '—';
+  document.getElementById('d-cobertura').textContent   = p.tipo_cobertura || p.tipo_de_cobertura || '—';
   document.getElementById('d-tipo-poliza').textContent = p.tipo_poliza || '—';
-  document.getElementById('d-tipo-cobro').textContent = p.tipo_cobro || '—';
-  document.getElementById('d-inicio').textContent     = fmtFecha(p.fecha_inicio_vigencia);
-  document.getElementById('d-termino').textContent    = fmtFecha(p.fecha_termino_vigencia);
-  document.getElementById('d-estatus').innerHTML      = `<span class="badge estatus-${estatus.clase}">${estatus.label}</span>`;
+  document.getElementById('d-tipo-cobro').textContent  = p.tipo_cobro || '—';
+  document.getElementById('d-inicio').textContent      = fmtFecha(p.fecha_inicio_vigencia);
+  document.getElementById('d-termino').textContent     = fmtFecha(p.fecha_termino_vigencia);
 
-  // Badges grandes junto al número de póliza
-  const colorEstatus = { vigente: { bg:'#E8F5EE', color:'#1A6B3C' }, vencida: { bg:'#FEEEEE', color:'#C0392B' }, cancelada: { bg:'#E8ECF5', color:'#4A5568' } };
-  const ce = colorEstatus[estatus.clase] || colorEstatus.cancelada;
+  // Badge de estatus grande (junto al número)
   document.getElementById('d-estatus-header').innerHTML =
     `<span style="background:${ce.bg};color:${ce.color};padding:3px 14px;border-radius:20px;font-size:22px;font-weight:700">${estatus.label}</span>`;
 
-  const hoyExp = new Date(); hoyExp.setHours(0,0,0,0);
+  // Badge de expiración (derecha del flex)
+  const hoyExp  = new Date(); hoyExp.setHours(0,0,0,0);
   const termino2 = p.fecha_termino_vigencia ? new Date(p.fecha_termino_vigencia + 'T12:00:00') : null;
   const expirada = termino2 ? termino2 < hoyExp : true;
   document.getElementById('d-expira-header').innerHTML =
     `<span style="background:${expirada ? '#FEEEEE' : '#E8F5EE'};color:${expirada ? '#C0392B' : '#1A6B3C'};padding:3px 14px;border-radius:20px;font-size:22px;font-weight:700">${expirada ? '🔴 Expirada' : '🟢 No expirada'}</span>`;
 
-  // ── Finanzas calculadas en tiempo real ───────────────────
-  const costo        = Number(p.costo)        || 0;
-  const pagoInicial  = Number(p.pago_inicial) || 0;
-  const pagoMensual  = Number(p.pagos_de)     || 0;
-  const hoyFin       = new Date(); hoyFin.setHours(0,0,0,0);
-
-  // Suma de pagos registrados (excluye $0)
-  const pagosReales  = (res.pagos || []).filter(pg => Number(pg.monto) !== 0);
-  const sumPagos     = pagosReales.reduce((s, pg) => s + Number(pg.monto), 0);
-  // Total pagado = enganche + mensualidades
-  const totalPagado  = pagoInicial + sumPagos;
-  // Saldo = lo que aún debe
-  const saldo        = Math.max(0, costo - totalPagado);
-  // Saldo por pagar = cuotas futuras pendientes (>= 0)
-  const saldoPorPagar = saldo;
-  // Póliza pagada
-  const pagada = saldo <= 0;
-
-  // Fecha de inicio de vigencia (día de contratación)
-  const fechaInicio = p.fecha_inicio_vigencia ? new Date(p.fecha_inicio_vigencia + 'T12:00:00') : null;
-
-  // Próximo pago: siguiente día-del-mes igual al de contratación, >= hoy
-  let proxPago = null;
-  let mesesAtraso = 0;
-  if (!pagada && fechaInicio && pagoMensual > 0) {
-    const diaCorte = fechaInicio.getDate();
-    // ¿Cuántas mensualidades debieron haberse cubierto ya?
-    // mes 0 = pago inicial (día contratación), mes 1 = primer mensualidad (un mes después), etc.
-    const msDesde = (hoyFin.getFullYear() - fechaInicio.getFullYear()) * 12
-                  + (hoyFin.getMonth()    - fechaInicio.getMonth());
-    // Mensualidades esperadas hasta hoy (sin contar el enganche)
-    const mensualidadesEsperadas = Math.max(0, msDesde);
-    const mensualidadesPagadas   = Math.round(sumPagos / pagoMensual);
-    mesesAtraso = Math.max(0, mensualidadesEsperadas - mensualidadesPagadas);
-
-    // Próximo pago: partimos del mes siguiente al último pago esperado
-    const mesProximo = mensualidadesPagadas + 1; // 1-based desde fecha inicio
-    const d = new Date(fechaInicio.getFullYear(), fechaInicio.getMonth() + mesProximo, diaCorte);
-    // Si ya pasó, avanzar mes a mes hasta >= hoy
-    while (d < hoyFin) d.setMonth(d.getMonth() + 1);
-    proxPago = d;
-  }
-
+  // ── Finanzas ──────────────────────────────────────────────
   document.getElementById('d-costo').textContent           = fmtMonto(costo);
   document.getElementById('d-pago-inicial').textContent    = fmtMonto(pagoInicial);
   document.getElementById('d-pagos-de').textContent        = fmtMonto(pagoMensual);
   document.getElementById('d-pagado').textContent          = fmtMonto(totalPagado);
   document.getElementById('d-saldo').textContent           = fmtMonto(saldo);
-  document.getElementById('d-saldo-por-pagar').textContent = fmtMonto(saldoPorPagar);
+  document.getElementById('d-saldo-por-pagar').textContent = fmtMonto(saldo);
   document.getElementById('d-meses-atraso').textContent    = mesesAtraso;
   document.getElementById('d-prox-pago').textContent       = pagada ? '—' : (proxPago ? fmtFechaObj(proxPago) : '—');
 
@@ -1477,14 +1484,33 @@ function cerrarDetalle() {
 }
 
 // ── HELPERS DE FORMATO ────────────────────────────────────
-function estatusPoliza(p) {
-  if (p.cancelada) return { label: 'Cancelada', clase: 'cancelada' };
-  const hoy    = new Date();
-  const termino = p.fecha_termino_vigencia ? new Date(p.fecha_termino_vigencia) : null;
-  if (!termino) return { label: 'Sin fecha', clase: 'cancelada' };
-  return termino >= hoy
-    ? { label: 'Vigente',  clase: 'vigente' }
-    : { label: 'Vencida',  clase: 'vencida' };
+// estatusPoliza: recibe p (póliza) + datos financieros calculados (opcionales)
+// Sin datos financieros → solo evalúa cancelada/vigente/vencida (para la lista)
+// Con datos financieros → aplica las 6 categorías completas
+function estatusPoliza(p, finanzas) {
+  // 1. Cancelada manualmente (campo cancela = -1 en origen → cancelada = true, tipo = MANUAL)
+  if (p.cancelada && (p.tipo_cancelacion || '').toUpperCase() === 'MANUAL') {
+    return { label: 'Cancelada manualmente', clase: 'cancelada-manual' };
+  }
+  // 2. Si no hay datos financieros, evaluación básica
+  if (!finanzas) {
+    if (p.cancelada) return { label: 'Cancelada', clase: 'cancelada-manual' };
+    const hoy = new Date();
+    const termino = p.fecha_termino_vigencia ? new Date(p.fecha_termino_vigencia) : null;
+    if (!termino) return { label: 'Sin fecha', clase: 'cancelada-manual' };
+    return termino >= hoy ? { label: 'Vigente', clase: 'vigente' } : { label: 'Vencida', clase: 'atrasada' };
+  }
+  const { pagada, mesesAtraso } = finanzas;
+  // 3. Completamente pagada
+  if (pagada) return { label: 'Pagada', clase: 'pagada' };
+  // 4. Cancelada por falta de pago (3+ meses)
+  if (mesesAtraso >= 3) return { label: 'Cancelada por falta de pago', clase: 'cancelada-pago' };
+  // 5. Problema (2 meses)
+  if (mesesAtraso === 2) return { label: 'Problema', clase: 'problema' };
+  // 6. Atrasada (1 mes)
+  if (mesesAtraso === 1) return { label: 'Atrasada', clase: 'atrasada' };
+  // 7. Al corriente
+  return { label: 'Vigente', clase: 'vigente' };
 }
 
 function fmtFecha(f) {

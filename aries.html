@@ -2371,10 +2371,10 @@ function buildPagosHtmlOf(pagos, pct) {
     html += '<tr><td colspan="8" style="text-align:center;color:#999">Sin recibos cobrados</td></tr>';
   } else {
     cobrados.forEach(function(p, i){
-      var com = pct > 0 ? (parseFloat(p.monto)||0) * pct / 100 : 0;
+      var com = parseFloat(p.comision) || (pct > 0 ? (parseFloat(p.monto)||0) * pct / 100 : 0);
       html += '<tr><td>' + (i+1) + '</td><td>' + (p.id_poliza||'—') + '</td>';
       html += '<td style="font-size:10px">' + (p.asesor_nombre||'—') + '</td>';
-      html += '<td style="font-size:10px">' + (p.nombre_cliente||'—') + '</td>';
+      html += '<td style="font-size:10px">' + (p.cliente_nombre||'—') + '</td>';
       html += '<td>' + (p.fecha_pago||'—') + '</td>';
       html += '<td>' + (p.numero_recibo||'—') + '</td>';
       html += '<td style="text-align:right">' + fmtP(p.monto) + '</td>';
@@ -2485,7 +2485,7 @@ async function copiarRecepcionOf(id_recepcion) {
     txt += '#  | Póliza  | Asesor | Cliente | Fecha | No. Recibo | Monto | Comisión\n';
     cobrados.forEach((p, i) => {
       const com = pct > 0 ? (parseFloat(p.monto)||0) * pct / 100 : 0;
-      txt += (i+1) + '. | ' + (p.id_poliza||'—') + ' | ' + (p.asesor_nombre||'—') + ' | ' + (p.cliente_nombre||'—') + ' | ' + (p.fecha_pago||'—') + ' | ' + (p.numero_recibo||'—') + ' | ' + fmtM(p.monto) + ' | ' + (p.pct>0?fmtM(p.monto*(p.pct||0)/100):'—') + '\n';
+      txt += (i+1) + '. | ' + (p.id_poliza||'—') + ' | ' + (p.asesor_nombre||'—') + ' | ' + (p.cliente_nombre||'—') + ' | ' + (p.fecha_pago||'—') + ' | ' + (p.numero_recibo||'—') + ' | ' + fmtM(p.monto) + ' | ' + (p.comision>0?fmtM(p.comision):'—') + '\n';
     });
     txt += '\n';
   }

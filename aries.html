@@ -543,6 +543,9 @@ tr:hover td { background: var(--gray50); }
       <div class="nav-item" onclick="irA('cobranza')" id="nav-cobranza">
         <span class="nav-icon">💰</span> Cobranza
       </div>
+      <div class="nav-item" onclick="irA('oficina')" id="nav-oficina">
+        <span class="nav-icon">🏢</span> Oficina
+      </div>
       <div class="nav-item" onclick="irA('siniestros')" id="nav-siniestros">
         <span class="nav-icon">🚗</span> Siniestros
       </div>
@@ -711,7 +714,7 @@ tr:hover td { background: var(--gray50); }
 
       <!-- COBRANZA -->
       <div class="vista" id="v-cobranza">
-        <div class="vista-titulo">Recepción de Cobranza</div>
+        <div class="vista-titulo">Recepción de Cobranza Cobradores</div>
 
         <!-- TABS -->
         <div style="display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid var(--gray100)">
@@ -842,6 +845,139 @@ tr:hover td { background: var(--gray50); }
         </div>
       </div>
 
+      <!-- OFICINA -->
+      <div class="vista" id="v-oficina">
+        <div class="vista-titulo">Recepción de Cobranza de Oficina</div>
+
+        <!-- TABS -->
+        <div style="display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid var(--gray100)">
+          <button class="tab-btn activo" onclick="ofTab('captura')" id="otab-captura">📥 Captura</button>
+          <button class="tab-btn" onclick="ofTab('historial')" id="otab-historial">📋 Historial</button>
+          <button class="tab-btn" onclick="ofTab('asesores')" id="otab-asesores" style="display:none">⚙️ Asesores</button>
+        </div>
+
+        <!-- TAB CAPTURA OFICINA -->
+        <div id="of-captura">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+            <div class="campo">
+              <label>Asesor</label>
+              <select id="of-asesor" onchange="actualizarResumenOf()"
+                style="width:100%;padding:11px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:15px;background:var(--gray50);outline:none">
+                <option value="">— Selecciona —</option>
+              </select>
+            </div>
+            <div class="campo">
+              <label>Fecha de recepción</label>
+              <input type="date" id="of-fecha"
+                style="width:100%;padding:11px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:15px;background:var(--gray50);outline:none">
+            </div>
+          </div>
+
+          <!-- Tabla de recibos oficina -->
+          <div class="tabla-wrap" style="margin-bottom:16px">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Tipo</th>
+                  <th>Póliza</th>
+                  <th>Asesor</th>
+                  <th>Cliente</th>
+                  <th>Fecha Recibo</th>
+                  <th>No. Recibo</th>
+                  <th>Monto</th>
+                  <th>Comisión</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="tbody-recibos-of">
+                <tr id="tr-vacio-of"><td colspan="10" style="text-align:center;padding:20px;color:var(--gray300)">Agrega recibos con el botón +</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+            <button class="btn-accion btn-verde" onclick="agregarRenglonOf('COBRADO')" style="padding:9px 16px">+ Cobrado</button>
+            <button class="btn-accion" onclick="agregarRenglonOf('CANCELADO')" style="padding:9px 16px;background:var(--red);color:white;border:none;border-radius:var(--radius);cursor:pointer;font-size:14px">+ Cancelado</button>
+            <button class="btn-accion" onclick="agregarRenglonOf('PENDIENTE')" style="padding:9px 16px;background:#f59e0b;color:white;border:none;border-radius:var(--radius);cursor:pointer;font-size:14px">+ Pendiente</button>
+          </div>
+
+          <!-- Resumen oficina -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+            <div class="card" style="padding:20px">
+              <div style="font-size:11px;font-weight:700;color:var(--gray300);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">Resumen</div>
+              <div class="detalle-grid" style="font-size:14px">
+                <span class="dl">Cobrados</span><span id="of-res-recibos" style="font-weight:700;color:var(--green)">0</span>
+                <span class="dl">Cancelados</span><span id="of-res-cancelados" style="font-weight:700;color:var(--red)">0</span>
+                <span class="dl">Pendientes</span><span id="of-res-pendientes" style="font-weight:700;color:#f59e0b">0</span>
+                <span class="dl">Total cobrado</span><span id="of-res-cobrado" style="font-weight:700;color:var(--green)">$0.00</span>
+                <span class="dl" id="of-lbl-comision">Comisión (0%)</span><span id="of-res-comision" style="color:var(--red)">-$0.00</span>
+                <span class="dl" style="font-weight:700;color:var(--navy)">Efectivo en caja</span>
+                <span id="of-res-caja" style="font-weight:700;font-size:18px;color:var(--navy)">$0.00</span>
+              </div>
+            </div>
+            <div class="card" style="padding:20px">
+              <div style="font-size:11px;font-weight:700;color:var(--gray300);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">Notas</div>
+              <textarea id="of-notas" rows="4"
+                style="width:100%;border:1.5px solid var(--gray100);border-radius:var(--radius);padding:10px;font-size:14px;resize:none;outline:none;background:var(--gray50)"
+                placeholder="Observaciones opcionales…"></textarea>
+            </div>
+          </div>
+
+          <button class="btn-accion btn-verde" onclick="guardarRecepcionOf()" style="padding:12px 32px;font-size:15px">💾 Guardar recepción</button>
+        </div>
+
+        <!-- TAB HISTORIAL OFICINA -->
+        <div id="of-historial" style="display:none">
+          <div style="display:flex;gap:10px;margin-bottom:16px;align-items:flex-end">
+            <div class="campo" style="margin:0">
+              <label>Desde</label>
+              <input type="date" id="of-hist-desde" style="padding:9px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;outline:none">
+            </div>
+            <div class="campo" style="margin:0">
+              <label>Hasta</label>
+              <input type="date" id="of-hist-hasta" style="padding:9px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;outline:none">
+            </div>
+            <button class="btn-accion btn-verde" onclick="cargarHistorialOf()" style="padding:9px 18px">Buscar</button>
+          </div>
+          <div class="tabla-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Asesor</th>
+                  <th>Recibos</th>
+                  <th>Cobrado</th>
+                  <th>Comisión</th>
+                  <th>En caja</th>
+                  <th>Registró</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="tbody-historial-of">
+                <tr><td colspan="8" style="text-align:center;padding:24px;color:var(--gray300)">Selecciona un rango de fechas</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TAB ASESORES (solo admin) -->
+        <div id="of-asesores" style="display:none">
+          <div class="toolbar">
+            <button class="btn-accion btn-verde" onclick="abrirModalAsesor()">+ Nuevo asesor</button>
+            <button class="btn-accion btn-gris" onclick="cargarCatalogoAs()">↺ Actualizar</button>
+          </div>
+          <div class="tabla-wrap">
+            <table>
+              <thead>
+                <tr><th>Nombre</th><th>Comisión</th><th>Puede cobrar</th><th>Activo</th><th>Acciones</th></tr>
+              </thead>
+              <tbody id="tbody-asesores-cat"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <!-- SINIESTROS -->
       <div class="vista" id="v-siniestros">
         <div class="vista-titulo">Siniestros</div>
@@ -893,6 +1029,39 @@ tr:hover td { background: var(--gray50); }
       </div>
 
     </main>
+  </div>
+</div>
+
+<!-- ═══════ MODAL ASESOR ══════════════════════════════════ -->
+<div class="modal-overlay" id="modal-asesor">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <span id="mas-titulo">Nuevo asesor</span>
+      <button class="modal-close" onclick="cerrarModal('modal-asesor')">✕</button>
+    </div>
+    <div style="padding:24px;display:flex;flex-direction:column;gap:16px">
+      <input type="hidden" id="mas-id">
+      <div class="campo" style="margin:0">
+        <label>Nombre</label>
+        <input class="input-field" id="mas-nombre" placeholder="Nombre completo">
+      </div>
+      <div class="campo" style="margin:0">
+        <label>% Comisión</label>
+        <input class="input-field" id="mas-pct" type="number" min="0" max="100" step="0.5" value="0">
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <input type="checkbox" id="mas-puede-cobrar" style="width:18px;height:18px">
+        <label for="mas-puede-cobrar" style="font-size:14px">Autorizado para cobrar en oficina</label>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <input type="checkbox" id="mas-activo" checked style="width:18px;height:18px">
+        <label for="mas-activo" style="font-size:14px">Activo</label>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+        <button class="btn-accion btn-gris" onclick="cerrarModal('modal-asesor')">Cancelar</button>
+        <button class="btn-accion btn-verde" onclick="guardarAsesor()">Guardar</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1107,6 +1276,7 @@ function irA(vista) {
 
   if (vista === 'usuarios') cargarUsuarios();
   if (vista === 'cobranza') iniciarCobranza();
+  if (vista === 'oficina')  iniciarOficina();
 }
 
 // ── STATS DASHBOARD ───────────────────────────────────────
@@ -1805,8 +1975,10 @@ async function cargarHistorial() {
           onclick="imprimirRecepcion(${r.id})">🖨 Imprimir</button>
         ${r.anulado
           ? `<span style="font-size:11px;color:var(--red)">Anulada<br><span style="color:var(--gray300)">${esc(r.anulado_por||'')}</span></span>`
-          : `<button class="btn-accion btn-rojo" style="padding:4px 10px;font-size:12px"
-              onclick="anularRecepcion(${r.id},'${esc(r.nombre_cobrador)}')">Anular</button>`
+          : (sesion.usuario.rol === 'administrador'
+              ? `<button class="btn-accion btn-rojo" style="padding:4px 10px;font-size:12px"
+                  onclick="anularRecepcion(${r.id},'${esc(r.nombre_cobrador)}')">Anular</button>`
+              : '')
         }
       </td>
     </tr>
@@ -1881,6 +2053,485 @@ async function anularRecepcion(id, cobrador) {
 
 
 // ── IMPRIMIR RECEPCIÓN ────────────────────────────────────
+// ════════════════════════════════════════════════════════
+// MÓDULO OFICINA
+// ════════════════════════════════════════════════════════
+let ofRenglonCount = 0;
+let asesoresCache  = [];
+
+function ofTab(tab) {
+  ['captura','historial','asesores'].forEach(t => {
+    const el  = document.getElementById('of-' + t);
+    const btn = document.getElementById('otab-' + t);
+    if (el)  el.style.display  = t === tab ? 'block' : 'none';
+    if (btn) btn.classList.toggle('activo', t === tab);
+  });
+  if (tab === 'historial') cargarHistorialOf();
+  if (tab === 'asesores')  cargarCatalogoAs();
+}
+
+async function iniciarOficina() {
+  document.getElementById('of-fecha').value      = new Date().toISOString().split('T')[0];
+  document.getElementById('of-hist-desde').value = new Date().toISOString().split('T')[0];
+  document.getElementById('of-hist-hasta').value = new Date().toISOString().split('T')[0];
+
+  if (sesion && sesion.usuario.rol === 'administrador') {
+    document.getElementById('otab-asesores').style.display = '';
+  }
+
+  const res = await api({ accion: 'listar_asesores', access_token: sesion.access_token });
+  if (!res.ok) { alerta('Error al cargar asesores', 'rojo'); return; }
+  asesoresCache = res.asesores;
+
+  const sel = document.getElementById('of-asesor');
+  sel.innerHTML = '<option value="">— Selecciona —</option>' +
+    res.asesores.map(a =>
+      `<option value="${a.id}" data-pct="${a.porcentaje}">${esc(a.nombre)} (${a.porcentaje}%)</option>`
+    ).join('');
+}
+
+function actualizarResumenOf() {
+  const sel = document.getElementById('of-asesor');
+  const opt = sel.selectedOptions[0];
+  const pct = opt ? parseFloat(opt.dataset.pct) || 0 : 0;
+
+  let total = 0, count = 0, countCanc = 0, countPend = 0;
+  document.querySelectorAll('tr[data-tipo-of]').forEach(tr => {
+    const tipo = tr.dataset.tipoOf;
+    if (tipo === 'COBRADO') {
+      const n = tr.id.split('-')[3];
+      const v = parseFloat(document.getElementById('of-monto-' + n)?.value) || 0;
+      if (v > 0) { total += v; count++; }
+    } else if (tipo === 'CANCELADO') { countCanc++; }
+    else if (tipo === 'PENDIENTE')   { countPend++; }
+  });
+
+  const comision = pct > 0 ? total * pct / 100 : 0;
+  const caja     = total - comision;
+
+  document.getElementById('of-res-recibos').textContent   = count;
+  document.getElementById('of-res-cancelados').textContent = countCanc;
+  document.getElementById('of-res-pendientes').textContent = countPend;
+  document.getElementById('of-res-cobrado').textContent   = fmtMonto(total);
+  document.getElementById('of-lbl-comision').textContent  = `Comisión (${pct}%)`;
+  document.getElementById('of-res-comision').textContent  = '-' + fmtMonto(comision);
+  document.getElementById('of-res-caja').textContent      = fmtMonto(caja);
+
+  // Actualizar comisión por renglón
+  document.querySelectorAll('tr[data-tipo-of]').forEach(tr => {
+    if (tr.dataset.tipoOf !== 'COBRADO') return;
+    const n = tr.id.split('-')[3];
+    const monto = parseFloat(document.getElementById('of-monto-' + n)?.value) || 0;
+    const com   = pct > 0 ? monto * pct / 100 : 0;
+    const span  = document.getElementById('of-com-' + n);
+    if (span) span.textContent = pct > 0 ? fmtMonto(com) : '—';
+  });
+}
+
+async function buscarClienteRenglonOf(n) {
+  const poliza = document.getElementById('of-pol-' + n).value.trim();
+  const spanCli = document.getElementById('of-cli-' + n);
+  const spanAs  = document.getElementById('of-as-' + n);
+  if (!poliza) { spanCli.textContent = '—'; spanAs.textContent = '—'; return; }
+  spanCli.textContent = '…';
+  const res = await api({ accion: 'buscar_polizas', access_token: sesion.access_token, termino: poliza });
+  if (res.ok && res.polizas.length > 0) {
+    const p = res.polizas.find(x => x.id_poliza === poliza) || res.polizas[0];
+    spanCli.textContent = p.nombre_cliente || '—';
+    spanAs.textContent  = p.asesor || '—';
+  } else {
+    spanCli.textContent = 'No encontrada';
+    spanCli.style.color = 'var(--red)';
+    spanAs.textContent  = '—';
+  }
+}
+
+function agregarRenglonOf(tipo) {
+  tipo = tipo || 'COBRADO';
+  const vacio = document.getElementById('tr-vacio-of');
+  if (vacio) vacio.remove();
+
+  ofRenglonCount++;
+  const n  = ofRenglonCount;
+  const tr = document.createElement('tr');
+  tr.id = 'tr-of-rec-' + n;
+  tr.dataset.tipoOf = tipo;
+
+  const esCobrado   = tipo === 'COBRADO';
+  const tipoBadge   = esCobrado
+    ? '<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700">Cobrado</span>'
+    : tipo === 'CANCELADO'
+      ? '<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700">Cancelado</span>'
+      : '<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700">Pendiente</span>';
+
+  if (esCobrado) {
+    tr.innerHTML = `
+      <td style="color:var(--gray600);font-size:13px;width:30px">${n}</td>
+      <td>${tipoBadge}<input type="hidden" id="of-tipo-${n}" value="${tipo}"></td>
+      <td><input class="rec-input" id="of-pol-${n}" placeholder="Póliza" onblur="buscarClienteRenglonOf(${n})" style="width:90px"></td>
+      <td><span id="of-as-${n}" style="font-size:12px;color:var(--gray600)">—</span></td>
+      <td><span id="of-cli-${n}" style="font-size:12px;color:var(--gray600)">—</span></td>
+      <td><input class="rec-input" id="of-frec-${n}" type="date" style="width:130px"></td>
+      <td><input class="rec-input" id="of-rec-${n}" placeholder="No. Recibo" style="width:100px"></td>
+      <td><input class="rec-input" id="of-monto-${n}" type="number" placeholder="0.00" step="0.01"
+        oninput="actualizarResumenOf()" style="width:90px;text-align:right"></td>
+      <td><span id="of-com-${n}" style="font-size:12px;color:var(--red)">—</span></td>
+      <td><button onclick="eliminarRenglonOf(${n})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px">✕</button></td>
+    `;
+    document.getElementById('tbody-recibos-of').appendChild(tr);
+    const fechaRec = document.getElementById('of-fecha').value;
+    if (fechaRec) document.getElementById('of-frec-' + n).value = fechaRec;
+    document.getElementById('of-pol-' + n).focus();
+  } else {
+    tr.innerHTML = `
+      <td style="color:var(--gray600);font-size:13px;width:30px">${n}</td>
+      <td>${tipoBadge}<input type="hidden" id="of-tipo-${n}" value="${tipo}"></td>
+      <td colspan="6"><input class="rec-input" id="of-rec-${n}" placeholder="No. Recibo" style="width:140px"></td>
+      <td></td>
+      <td><button onclick="eliminarRenglonOf(${n})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px">✕</button></td>
+    `;
+    document.getElementById('tbody-recibos-of').appendChild(tr);
+    document.getElementById('of-rec-' + n).focus();
+  }
+  actualizarResumenOf();
+}
+
+function eliminarRenglonOf(n) {
+  const tr = document.getElementById('tr-of-rec-' + n);
+  if (tr) tr.remove();
+  actualizarResumenOf();
+  if (document.getElementById('tbody-recibos-of').children.length === 0) {
+    const vacio = document.createElement('tr');
+    vacio.id = 'tr-vacio-of';
+    vacio.innerHTML = '<td colspan="10" style="text-align:center;padding:20px;color:var(--gray300)">Agrega recibos con el botón +</td>';
+    document.getElementById('tbody-recibos-of').appendChild(vacio);
+  }
+}
+
+async function guardarRecepcionOf() {
+  const idAs  = document.getElementById('of-asesor').value;
+  const fecha = document.getElementById('of-fecha').value;
+  const notas = document.getElementById('of-notas').value;
+
+  if (!idAs)  { alerta('Selecciona un asesor', 'rojo'); return; }
+  if (!fecha) { alerta('Selecciona una fecha', 'rojo'); return; }
+
+  const recibos = [];
+  document.querySelectorAll('tr[data-tipo-of]').forEach(tr => {
+    const tipo = tr.dataset.tipoOf;
+    const n    = tr.id.split('-')[3];
+    const numRec = document.getElementById('of-rec-' + n)?.value.trim() || null;
+    if (tipo === 'COBRADO') {
+      const poliza   = document.getElementById('of-pol-'   + n)?.value.trim() || null;
+      const monto    = parseFloat(document.getElementById('of-monto-' + n)?.value) || 0;
+      const fechaRec = document.getElementById('of-frec-'  + n)?.value || null;
+      const asesorSpan = document.getElementById('of-as-' + n)?.textContent || '';
+      const clienteSpan = document.getElementById('of-cli-' + n)?.textContent || '';
+      if (monto > 0) recibos.push({ tipo:'COBRADO', id_poliza: poliza, numero_recibo: numRec, monto, fecha_recibo: fechaRec, asesor_nombre: asesorSpan, cliente_nombre: clienteSpan });
+    } else {
+      recibos.push({ tipo, id_poliza: null, numero_recibo: numRec, monto: 0, fecha_recibo: null });
+    }
+  });
+
+  if (!recibos.some(r => r.tipo === 'COBRADO')) {
+    alerta('Agrega al menos un recibo cobrado con monto', 'rojo'); return;
+  }
+
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = 'Guardando…';
+
+  const res = await api({ accion: 'guardar_recepcion_of', access_token: sesion.access_token,
+                          id_asesor: idAs, fecha, recibos, notas, modulo: 'OFICINA' });
+
+  btn.disabled = false; btn.textContent = '💾 Guardar recepción';
+
+  if (!res.ok) { alerta(res.error, 'rojo'); return; }
+  const r = res.resumen;
+  alerta(`✓ ${r.num_recibos} recibos guardados — Caja: ${fmtMonto(r.efectivo_caja)}`, 'verde');
+
+  document.getElementById('tbody-recibos-of').innerHTML =
+    '<tr id="tr-vacio-of"><td colspan="10" style="text-align:center;padding:20px;color:var(--gray300)">Agrega recibos con el botón +</td></tr>';
+  document.getElementById('of-asesor').value = '';
+  document.getElementById('of-notas').value  = '';
+  ofRenglonCount = 0;
+  actualizarResumenOf();
+}
+
+async function cargarHistorialOf() {
+  const desde = document.getElementById('of-hist-desde').value;
+  const hasta = document.getElementById('of-hist-hasta').value;
+  const tbody = document.getElementById('tbody-historial-of');
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--gray300)">Cargando…</td></tr>';
+
+  const res = await api({ accion: 'historial_recepciones_of', access_token: sesion.access_token,
+                          fecha_inicio: desde, fecha_fin: hasta });
+  if (!res.ok) { alerta(res.error, 'rojo'); return; }
+
+  if (res.recepciones.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--gray300)">Sin recepciones en ese período</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = res.recepciones.map(r => `
+    <tr style="${r.anulado ? 'opacity:.45;text-decoration:line-through' : ''}">
+      <td>${fmtFecha(r.fecha)}</td>
+      <td><strong>${esc(r.nombre_asesor)}</strong></td>
+      <td style="text-align:center">${r.num_recibos}</td>
+      <td style="text-align:right;color:var(--green);font-weight:600">${fmtMonto(r.total_cobrado)}</td>
+      <td style="text-align:right;color:var(--red)">${fmtMonto(r.comision)}</td>
+      <td style="text-align:right;font-weight:700;color:var(--navy)">${fmtMonto(r.efectivo_caja)}</td>
+      <td style="font-size:12px;color:var(--gray600)">${esc(r.usuario)}</td>
+      <td style="white-space:nowrap">
+        <button class="btn-accion btn-gris" style="padding:4px 10px;font-size:12px;margin-right:4px"
+          onclick="imprimirRecepcionOf(${r.id})">🖨 Imprimir</button>
+        <button class="btn-accion btn-gris" style="padding:4px 10px;font-size:12px;margin-right:4px"
+          onclick="copiarRecepcionOf(${r.id})">📋 Copiar</button>
+        ${r.anulado
+          ? `<span style="font-size:11px;color:var(--red)">Anulada<br><span style="color:var(--gray300)">${esc(r.anulado_por||'')}</span></span>`
+          : (sesion.usuario.rol === 'administrador'
+              ? `<button class="btn-accion btn-rojo" style="padding:4px 10px;font-size:12px"
+                  onclick="anularRecepcionOf(${r.id},'${esc(r.nombre_asesor)}')">Anular</button>`
+              : '')
+        }
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function anularRecepcionOf(id, asesor) {
+  if (!confirm(`¿Anular la recepción de ${asesor}?\nEsta acción no se puede deshacer.`)) return;
+  const res = await api({ accion: 'anular_recepcion_of', access_token: sesion.access_token, id_recepcion: id });
+  if (res.ok) { alerta(res.mensaje, 'verde'); cargarHistorialOf(); }
+  else { alerta(res.error, 'rojo'); }
+}
+
+// ── CATÁLOGO ASESORES ─────────────────────────────────────
+async function cargarCatalogoAs() {
+  const tbody = document.getElementById('tbody-asesores-cat');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--gray300)">Cargando…</td></tr>';
+  const res = await api({ accion: 'listar_asesores_admin', access_token: sesion.access_token });
+  if (!res.ok) { alerta(res.error, 'rojo'); return; }
+  tbody.innerHTML = res.asesores.map(a => `
+    <tr>
+      <td><strong>${esc(a.nombre)}</strong></td>
+      <td>${a.porcentaje}%</td>
+      <td><span class="badge badge-${a.puede_cobrar ? 'activo' : 'inactivo'}">${a.puede_cobrar ? '✓ Sí' : 'No'}</span></td>
+      <td><span class="badge badge-${a.activo ? 'activo' : 'inactivo'}">${a.activo ? 'Activo' : 'Inactivo'}</span></td>
+      <td><button class="btn-accion btn-gris" style="padding:5px 12px;font-size:12px"
+        onclick='abrirEditarAsesor(${JSON.stringify(a)})'>Editar</button></td>
+    </tr>
+  `).join('') || '<tr><td colspan="5" style="text-align:center;padding:24px">Sin asesores</td></tr>';
+}
+
+function abrirModalAsesor(a) {
+  document.getElementById('mas-id').value           = a ? a.id : '';
+  document.getElementById('mas-titulo').textContent = a ? 'Editar asesor' : 'Nuevo asesor';
+  document.getElementById('mas-nombre').value       = a ? a.nombre : '';
+  document.getElementById('mas-pct').value          = a ? a.porcentaje : '0';
+  document.getElementById('mas-puede-cobrar').checked = a ? a.puede_cobrar : false;
+  document.getElementById('mas-activo').checked     = a ? a.activo : true;
+  document.getElementById('modal-asesor').classList.add('visible');
+}
+
+function abrirEditarAsesor(a) { abrirModalAsesor(a); }
+
+async function guardarAsesor() {
+  const id          = document.getElementById('mas-id').value;
+  const nombre      = document.getElementById('mas-nombre').value.trim();
+  const pct         = document.getElementById('mas-pct').value;
+  const puedeCobrar = document.getElementById('mas-puede-cobrar').checked;
+  const activo      = document.getElementById('mas-activo').checked;
+
+  if (!nombre) { alerta('El nombre es requerido', 'rojo'); return; }
+
+  const res = await api({ accion: 'guardar_asesor', access_token: sesion.access_token,
+                          id: id || null, nombre, porcentaje: pct, puede_cobrar: puedeCobrar, activo });
+  if (res.ok) {
+    cerrarModal('modal-asesor');
+    alerta(res.mensaje, 'verde');
+    cargarCatalogoAs();
+    iniciarOficina();
+  } else {
+    alerta(res.error, 'rojo');
+  }
+}
+
+// ── IMPRIMIR Y COPIAR RECEPCIÓN OFICINA ──────────────────
+async function obtenerDatosRecepcionOf(id_recepcion) {
+  const res = await api({ accion: 'detalle_recepcion_of', access_token: sesion.access_token, id_recepcion });
+  if (!res.ok) { alerta(res.error, 'rojo'); return null; }
+  return res;
+}
+
+function buildPagosHtmlOf(pagos, pct) {
+  var cobrados   = pagos.filter(function(p){ return p.origen === 'OFICINA'; });
+  var cancelados = pagos.filter(function(p){ return p.origen === 'CANCELADO'; });
+  var pendientes = pagos.filter(function(p){ return p.origen === 'PENDIENTE'; });
+  function fmtP(n){ return '$' + Number(n||0).toLocaleString('es-MX',{minimumFractionDigits:2}); }
+
+  var html = '';
+  html += '<div style="font-weight:bold;font-size:12px;margin:8px 0 4px;color:#166534">COBRADOS (' + cobrados.length + ' recibos)</div>';
+  html += '<table><thead><tr><th>#</th><th>Póliza</th><th>Asesor</th><th>Cliente</th><th>Fecha Recibo</th><th>No. Recibo</th><th style="text-align:right">Monto</th><th style="text-align:right">Comisión</th></tr></thead><tbody>';
+  if (cobrados.length === 0) {
+    html += '<tr><td colspan="8" style="text-align:center;color:#999">Sin recibos cobrados</td></tr>';
+  } else {
+    cobrados.forEach(function(p, i){
+      var com = pct > 0 ? (parseFloat(p.monto)||0) * pct / 100 : 0;
+      html += '<tr><td>' + (i+1) + '</td><td>' + (p.id_poliza||'—') + '</td>';
+      html += '<td style="font-size:10px">' + (p.asesor_nombre||'—') + '</td>';
+      html += '<td style="font-size:10px">' + (p.nombre_cliente||'—') + '</td>';
+      html += '<td>' + (p.fecha_pago||'—') + '</td>';
+      html += '<td>' + (p.numero_recibo||'—') + '</td>';
+      html += '<td style="text-align:right">' + fmtP(p.monto) + '</td>';
+      html += '<td style="text-align:right;color:red">' + (pct > 0 ? fmtP(com) : '—') + '</td></tr>';
+    });
+  }
+  html += '</tbody></table>';
+
+  if (cancelados.length > 0) {
+    html += '<div style="font-weight:bold;font-size:12px;margin:12px 0 4px;color:#991b1b">CANCELADOS (' + cancelados.length + ' recibos)</div>';
+    html += '<table><thead><tr><th>#</th><th>No. Recibo</th></tr></thead><tbody>';
+    cancelados.forEach(function(p,i){ html += '<tr><td>'+(i+1)+'</td><td>'+(p.numero_recibo||'—')+'</td></tr>'; });
+    html += '</tbody></table>';
+  }
+  if (pendientes.length > 0) {
+    html += '<div style="font-weight:bold;font-size:12px;margin:12px 0 4px;color:#92400e">PENDIENTES (' + pendientes.length + ' recibos)</div>';
+    html += '<table><thead><tr><th>#</th><th>No. Recibo</th></tr></thead><tbody>';
+    pendientes.forEach(function(p,i){ html += '<tr><td>'+(i+1)+'</td><td>'+(p.numero_recibo||'—')+'</td></tr>'; });
+    html += '</tbody></table>';
+  }
+  return html;
+}
+
+async function imprimirRecepcionOf(id_recepcion) {
+  const datos = await obtenerDatosRecepcionOf(id_recepcion);
+  if (!datos) return;
+  const r = datos.recepcion;
+  const pagos = datos.pagos;
+  const pct   = datos.porcentaje || 0;
+  const pagosHtml = buildPagosHtmlOf(pagos, pct);
+  const fmtM = n => '$' + Number(n||0).toLocaleString('es-MX',{minimumFractionDigits:2});
+
+  const htmlDoc = `<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8">
+<title>Recepción de Oficina — ${r.nombre_asesor}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Arial,sans-serif;font-size:12px;padding:24px;color:#000}
+  h1{font-size:16px;text-align:center;margin-bottom:4px}
+  h2{font-size:13px;text-align:center;color:#444;margin-bottom:20px}
+  .encabezado{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;border:1px solid #ccc;padding:10px}
+  .enc-item{display:flex;gap:6px}.enc-lbl{font-weight:bold;white-space:nowrap}
+  table{width:100%;border-collapse:collapse;margin-bottom:16px}
+  th{background:#1B2A6B;color:white;padding:6px 8px;text-align:left;font-size:11px}
+  td{padding:5px 8px;border-bottom:1px solid #eee;font-size:11px}
+  tr:nth-child(even) td{background:#f8f8f8}
+  .resumen{border:2px solid #1B2A6B;padding:12px;margin-bottom:24px}
+  .resumen table{margin:0}.resumen td{border:none;padding:4px 8px}
+  .resumen .lbl{font-weight:bold;color:#444}
+  .resumen .total{font-size:16px;font-weight:bold;color:#1B2A6B}
+  .firmas{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:40px}
+  .firma{text-align:center}.firma-linea{border-top:1px solid #000;padding-top:6px;margin-top:40px}
+  .anulado-banner{background:#fee;border:2px solid red;color:red;text-align:center;padding:8px;font-weight:bold;margin-bottom:12px}
+  @media print{body{padding:12px}}
+</style></head><body>
+  <h1>ARTS NOVA MUTUCLUB</h1>
+  <h2>Recepción de Cobranza de Oficina</h2>
+  ${r.anulado ? '<div class="anulado-banner">⚠ RECEPCIÓN ANULADA — '+(r.anulado_por||'')+'</div>' : ''}
+  <div class="encabezado">
+    <div class="enc-item"><span class="enc-lbl">Asesor:</span> ${r.nombre_asesor}</div>
+    <div class="enc-item"><span class="enc-lbl">Fecha:</span> ${r.fecha}</div>
+    <div class="enc-item"><span class="enc-lbl">Total recibos:</span> ${r.num_recibos}</div>
+    <div class="enc-item"><span class="enc-lbl">Registró:</span> ${r.usuario}</div>
+  </div>
+  ${pagosHtml}
+  <div class="resumen"><table>
+    <tr><td class="lbl">Total cobrado:</td><td style="text-align:right;color:green;font-weight:bold">${fmtM(r.total_cobrado)}</td></tr>
+    <tr><td class="lbl">Comisión (${pct}%):</td><td style="text-align:right;color:red">-${fmtM(r.comision)}</td></tr>
+    <tr style="border-top:2px solid #1B2A6B">
+      <td class="lbl total">Efectivo en caja:</td><td class="total" style="text-align:right">${fmtM(r.efectivo_caja)}</td>
+    </tr>
+  </table></div>
+  <div class="firmas">
+    <div class="firma"><div class="firma-linea">${r.nombre_asesor}</div><div>Asesor</div></div>
+    <div class="firma"><div class="firma-linea">${r.usuario}</div><div>Recibió</div></div>
+  </div>
+  <script>window.onload=function(){window.print()};<\/script>
+</body></html>`;
+
+  const win = window.open('', '_blank', 'width=800,height=600');
+  win.document.write(htmlDoc);
+  win.document.close();
+}
+
+async function copiarRecepcionOf(id_recepcion) {
+  const datos = await obtenerDatosRecepcionOf(id_recepcion);
+  if (!datos) return;
+  const r     = datos.recepcion;
+  const pagos = datos.pagos;
+  const pct   = datos.porcentaje || 0;
+  const fmtM  = n => '$' + Number(n||0).toLocaleString('es-MX',{minimumFractionDigits:2});
+
+  const cobrados   = pagos.filter(p => p.origen === 'OFICINA');
+  const cancelados = pagos.filter(p => p.origen === 'CANCELADO');
+  const pendientes = pagos.filter(p => p.origen === 'PENDIENTE');
+
+  let txt = 'ARTS NOVA MUTUCLUB\n';
+  txt += 'Recepción de Cobranza de Oficina\n';
+  txt += '='.repeat(40) + '\n';
+  txt += `Asesor: ${r.nombre_asesor}\n`;
+  txt += `Fecha: ${r.fecha}\n`;
+  txt += `Registró: ${r.usuario}\n`;
+  txt += '='.repeat(40) + '\n\n';
+
+  if (cobrados.length > 0) {
+    txt += `COBRADOS (${cobrados.length} recibos)\n`;
+    txt += '-'.repeat(40) + '\n';
+    txt += '#  | Póliza  | Asesor | Cliente | Fecha | No. Recibo | Monto | Comisión\n';
+    cobrados.forEach((p, i) => {
+      const com = pct > 0 ? (parseFloat(p.monto)||0) * pct / 100 : 0;
+      txt += `${i+1}. | ${p.id_poliza||'—'} | ${p.asesor_nombre||'—'} | ${p.nombre_cliente||'—'} | ${p.fecha_pago||'—'} | ${p.numero_recibo||'—'} | ${fmtM(p.monto)} | ${pct>0?fmtM(com):'—'}\n`;
+    });
+    txt += '\n';
+  }
+  if (cancelados.length > 0) {
+    txt += `CANCELADOS (${cancelados.length} recibos)\n`;
+    txt += '-'.repeat(40) + '\n';
+    cancelados.forEach((p,i) => { txt += `${i+1}. No. Recibo: ${p.numero_recibo||'—'}\n`; });
+    txt += '\n';
+  }
+  if (pendientes.length > 0) {
+    txt += `PENDIENTES (${pendientes.length} recibos)\n`;
+    txt += '-'.repeat(40) + '\n';
+    pendientes.forEach((p,i) => { txt += `${i+1}. No. Recibo: ${p.numero_recibo||'—'}\n`; });
+    txt += '\n';
+  }
+
+  txt += '='.repeat(40) + '\n';
+  txt += `Total cobrado: ${fmtM(r.total_cobrado)}\n`;
+  txt += `Comisión (${pct}%): -${fmtM(r.comision)}\n`;
+  txt += `Efectivo en caja: ${fmtM(r.efectivo_caja)}\n`;
+
+  try {
+    await navigator.clipboard.writeText(txt);
+    alerta('✓ Copiado al portapapeles — pégalo en el cuerpo del correo', 'verde');
+  } catch(e) {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = txt;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    alerta('✓ Copiado al portapapeles — pégalo en el cuerpo del correo', 'verde');
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// FIN MÓDULO OFICINA
+// ════════════════════════════════════════════════════════
+
 function buildPagosHtml(pagos) {
   var cobrados   = pagos.filter(function(p){ return p.origen === 'OPERACION'; });
   var cancelados = pagos.filter(function(p){ return p.origen === 'CANCELADO'; });

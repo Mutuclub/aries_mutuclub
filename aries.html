@@ -1881,11 +1881,51 @@ async function anularRecepcion(id, cobrador) {
 
 
 // ── IMPRIMIR RECEPCIÓN ────────────────────────────────────
+function buildPagosHtml(pagos) {
+  var cobrados   = pagos.filter(function(p){ return p.origen === 'OPERACION'; });
+  var cancelados = pagos.filter(function(p){ return p.origen === 'CANCELADO'; });
+  var pendientes = pagos.filter(function(p){ return p.origen === 'PENDIENTE'; });
+  function fmtP(n){ return '$' + Number(n||0).toLocaleString('es-MX',{minimumFractionDigits:2}); }
+
+  var html = '';
+
+  html += '<div style="font-weight:bold;font-size:12px;margin:8px 0 4px;color:#166534">COBRADOS (' + cobrados.length + ' recibos)</div>';
+  html += '<table><thead><tr><th style="width:25px">#</th><th>P\u00f3liza</th><th>Cliente</th><th>Fecha Recibo</th><th>No. Recibo</th><th style="text-align:right">Monto</th></tr></thead><tbody>';
+  if (cobrados.length === 0) {
+    html += '<tr><td colspan="6" style="text-align:center;color:#999">Sin recibos cobrados</td></tr>';
+  } else {
+    cobrados.forEach(function(p, i){
+      html += '<tr><td>' + (i+1) + '</td><td>' + (p.id_poliza||'\u2014') + '</td>';
+      html += '<td style="font-size:10px">' + (p.nombre_cliente||'\u2014') + '</td>';
+      html += '<td>' + (p.fecha_pago||'\u2014') + '</td>';
+      html += '<td>' + (p.numero_recibo||'\u2014') + '</td>';
+      html += '<td style="text-align:right">' + fmtP(p.monto) + '</td></tr>';
+    });
+  }
+  html += '</tbody></table>';
+
+  if (cancelados.length > 0) {
+    html += '<div style="font-weight:bold;font-size:12px;margin:12px 0 4px;color:#991b1b">CANCELADOS (' + cancelados.length + ' recibos)</div>';
+    html += '<table><thead><tr><th style="width:25px">#</th><th>No. Recibo</th></tr></thead><tbody>';
+    cancelados.forEach(function(p, i){
+      html += '<tr><td>' + (i+1) + '</td><td>' + (p.numero_recibo||'\u2014') + '</td></tr>';
+    });
+    html += '</tbody></table>';
+  }
+
+  if (pendientes.length > 0) {
+    html += '<div style="font-weight:bold;font-size:12px;margin:12px 0 4px;color:#92400e">PENDIENTES (' + pendientes.length + ' recibos)</div>';
+    html += '<table><thead><tr><th style="width:25px">#</th><th>No. Recibo</th></tr></thead><tbody>';
+    pendientes.forEach(function(p, i){
+      html += '<tr><td>' + (i+1) + '</td><td>' + (p.numero_recibo||'\u2014') + '</td></tr>';
+    });
+    html += '</tbody></table>';
+  }
+
+  return html;
+}
+
 async function imprimirRecepcion(id_recepcion) {
-  // Buscar la recepción en el historial ya cargado
-  const tbody = document.getElementById('tbody-historial');
-  
-  // Obtener datos de la recepción via API
   const res = await api({ 
     accion: 'detalle_recepcion', 
     access_token: sesion.access_token, 
@@ -1893,15 +1933,18 @@ async function imprimirRecepcion(id_recepcion) {
   });
   
   if (!res.ok) { alerta(res.error, 'rojo'); return; }
-  const r = res.recepcion;
+  const r    = res.recepcion;
   const pagos = res.pagos;
 
-  const win = window.open('', '_blank', 'width=800,height=600');
-  win.document.write(`<!DOCTYPE html>
+  // Generar HTML de pagos ANTES de abrir la ventana
+  const pagosHtml = buildPagosHtml(pagos);
+  const fmtM = n => '$' + Number(n||0).toLocaleString('es-MX',{minimumFractionDigits:2});
+
+  const htmlDoc = `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Recepción de Cobranza — ${r.nombre_cobrador}</title>
+  <title>Recepci\u00f3n de Cobranza \u2014 ${r.nombre_cobrador}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, sans-serif; font-size: 12px; padding: 24px; color: #000; }
@@ -1922,102 +1965,42 @@ async function imprimirRecepcion(id_recepcion) {
     .firmas { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px; }
     .firma { text-align: center; }
     .firma-linea { border-top: 1px solid #000; padding-top: 6px; margin-top: 40px; }
-    .anulado-banner { background: #fee; border: 2px solid red; color: red; text-align: center; 
-                      padding: 8px; font-weight: bold; margin-bottom: 12px; }
+    .anulado-banner { background: #fee; border: 2px solid red; color: red; text-align: center; padding: 8px; font-weight: bold; margin-bottom: 12px; }
     @media print { body { padding: 12px; } }
   </style>
 </head>
 <body>
   <h1>ARTS NOVA MUTUCLUB</h1>
-  <h2>Recepción de Cobranza</h2>
-  
-  ${r.anulado ? '<div class="anulado-banner">⚠ RECEPCIÓN ANULADA — ' + (r.anulado_por||'') + '</div>' : ''}
-
+  <h2>Recepci\u00f3n de Cobranza</h2>
+  ${r.anulado ? '<div class="anulado-banner">\u26a0 RECEPCI\u00d3N ANULADA \u2014 ' + (r.anulado_por||'') + '</div>' : ''}
   <div class="encabezado">
     <div class="enc-item"><span class="enc-lbl">Cobrador:</span> ${r.nombre_cobrador}</div>
     <div class="enc-item"><span class="enc-lbl">Fecha:</span> ${r.fecha}</div>
     <div class="enc-item"><span class="enc-lbl">Total recibos:</span> ${r.num_recibos}</div>
-    <div class="enc-item"><span class="enc-lbl">Registró:</span> ${r.usuario}</div>
+    <div class="enc-item"><span class="enc-lbl">Registr\u00f3:</span> ${r.usuario}</div>
   </div>
-
-  ${buildPagosHtml(pagos)}
-
+  ${pagosHtml}
   <div class="resumen">
     <table>
-      <tr><td class="lbl">Efectivo cobrado:</td>
-          <td style="text-align:right;color:green;font-weight:bold">$${Number(r.total_cobrado).toLocaleString('es-MX',{minimumFractionDigits:2})}</td></tr>
-      <tr><td class="lbl">Comisión (${r.porcentaje||''}%):</td>
-          <td style="text-align:right;color:red">-$${Number(r.comision).toLocaleString('es-MX',{minimumFractionDigits:2})}</td></tr>
-      <tr><td class="lbl">Apoyo gasolina:</td>
-          <td style="text-align:right;color:red">-$${Number(r.gasolina_monto).toLocaleString('es-MX',{minimumFractionDigits:2})}</td></tr>
+      <tr><td class="lbl">Efectivo cobrado:</td><td style="text-align:right;color:green;font-weight:bold">${fmtM(r.total_cobrado)}</td></tr>
+      <tr><td class="lbl">Comisi\u00f3n (${r.porcentaje||''}%):</td><td style="text-align:right;color:red">-${fmtM(r.comision)}</td></tr>
+      <tr><td class="lbl">Apoyo gasolina:</td><td style="text-align:right;color:red">-${fmtM(r.gasolina_monto)}</td></tr>
       <tr style="border-top:2px solid #1B2A6B">
-          <td class="lbl total">Efectivo en caja:</td>
-          <td class="total" style="text-align:right">$${Number(r.efectivo_caja).toLocaleString('es-MX',{minimumFractionDigits:2})}</td></tr>
+        <td class="lbl total">Efectivo en caja:</td>
+        <td class="total" style="text-align:right">${fmtM(r.efectivo_caja)}</td>
+      </tr>
     </table>
   </div>
-
   <div class="firmas">
-    <div class="firma">
-      <div class="firma-linea">${r.nombre_cobrador}</div>
-      <div>Cobrador</div>
-    </div>
-    <div class="firma">
-      <div class="firma-linea">${r.usuario}</div>
-      <div>Recibió</div>
-    </div>
+    <div class="firma"><div class="firma-linea">${r.nombre_cobrador}</div><div>Cobrador</div></div>
+    <div class="firma"><div class="firma-linea">${r.usuario}</div><div>Recibi\u00f3</div></div>
   </div>
-
-  <script>
-    function buildPagosHtml(pagos) {
-      var cobrados   = pagos.filter(function(p){ return p.origen === 'OPERACION'; });
-      var cancelados = pagos.filter(function(p){ return p.origen === 'CANCELADO'; });
-      var pendientes = pagos.filter(function(p){ return p.origen === 'PENDIENTE'; });
-      function fmtP(n){ return '$' + Number(n||0).toLocaleString('es-MX',{minimumFractionDigits:2}); }
-
-      var html = '';
-
-      // COBRADOS
-      html += '<div style="font-weight:bold;font-size:12px;margin:8px 0 4px;color:#166534">COBRADOS (' + cobrados.length + ' recibos)</div>';
-      html += '<table><thead><tr><th style="width:25px">#</th><th>P\u00f3liza</th><th>Cliente</th><th>Fecha Recibo</th><th>No. Recibo</th><th style="text-align:right">Monto</th></tr></thead><tbody>';
-      if (cobrados.length === 0) {
-        html += '<tr><td colspan="6" style="text-align:center;color:#999">Sin recibos cobrados</td></tr>';
-      } else {
-        cobrados.forEach(function(p, i){
-          html += '<tr><td>' + (i+1) + '</td><td>' + (p.id_poliza||'\u2014') + '</td>';
-          html += '<td style="font-size:10px">' + (p.nombre_cliente||'\u2014') + '</td>';
-          html += '<td>' + (p.fecha_pago||'\u2014') + '</td>';
-          html += '<td>' + (p.numero_recibo||'\u2014') + '</td>';
-          html += '<td style="text-align:right">' + fmtP(p.monto) + '</td></tr>';
-        });
-      }
-      html += '</tbody></table>';
-
-      // CANCELADOS
-      if (cancelados.length > 0) {
-        html += '<div style="font-weight:bold;font-size:12px;margin:12px 0 4px;color:#991b1b">CANCELADOS (' + cancelados.length + ' recibos)</div>';
-        html += '<table><thead><tr><th style="width:25px">#</th><th>No. Recibo</th></tr></thead><tbody>';
-        cancelados.forEach(function(p, i){
-          html += '<tr><td>' + (i+1) + '</td><td>' + (p.numero_recibo||'\u2014') + '</td></tr>';
-        });
-        html += '</tbody></table>';
-      }
-
-      // PENDIENTES
-      if (pendientes.length > 0) {
-        html += '<div style="font-weight:bold;font-size:12px;margin:12px 0 4px;color:#92400e">PENDIENTES (' + pendientes.length + ' recibos)</div>';
-        html += '<table><thead><tr><th style="width:25px">#</th><th>No. Recibo</th></tr></thead><tbody>';
-        pendientes.forEach(function(p, i){
-          html += '<tr><td>' + (i+1) + '</td><td>' + (p.numero_recibo||'\u2014') + '</td></tr>';
-        });
-        html += '</tbody></table>';
-      }
-
-      return html;
-    }
-    window.onload = function(){ window.print(); };
-  <\/script>
+  <script>window.onload = function(){ window.print(); };<\/script>
 </body>
-</html>`);
+</html>`;
+
+  const win = window.open('', '_blank', 'width=800,height=600');
+  win.document.write(htmlDoc);
   win.document.close();
 }
 

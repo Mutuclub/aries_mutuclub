@@ -743,6 +743,7 @@ tr:hover td { background: var(--gray50); }
               <thead>
                 <tr>
                   <th>#</th>
+                  <th>Tipo</th>
                   <th>Póliza</th>
                   <th>Cliente</th>
                   <th>Fecha Recibo</th>
@@ -752,19 +753,25 @@ tr:hover td { background: var(--gray50); }
                 </tr>
               </thead>
               <tbody id="tbody-recibos">
-                <tr id="tr-vacio"><td colspan="6" style="text-align:center;padding:20px;color:var(--gray300)">Agrega recibos con el botón +</td></tr>
+                <tr id="tr-vacio"><td colspan="8" style="text-align:center;padding:20px;color:var(--gray300)">Agrega recibos con el botón +</td></tr>
               </tbody>
             </table>
           </div>
 
-          <button class="btn-accion btn-gris" onclick="agregarRenglon()" style="margin-bottom:20px">+ Agregar recibo</button>
+          <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+            <button class="btn-accion btn-verde" onclick="agregarRenglon('COBRADO')" style="padding:9px 16px">+ Cobrado</button>
+            <button class="btn-accion" onclick="agregarRenglon('CANCELADO')" style="padding:9px 16px;background:var(--red);color:white;border:none;border-radius:var(--radius);cursor:pointer;font-size:14px">+ Cancelado</button>
+            <button class="btn-accion" onclick="agregarRenglon('PENDIENTE')" style="padding:9px 16px;background:#f59e0b;color:white;border:none;border-radius:var(--radius);cursor:pointer;font-size:14px">+ Pendiente</button>
+          </div>
 
           <!-- Resumen -->
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
             <div class="card" style="padding:20px">
               <div style="font-size:11px;font-weight:700;color:var(--gray300);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">Resumen</div>
               <div class="detalle-grid" style="font-size:14px">
-                <span class="dl">Recibos capturados</span><span id="res-recibos" style="font-weight:700">0</span>
+                <span class="dl">Cobrados</span><span id="res-recibos" style="font-weight:700;color:var(--green)">0</span>
+                <span class="dl">Cancelados</span><span id="res-cancelados" style="font-weight:700;color:var(--red)">0</span>
+                <span class="dl">Pendientes</span><span id="res-pendientes" style="font-weight:700;color:#f59e0b">0</span>
                 <span class="dl">Efectivo cobrado</span><span id="res-cobrado" style="font-weight:700;color:var(--green)">$0.00</span>
                 <span class="dl" id="lbl-comision">Comisión (10%)</span><span id="res-comision" style="color:var(--red)">-$0.00</span>
                 <span class="dl">Apoyo gasolina</span><span id="res-gasolina" style="color:var(--red)">-$0.00</span>
@@ -1593,7 +1600,8 @@ async function iniciarCobranza() {
     ).join('');
 }
 
-function agregarRenglon() {
+function agregarRenglon(tipo) {
+  tipo = tipo || 'COBRADO';
   const vacio = document.getElementById('tr-vacio');
   if (vacio) vacio.remove();
 
@@ -1601,21 +1609,34 @@ function agregarRenglon() {
   const n = renglonCount;
   const tr = document.createElement('tr');
   tr.id = 'tr-rec-' + n;
+  tr.dataset.tipo = tipo;
+
+  const esCobrado   = tipo === 'COBRADO';
+  const esCancelado = tipo === 'CANCELADO';
+  const tipoBadge   = esCobrado
+    ? '<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700">Cobrado</span>'
+    : esCancelado
+      ? '<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700">Cancelado</span>'
+      : '<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700">Pendiente</span>';
+
   tr.innerHTML = `
     <td style="color:var(--gray600);font-size:13px;width:30px">${n}</td>
-    <td><input class="rec-input" id="pol-${n}" placeholder="Póliza" onblur="buscarClienteRenglon(${n})" style="width:90px"></td>
-    <td><span id="cli-${n}" style="font-size:12px;color:var(--gray600)">—</span></td>
-    <td><input class="rec-input" id="frec-${n}" type="date" style="width:130px"></td>
+    <td>${tipoBadge}<input type="hidden" id="tipo-${n}" value="${tipo}"></td>
+    <td>${esCobrado ? `<input class="rec-input" id="pol-${n}" placeholder="Póliza" onblur="buscarClienteRenglon(${n})" style="width:90px">` : '<span style="font-size:12px;color:var(--gray300)">—</span><input type="hidden" id="pol-'+n+'" value="">'}</td>
+    <td><span id="cli-${n}" style="font-size:12px;color:var(--gray600)">${esCobrado ? '—' : ''}</span></td>
+    <td>${esCobrado ? `<input class="rec-input" id="frec-${n}" type="date" style="width:130px">` : '<span style="font-size:12px;color:var(--gray300)">—</span><input type="hidden" id="frec-'+n+'" value="">'}</td>
     <td><input class="rec-input" id="rec-${n}" placeholder="No. Recibo" style="width:100px"></td>
-    <td><input class="rec-input" id="monto-${n}" type="number" placeholder="0.00" step="0.01"
-      oninput="actualizarResumen()" style="width:90px;text-align:right"></td>
+    <td>${esCobrado ? `<input class="rec-input" id="monto-${n}" type="number" placeholder="0.00" step="0.01" oninput="actualizarResumen()" style="width:90px;text-align:right">` : '<span style="font-size:12px;color:var(--gray300)">—</span><input type="hidden" id="monto-'+n+'" value="0">'}</td>
     <td><button onclick="eliminarRenglon(${n})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px">✕</button></td>
   `;
   document.getElementById('tbody-recibos').appendChild(tr);
-  // Default fecha recibo = fecha recepción
-  const fechaRec = document.getElementById('cob-fecha').value;
-  if (fechaRec) document.getElementById('frec-' + n).value = fechaRec;
-  document.getElementById('pol-' + n).focus();
+  if (esCobrado) {
+    const fechaRec = document.getElementById('cob-fecha').value;
+    if (fechaRec) document.getElementById('frec-' + n).value = fechaRec;
+    document.getElementById('pol-' + n).focus();
+  } else {
+    document.getElementById('rec-' + n).focus();
+  }
   actualizarResumen();
 }
 
@@ -1642,7 +1663,7 @@ function eliminarRenglon(n) {
   if (document.getElementById('tbody-recibos').children.length === 0) {
     const vacio = document.createElement('tr');
     vacio.id = 'tr-vacio';
-    vacio.innerHTML = '<td colspan="6" style="text-align:center;padding:20px;color:var(--gray300)">Agrega recibos con el botón +</td>';
+    vacio.innerHTML = '<td colspan="8" style="text-align:center;padding:20px;color:var(--gray300)">Agrega recibos con el botón +</td>';
     document.getElementById('tbody-recibos').appendChild(vacio);
   }
 }
@@ -1653,16 +1674,24 @@ function actualizarResumen() {
   const pct   = opt ? parseFloat(opt.dataset.pct) || 0 : 0;
   const gas   = opt ? opt.dataset.gas === 'true' : false;
 
-  // Sumar montos
-  let total = 0, count = 0;
-  document.querySelectorAll('[id^="monto-"]').forEach(inp => {
-    const v = parseFloat(inp.value) || 0;
-    if (v > 0) { total += v; count++; }
+  // Sumar montos solo de cobrados; contar cancelados y pendientes
+  let total = 0, count = 0, countCanc = 0, countPend = 0;
+  document.querySelectorAll('tr[data-tipo]').forEach(tr => {
+    const tipo = tr.dataset.tipo;
+    if (tipo === 'COBRADO') {
+      const n = tr.id.split('-')[2];
+      const v = parseFloat(document.getElementById('monto-' + n)?.value) || 0;
+      if (v > 0) { total += v; count++; }
+    } else if (tipo === 'CANCELADO') {
+      countCanc++;
+    } else if (tipo === 'PENDIENTE') {
+      countPend++;
+    }
   });
 
   const comision = pct > 0 ? total * pct / 100 : 0;
 
-  // Calcular gasolina
+  // Calcular gasolina solo sobre cobrados
   let gasMonto = 0;
   if (gas && count > 0) {
     const grupos  = Math.floor(count / 3);
@@ -1672,12 +1701,14 @@ function actualizarResumen() {
 
   const caja = total - comision - gasMonto;
 
-  document.getElementById('res-recibos').textContent  = count;
-  document.getElementById('res-cobrado').textContent  = fmtMonto(total);
-  document.getElementById('lbl-comision').textContent = `Comisión (${pct}%)`;
-  document.getElementById('res-comision').textContent = '-' + fmtMonto(comision);
-  document.getElementById('res-gasolina').textContent = '-' + fmtMonto(gasMonto);
-  document.getElementById('res-caja').textContent     = fmtMonto(caja);
+  document.getElementById('res-recibos').textContent   = count;
+  document.getElementById('res-cancelados').textContent = countCanc;
+  document.getElementById('res-pendientes').textContent = countPend;
+  document.getElementById('res-cobrado').textContent   = fmtMonto(total);
+  document.getElementById('lbl-comision').textContent  = `Comisión (${pct}%)`;
+  document.getElementById('res-comision').textContent  = '-' + fmtMonto(comision);
+  document.getElementById('res-gasolina').textContent  = '-' + fmtMonto(gasMonto);
+  document.getElementById('res-caja').textContent      = fmtMonto(caja);
 }
 
 async function guardarRecepcion() {
@@ -1688,20 +1719,26 @@ async function guardarRecepcion() {
   if (!idCob) { alerta('Selecciona un cobrador', 'rojo'); return; }
   if (!fecha) { alerta('Selecciona una fecha', 'rojo'); return; }
 
-  // Recopilar recibos
+  // Recopilar recibos (cobrados, cancelados y pendientes)
   const recibos = [];
-  document.querySelectorAll('[id^="pol-"]').forEach(inp => {
-    const n     = inp.id.split('-')[1];
-    const poliza = inp.value.trim();
-    const numRec = document.getElementById('rec-' + n)?.value.trim();
-    const monto  = parseFloat(document.getElementById('monto-' + n)?.value) || 0;
-    if (monto > 0) {
-    const fechaRec = document.getElementById('frec-' + n)?.value || '';
-      recibos.push({ id_poliza: poliza || null, numero_recibo: numRec || null, monto, fecha_recibo: fechaRec || null });
+  document.querySelectorAll('tr[data-tipo]').forEach(tr => {
+    const tipo = tr.dataset.tipo;
+    const n    = tr.id.split('-')[2];
+    const numRec   = document.getElementById('rec-'   + n)?.value.trim() || null;
+    if (tipo === 'COBRADO') {
+      const poliza   = document.getElementById('pol-'   + n)?.value.trim() || null;
+      const monto    = parseFloat(document.getElementById('monto-' + n)?.value) || 0;
+      const fechaRec = document.getElementById('frec-'  + n)?.value || null;
+      if (monto > 0) recibos.push({ tipo: 'COBRADO', id_poliza: poliza, numero_recibo: numRec, monto, fecha_recibo: fechaRec });
+    } else if (tipo === 'CANCELADO') {
+      recibos.push({ tipo: 'CANCELADO', id_poliza: null, numero_recibo: numRec, monto: 0, fecha_recibo: null });
+    } else if (tipo === 'PENDIENTE') {
+      recibos.push({ tipo: 'PENDIENTE', id_poliza: null, numero_recibo: numRec, monto: 0, fecha_recibo: null });
     }
   });
 
-  if (recibos.length === 0) { alerta('Agrega al menos un recibo con monto', 'rojo'); return; }
+  const tieneCobrados = recibos.some(r => r.tipo === 'COBRADO');
+  if (!tieneCobrados) { alerta('Agrega al menos un recibo cobrado con monto', 'rojo'); return; }
 
   const btn = event.target;
   btn.disabled = true;
@@ -1724,7 +1761,7 @@ async function guardarRecepcion() {
 
   // Limpiar
   document.getElementById('tbody-recibos').innerHTML =
-    '<tr id="tr-vacio"><td colspan="6" style="text-align:center;padding:20px;color:var(--gray300)">Agrega recibos con el botón +</td></tr>';
+    '<tr id="tr-vacio"><td colspan="8" style="text-align:center;padding:20px;color:var(--gray300)">Agrega recibos con el botón +</td></tr>';
   document.getElementById('cob-cobrador').value = '';
   document.getElementById('cob-notas').value = '';
   renglonCount = 0;
@@ -1903,32 +1940,56 @@ async function imprimirRecepcion(id_recepcion) {
     <div class="enc-item"><span class="enc-lbl">Registró:</span> ${r.usuario}</div>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th style="width:30px">#</th>
-        <th>Póliza</th>
-        <th>Cliente</th>
-        <th>Fecha Recibo</th>
-        <th>No. Recibo</th>
-        <th style="text-align:right">Monto</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${pagos.length === 0
-        ? `<tr><td colspan="6" style="text-align:center;color:#999;padding:12px">Sin detalle de recibos disponible</td></tr>`
-        : pagos.map((p, i) => `
-        <tr>
-          <td>${i + 1}</td>
-          <td>${p.id_poliza || '—'}</td>
-          <td style="font-size:10px">${p.nombre_cliente || '—'}</td>
-          <td>${p.fecha_pago || '—'}</td>
-          <td>${p.numero_recibo || '—'}</td>
-          <td style="text-align:right">$${Number(p.monto).toLocaleString('es-MX', {minimumFractionDigits:2})}</td>
-        </tr>
-      `).join('')}
-    </tbody>
-  </table>
+  ${(() => {
+    const cobrados   = pagos.filter(p => p.origen === 'OPERACION');
+    const cancelados = pagos.filter(p => p.origen === 'CANCELADO');
+    const pendientes = pagos.filter(p => p.origen === 'PENDIENTE');
+    const fmtP = n => '$' + Number(n||0).toLocaleString('es-MX',{minimumFractionDigits:2});
+
+    let html = '';
+
+    // ── COBRADOS ──
+    html += `<div style="font-weight:bold;font-size:12px;margin:8px 0 4px;color:#166534">COBRADOS (${cobrados.length} recibos)</div>`;
+    html += `<table><thead><tr>
+      <th style="width:25px">#</th><th>Póliza</th><th>Cliente</th>
+      <th>Fecha Recibo</th><th>No. Recibo</th><th style="text-align:right">Monto</th>
+    </tr></thead><tbody>`;
+    if (cobrados.length === 0) {
+      html += '<tr><td colspan="6" style="text-align:center;color:#999">Sin recibos cobrados</td></tr>';
+    } else {
+      cobrados.forEach((p, i) => {
+        html += \`<tr>
+          <td>\${i+1}</td><td>\${p.id_poliza||'—'}</td>
+          <td style="font-size:10px">\${p.nombre_cliente||'—'}</td>
+          <td>\${p.fecha_pago||'—'}</td><td>\${p.numero_recibo||'—'}</td>
+          <td style="text-align:right">\${fmtP(p.monto)}</td>
+        </tr>\`;
+      });
+    }
+    html += '</tbody></table>';
+
+    // ── CANCELADOS ──
+    if (cancelados.length > 0) {
+      html += \`<div style="font-weight:bold;font-size:12px;margin:12px 0 4px;color:#991b1b">CANCELADOS (\${cancelados.length} recibos)</div>\`;
+      html += '<table><thead><tr><th style="width:25px">#</th><th>No. Recibo</th></tr></thead><tbody>';
+      cancelados.forEach((p, i) => {
+        html += \`<tr><td>\${i+1}</td><td>\${p.numero_recibo||'—'}</td></tr>\`;
+      });
+      html += '</tbody></table>';
+    }
+
+    // ── PENDIENTES ──
+    if (pendientes.length > 0) {
+      html += \`<div style="font-weight:bold;font-size:12px;margin:12px 0 4px;color:#92400e">PENDIENTES (\${pendientes.length} recibos)</div>\`;
+      html += '<table><thead><tr><th style="width:25px">#</th><th>No. Recibo</th></tr></thead><tbody>';
+      pendientes.forEach((p, i) => {
+        html += \`<tr><td>\${i+1}</td><td>\${p.numero_recibo||'—'}</td></tr>\`;
+      });
+      html += '</tbody></table>';
+    }
+
+    return html;
+  })()}
 
   <div class="resumen">
     <table>

@@ -546,6 +546,9 @@ tr:hover td { background: var(--gray50); }
       <div class="nav-item" onclick="irA('oficina')" id="nav-oficina">
         <span class="nav-icon">🏢</span> Oficina
       </div>
+      <div class="nav-item" onclick="irA('depositos')" id="nav-depositos">
+        <span class="nav-icon">🏦</span> Depósitos
+      </div>
       <div class="nav-item" onclick="irA('siniestros')" id="nav-siniestros">
         <span class="nav-icon">🚗</span> Siniestros
       </div>
@@ -971,6 +974,130 @@ tr:hover td { background: var(--gray50); }
         </div>
       </div>
 
+      <!-- DEPÓSITOS -->
+      <div class="vista" id="v-depositos">
+        <div class="vista-titulo">Registro de Depósitos</div>
+
+        <!-- TABS -->
+        <div style="display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid var(--gray100)">
+          <button class="tab-btn activo" onclick="depTab('captura')" id="dtab-captura">📥 Captura</button>
+          <button class="tab-btn" onclick="depTab('historial')" id="dtab-historial">📋 Historial</button>
+        </div>
+
+        <!-- TAB CAPTURA -->
+        <div id="dep-captura">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+            <div class="campo">
+              <label>Fecha de registro</label>
+              <input type="date" id="dep-fecha"
+                style="width:100%;padding:11px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:15px;background:var(--gray50);outline:none">
+            </div>
+          </div>
+
+          <!-- Tabla de depósitos -->
+          <div class="tabla-wrap" style="margin-bottom:16px">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Póliza</th>
+                  <th>Cliente</th>
+                  <th>Fecha dep.</th>
+                  <th>Monto</th>
+                  <th>No. Depósito</th>
+                  <th>Tipo</th>
+                  <th>Banco</th>
+                  <th>Notas</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="tbody-depositos">
+                <tr id="tr-vacio-dep"><td colspan="10" style="text-align:center;padding:20px;color:var(--gray300)">Agrega renglones con el botón +</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div style="display:flex;gap:10px;margin-bottom:20px">
+            <button class="btn-accion btn-verde" onclick="agregarRenglonDep()" style="padding:9px 16px">+ Agregar depósito</button>
+          </div>
+
+          <!-- Resumen -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+            <div class="card" style="padding:20px">
+              <div style="font-size:11px;font-weight:700;color:var(--gray300);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">Resumen</div>
+              <div class="detalle-grid" style="font-size:14px">
+                <span class="dl">Registros</span><span id="dep-res-count" style="font-weight:700;color:var(--green)">0</span>
+                <span class="dl">Total</span><span id="dep-res-total" style="font-weight:700;color:var(--green)">$0.00</span>
+              </div>
+            </div>
+            <div class="card" style="padding:20px">
+              <div style="font-size:11px;font-weight:700;color:var(--gray300);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">Notas generales</div>
+              <textarea id="dep-notas" rows="4"
+                style="width:100%;border:1.5px solid var(--gray100);border-radius:var(--radius);padding:10px;font-size:14px;resize:none;outline:none;background:var(--gray50)"
+                placeholder="Observaciones opcionales…"></textarea>
+            </div>
+          </div>
+
+          <button class="btn-accion btn-verde" onclick="guardarDepositos()" style="padding:12px 32px;font-size:15px">💾 Guardar registros</button>
+        </div>
+
+        <!-- TAB HISTORIAL -->
+        <div id="dep-historial" style="display:none">
+          <div style="display:flex;gap:10px;margin-bottom:16px;align-items:flex-end;flex-wrap:wrap">
+            <div class="campo" style="margin:0">
+              <label>Desde</label>
+              <input type="date" id="dep-hist-desde" style="padding:9px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;outline:none">
+            </div>
+            <div class="campo" style="margin:0">
+              <label>Hasta</label>
+              <input type="date" id="dep-hist-hasta" style="padding:9px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;outline:none">
+            </div>
+            <div class="campo" style="margin:0">
+              <label>Banco</label>
+              <select id="dep-hist-banco" style="padding:9px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;outline:none;background:var(--gray50)">
+                <option value="">Todos</option>
+                <option>Inbursa</option>
+                <option>Banorte</option>
+                <option>BBVA</option>
+                <option>Scotiabank</option>
+              </select>
+            </div>
+            <div class="campo" style="margin:0">
+              <label>Tipo</label>
+              <select id="dep-hist-tipo" style="padding:9px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;outline:none;background:var(--gray50)">
+                <option value="">Todos</option>
+                <option>Depósito</option>
+                <option>Transferencia</option>
+                <option>Recibo</option>
+                <option>Otro</option>
+              </select>
+            </div>
+            <button class="btn-accion btn-verde" onclick="cargarHistorialDep()" style="padding:9px 18px">Buscar</button>
+          </div>
+          <div class="tabla-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Póliza</th>
+                  <th>Cliente</th>
+                  <th>Monto</th>
+                  <th>No. Depósito</th>
+                  <th>Tipo</th>
+                  <th>Banco</th>
+                  <th>Notas</th>
+                  <th>Registró</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="tbody-historial-dep">
+                <tr><td colspan="10" style="text-align:center;padding:24px;color:var(--gray300)">Selecciona un rango de fechas</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <!-- SINIESTROS -->
       <div class="vista" id="v-siniestros">
         <div class="vista-titulo">Siniestros</div>
@@ -1267,9 +1394,10 @@ function irA(vista) {
   if (v) v.classList.add('activa');
   if (n) n.classList.add('activo');
 
-  if (vista === 'usuarios') cargarUsuarios();
-  if (vista === 'cobranza') iniciarCobranza();
-  if (vista === 'oficina')  iniciarOficina();
+  if (vista === 'usuarios')  cargarUsuarios();
+  if (vista === 'cobranza')  iniciarCobranza();
+  if (vista === 'oficina')   iniciarOficina();
+  if (vista === 'depositos') iniciarDepositos();
 }
 
 // ── STATS DASHBOARD ───────────────────────────────────────
@@ -2524,6 +2652,215 @@ async function copiarRecepcionOf(id_recepcion) {
 
 // ════════════════════════════════════════════════════════
 // FIN MÓDULO OFICINA
+// ════════════════════════════════════════════════════════
+
+// ════════════════════════════════════════════════════════
+// MÓDULO DEPÓSITOS
+// ════════════════════════════════════════════════════════
+let depRenglonCount = 0;
+
+function depTab(tab) {
+  ['captura','historial'].forEach(t => {
+    const el  = document.getElementById('dep-' + t);
+    const btn = document.getElementById('dtab-' + t);
+    if (el)  el.style.display  = t === tab ? 'block' : 'none';
+    if (btn) btn.classList.toggle('activo', t === tab);
+  });
+  if (tab === 'historial') cargarHistorialDep();
+}
+
+function iniciarDepositos() {
+  const hoy = new Date().toISOString().split('T')[0];
+  document.getElementById('dep-fecha').value      = hoy;
+  document.getElementById('dep-hist-desde').value = hoy;
+  document.getElementById('dep-hist-hasta').value = hoy;
+}
+
+function actualizarResumenDep() {
+  let total = 0, count = 0;
+  document.querySelectorAll('tr[data-dep]').forEach(tr => {
+    const n     = tr.dataset.dep;
+    const monto = parseFloat(document.getElementById('dep-monto-' + n)?.value) || 0;
+    if (monto > 0) { total += monto; count++; }
+  });
+  document.getElementById('dep-res-count').textContent = count;
+  document.getElementById('dep-res-total').textContent = fmtMonto(total);
+}
+
+async function buscarClienteRenglonDep(n) {
+  const poliza  = document.getElementById('dep-pol-' + n).value.trim();
+  const spanCli = document.getElementById('dep-cli-' + n);
+  if (!poliza) { spanCli.textContent = '—'; spanCli.style.color = ''; return; }
+  spanCli.textContent = '…';
+  const res = await api({ accion: 'buscar_polizas', access_token: sesion.access_token, termino: poliza });
+  if (res.ok && res.polizas.length > 0) {
+    const p = res.polizas.find(x => x.id_poliza === poliza) || res.polizas[0];
+    spanCli.textContent = p.nombre_cliente || '—';
+    spanCli.style.color = '';
+  } else {
+    spanCli.textContent = 'No encontrada';
+    spanCli.style.color = 'var(--red)';
+  }
+}
+
+function agregarRenglonDep() {
+  const vacio = document.getElementById('tr-vacio-dep');
+  if (vacio) vacio.remove();
+
+  depRenglonCount++;
+  const n  = depRenglonCount;
+  const tr = document.createElement('tr');
+  tr.id = 'tr-dep-' + n;
+  tr.dataset.dep = n;
+
+  const fechaReg = document.getElementById('dep-fecha').value;
+
+  tr.innerHTML = `
+    <td style="color:var(--gray600);font-size:13px;width:28px">${n}</td>
+    <td><input class="rec-input" id="dep-pol-${n}" placeholder="Póliza"
+      onblur="buscarClienteRenglonDep(${n})" style="width:88px"></td>
+    <td><span id="dep-cli-${n}" style="font-size:12px;color:var(--gray600)">—</span></td>
+    <td><input class="rec-input" id="dep-fecha-${n}" type="date" value="${fechaReg}" style="width:130px"></td>
+    <td><input class="rec-input" id="dep-monto-${n}" type="number" placeholder="0.00" step="0.01"
+      oninput="actualizarResumenDep()" style="width:88px;text-align:right"></td>
+    <td><input class="rec-input" id="dep-ndep-${n}" placeholder="No. depósito" style="width:120px"></td>
+    <td>
+      <select id="dep-tipo-${n}" class="rec-input" style="width:120px;padding:6px 8px">
+        <option value="Depósito">Depósito</option>
+        <option value="Transferencia">Transferencia</option>
+        <option value="Recibo">Recibo</option>
+        <option value="Otro">Otro</option>
+      </select>
+    </td>
+    <td>
+      <select id="dep-banco-${n}" class="rec-input" style="width:110px;padding:6px 8px">
+        <option value="">— Banco —</option>
+        <option value="Inbursa">Inbursa</option>
+        <option value="Banorte">Banorte</option>
+        <option value="BBVA">BBVA</option>
+        <option value="Scotiabank">Scotiabank</option>
+      </select>
+    </td>
+    <td><input class="rec-input" id="dep-notas-${n}" placeholder="Notas" style="width:110px"></td>
+    <td><button onclick="eliminarRenglonDep(${n})"
+      style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px">✕</button></td>
+  `;
+  document.getElementById('tbody-depositos').appendChild(tr);
+  document.getElementById('dep-pol-' + n).focus();
+  actualizarResumenDep();
+}
+
+function eliminarRenglonDep(n) {
+  const tr = document.getElementById('tr-dep-' + n);
+  if (tr) tr.remove();
+  actualizarResumenDep();
+  if (document.getElementById('tbody-depositos').children.length === 0) {
+    const vacio = document.createElement('tr');
+    vacio.id = 'tr-vacio-dep';
+    vacio.innerHTML = '<td colspan="10" style="text-align:center;padding:20px;color:var(--gray300)">Agrega renglones con el botón +</td>';
+    document.getElementById('tbody-depositos').appendChild(vacio);
+  }
+}
+
+async function guardarDepositos() {
+  const fecha = document.getElementById('dep-fecha').value;
+  const notas = document.getElementById('dep-notas').value;
+
+  if (!fecha) { alerta('Selecciona una fecha de registro', 'rojo'); return; }
+
+  const depositos = [];
+  let errValidacion = null;
+
+  document.querySelectorAll('tr[data-dep]').forEach(tr => {
+    const n       = tr.dataset.dep;
+    const poliza  = document.getElementById('dep-pol-'   + n)?.value.trim() || null;
+    const monto   = parseFloat(document.getElementById('dep-monto-' + n)?.value) || 0;
+    const fechaDep = document.getElementById('dep-fecha-' + n)?.value || fecha;
+    const ndep    = document.getElementById('dep-ndep-'  + n)?.value.trim() || null;
+    const tipo    = document.getElementById('dep-tipo-'  + n)?.value || 'Depósito';
+    const banco   = document.getElementById('dep-banco-' + n)?.value || null;
+    const notasR  = document.getElementById('dep-notas-' + n)?.value.trim() || null;
+    const cliente = document.getElementById('dep-cli-'   + n)?.textContent || null;
+
+    if (monto <= 0) return;
+    if (!ndep) { errValidacion = `Renglón ${n}: falta el número de depósito`; return; }
+
+    depositos.push({ id_poliza: poliza, monto, fecha_deposito: fechaDep,
+      numero_deposito: ndep, tipo_deposito: tipo, banco, notas: notasR,
+      cliente_nombre: cliente !== '—' && cliente !== 'No encontrada' ? cliente : null });
+  });
+
+  if (errValidacion) { alerta(errValidacion, 'rojo'); return; }
+  if (depositos.length === 0) { alerta('Agrega al menos un depósito con monto', 'rojo'); return; }
+
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = 'Guardando…';
+
+  const res = await api({ accion: 'guardar_depositos', access_token: sesion.access_token,
+                          fecha, depositos, notas });
+
+  btn.disabled = false; btn.textContent = '💾 Guardar registros';
+
+  if (!res.ok) { alerta(res.error, 'rojo'); return; }
+  alerta(`✓ ${res.guardados} depósito(s) registrado(s) — Total: ${fmtMonto(res.total)}`, 'verde');
+
+  document.getElementById('tbody-depositos').innerHTML =
+    '<tr id="tr-vacio-dep"><td colspan="10" style="text-align:center;padding:20px;color:var(--gray300)">Agrega renglones con el botón +</td></tr>';
+  document.getElementById('dep-notas').value = '';
+  depRenglonCount = 0;
+  actualizarResumenDep();
+}
+
+async function cargarHistorialDep() {
+  const desde = document.getElementById('dep-hist-desde').value;
+  const hasta = document.getElementById('dep-hist-hasta').value;
+  const banco = document.getElementById('dep-hist-banco').value;
+  const tipo  = document.getElementById('dep-hist-tipo').value;
+  const tbody = document.getElementById('tbody-historial-dep');
+  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--gray300)">Cargando…</td></tr>';
+
+  const res = await api({ accion: 'historial_depositos', access_token: sesion.access_token,
+                          fecha_inicio: desde, fecha_fin: hasta, banco, tipo });
+  if (!res.ok) { alerta(res.error, 'rojo'); return; }
+
+  if (!res.depositos || res.depositos.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--gray300)">Sin registros en ese período</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = res.depositos.map(d => `
+    <tr style="${d.anulado ? 'opacity:.45;text-decoration:line-through' : ''}">
+      <td>${fmtFecha(d.fecha_pago)}</td>
+      <td style="font-family:monospace">${esc(d.id_poliza||'—')}</td>
+      <td style="font-size:12px">${esc(d.cliente_nombre||'—')}</td>
+      <td style="text-align:right;color:var(--green);font-weight:600">${fmtMonto(d.monto)}</td>
+      <td style="font-family:monospace;font-size:12px">${esc(d.numero_deposito||'—')}</td>
+      <td><span style="background:var(--gray100);padding:2px 8px;border-radius:10px;font-size:11px">${esc(d.tipo_deposito||'—')}</span></td>
+      <td style="font-size:12px">${esc(d.banco||'—')}</td>
+      <td style="font-size:12px;color:var(--gray600)">${esc(d.notas||'')}</td>
+      <td style="font-size:12px;color:var(--gray600)">${esc(d.registrado_por||'—')}</td>
+      <td>
+        ${d.anulado
+          ? `<span style="font-size:11px;color:var(--red)">Anulado</span>`
+          : (sesion.usuario.rol === 'administrador'
+              ? `<button class="btn-accion btn-rojo" style="padding:4px 10px;font-size:12px"
+                  onclick="anularDeposito('${esc(d.id_pago)}')">Anular</button>`
+              : '')
+        }
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function anularDeposito(id_pago) {
+  if (!confirm('¿Anular este depósito?\nEsta acción no se puede deshacer.')) return;
+  const res = await api({ accion: 'anular_deposito', access_token: sesion.access_token, id_pago });
+  if (res.ok) { alerta(res.mensaje, 'verde'); cargarHistorialDep(); }
+  else { alerta(res.error, 'rojo'); }
+}
+
+// ════════════════════════════════════════════════════════
+// FIN MÓDULO DEPÓSITOS
 // ════════════════════════════════════════════════════════
 
 function buildPagosHtml(pagos) {

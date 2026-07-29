@@ -1765,9 +1765,9 @@ async function verDetalle(id_poliza) {
         <td style="font-size:11px;color:var(--gray300)">${numFila}</td>
         <td>${fmtFecha(pg.fecha_pago)}</td>
         <td style="text-align:right;font-weight:600">${fmtMonto(pg.monto)}</td>
-        <td>${esc(pg.numero_recibo || '—')}</td>
+        <td>${esc(pg.origen === 'DEPOSITO' ? (pg.numero_deposito || '—') : (pg.numero_recibo || '—'))}</td>
         <td><span class="badge ${pg.origen === 'HISTORICO' ? 'badge-cobrador' : 'badge-agente'}"
-          style="font-size:10px">${esc(pg.origen || '—')}</span></td>
+          style="font-size:10px">${esc(pg.origen === 'DEPOSITO' ? 'Transferencia' : (pg.origen || '—'))}</span></td>
         <td style="font-size:12px;color:var(--gray600)">${esc(pg.notas || '')}</td>
       </tr>`);
   }

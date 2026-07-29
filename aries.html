@@ -318,6 +318,7 @@ body {
 }
 .btn-accion:hover { opacity: .85; }
 .btn-verde  { background: var(--green);  color: var(--white); }
+.btn-azul   { background: var(--navy);   color: var(--white); }
 .btn-gris   { background: var(--gray100); color: var(--gray600); }
 .btn-rojo   { background: var(--red);    color: var(--white); }
 
@@ -593,7 +594,8 @@ tr:hover td { background: var(--gray50); }
           <input type="text" id="poliza-busqueda" placeholder="Nombre, póliza o placas…"
             style="flex:1;padding:11px 16px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:15px;outline:none"
             onkeydown="if(event.key==='Enter') buscarPolizas()">
-          <button class="btn-accion btn-verde" onclick="buscarPolizas()" style="padding:11px 22px">Buscar</button>
+          <button class="btn-accion btn-verde" onclick="buscarPolizas()" style="padding:11px 22px">🔍 Buscar</button>
+          <button class="btn-accion btn-azul"  onclick="abrirFormPoliza(null)" style="padding:11px 22px">➕ Nuevo</button>
         </div>
 
         <!-- RESULTADOS -->
@@ -621,7 +623,10 @@ tr:hover td { background: var(--gray50); }
 
         <!-- DETALLE PÓLIZA -->
         <div id="poliza-detalle" style="display:none">
-          <button onclick="cerrarDetalle()" style="margin-bottom:16px;background:none;border:none;color:var(--navy);font-size:14px;cursor:pointer;font-weight:600">← Volver a resultados</button>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+            <button onclick="cerrarDetalle()" style="background:none;border:none;color:var(--navy);font-size:14px;cursor:pointer;font-weight:600">← Volver a resultados</button>
+            <button class="btn-accion btn-azul" onclick="abrirFormPoliza(polizaActual)" style="padding:7px 18px;font-size:13px">✏️ Actualizar</button>
+          </div>
 
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
 
@@ -704,6 +709,202 @@ tr:hover td { background: var(--gray50); }
           </div>
 
         </div>
+
+        <!-- FORMULARIO NUEVA / EDITAR PÓLIZA -->
+        <div id="poliza-form" style="display:none">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+            <button onclick="cerrarFormPoliza()" style="background:none;border:none;color:var(--navy);font-size:14px;cursor:pointer;font-weight:600">← Volver</button>
+            <div style="font-size:17px;font-weight:700;color:var(--navy)" id="form-titulo">Nueva Póliza</div>
+            <button class="btn-accion btn-verde" onclick="guardarPoliza()" style="margin-left:auto;padding:9px 24px">💾 Guardar</button>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+
+            <!-- Datos de Póliza -->
+            <div class="card">
+              <div style="font-size:11px;font-weight:700;color:var(--gray300);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px">Datos de Póliza</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="campo" style="grid-column:1/-1">
+                  <label>No. Póliza *</label>
+                  <input type="text" id="fp-id-poliza" placeholder="Ej. 12345"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo">
+                  <label>Empresa</label>
+                  <select id="fp-empresa" style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none">
+                    <option value="">— Selecciona —</option>
+                  </select>
+                </div>
+                <div class="campo">
+                  <label>Tipo Póliza</label>
+                  <select id="fp-tipo-poliza" style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none">
+                    <option value="">— Selecciona —</option>
+                    <option>NUEVA</option>
+                    <option>RENOVACIÓN</option>
+                  </select>
+                </div>
+                <div class="campo">
+                  <label>Tipo Cobertura</label>
+                  <input type="text" id="fp-tipo-cobertura" placeholder="Ej. Amplia Plus"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo">
+                  <label>Tipo Cobro</label>
+                  <select id="fp-tipo-cobro" style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none">
+                    <option value="">— Selecciona —</option>
+                    <option>MENSUAL</option>
+                    <option>TRIMESTRAL</option>
+                    <option>SEMESTRAL</option>
+                    <option>ANUAL</option>
+                    <option>CONTADO</option>
+                  </select>
+                </div>
+                <div class="campo">
+                  <label>Asesor</label>
+                  <input type="text" id="fp-asesor" placeholder="Nombre del asesor"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo">
+                  <label>Cobrador</label>
+                  <input type="text" id="fp-cobrador" placeholder="Nombre del cobrador"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo">
+                  <label>Inicio Vigencia</label>
+                  <input type="date" id="fp-inicio-vigencia"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo">
+                  <label>Término Vigencia</label>
+                  <input type="date" id="fp-termino-vigencia"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo" style="grid-column:1/-1">
+                  <label>Notas</label>
+                  <textarea id="fp-notas" rows="2" placeholder="Observaciones…"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;resize:vertical;box-sizing:border-box"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Finanzas -->
+            <div class="card">
+              <div style="font-size:11px;font-weight:700;color:var(--gray300);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px">Finanzas</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="campo">
+                  <label>Costo Total</label>
+                  <input type="number" id="fp-costo" placeholder="0.00" min="0" step="0.01"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo">
+                  <label>Pago Inicial</label>
+                  <input type="number" id="fp-pago-inicial" placeholder="0.00" min="0" step="0.01"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo">
+                  <label>Pagos de</label>
+                  <input type="number" id="fp-pagos-de" placeholder="0.00" min="0" step="0.01"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+              </div>
+            </div>
+
+            <!-- Cliente -->
+            <div class="card">
+              <div style="font-size:11px;font-weight:700;color:var(--gray300);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px">Cliente</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="campo" style="grid-column:1/-1">
+                  <label>Nombre Completo *</label>
+                  <input type="text" id="fp-nombre" placeholder="Apellido Paterno Materno Nombre"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo">
+                  <label>Teléfono 1</label>
+                  <input type="text" id="fp-tel1"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo">
+                  <label>Teléfono 2</label>
+                  <input type="text" id="fp-tel2"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo" style="grid-column:1/-1">
+                  <label>Correo Electrónico</label>
+                  <input type="email" id="fp-correo"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo" style="grid-column:1/-1">
+                  <label>Domicilio Particular</label>
+                  <input type="text" id="fp-domicilio"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo">
+                  <label>Colonia</label>
+                  <input type="text" id="fp-colonia"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo">
+                  <label>Municipio</label>
+                  <input type="text" id="fp-municipio"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo" style="grid-column:1/-1">
+                  <label>Domicilio de Cobro</label>
+                  <input type="text" id="fp-dom-cobro"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+              </div>
+            </div>
+
+            <!-- Vehículo -->
+            <div class="card">
+              <div style="font-size:11px;font-weight:700;color:var(--gray300);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px">Vehículo</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="campo" style="grid-column:1/-1">
+                  <label>Descripción Vehículo *</label>
+                  <input type="text" id="fp-vehiculo" placeholder="Marca y submarca"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo">
+                  <label>Modelo (año)</label>
+                  <input type="number" id="fp-modelo" placeholder="2024"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo">
+                  <label>Tipo</label>
+                  <input type="text" id="fp-tipo-vehiculo" placeholder="Sedan, SUV…"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo">
+                  <label>Color</label>
+                  <input type="text" id="fp-color"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo">
+                  <label>Placas</label>
+                  <input type="text" id="fp-placas"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo">
+                  <label>No. Motor</label>
+                  <input type="text" id="fp-motor"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo" style="grid-column:1/-1">
+                  <label>No. Serie / VIN</label>
+                  <input type="text" id="fp-serie"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo" style="display:flex;align-items:center;gap:8px">
+                  <input type="checkbox" id="fp-moto" style="width:18px;height:18px">
+                  <label for="fp-moto" style="margin:0;font-weight:600">Motocicleta</label>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div><!-- /poliza-form -->
+
       </div>
 
 
@@ -1713,7 +1914,9 @@ function esc(str) {
 }
 
 // ── PÓLIZAS ───────────────────────────────────────────────
-let ultimosBusqueda = [];
+let ultimosBusqueda  = [];
+let polizaActual     = null;
+let empresasCatalogo = [];
 
 async function buscarPolizas() {
   const termino = document.getElementById('poliza-busqueda').value.trim();
@@ -1790,6 +1993,8 @@ async function verDetalle(id_poliza) {
 
   const res = await api({ accion: 'detalle_poliza', access_token: sesion.access_token, id_poliza });
   if (!res.ok) { alerta(res.error, 'rojo'); cerrarDetalle(); return; }
+
+  polizaActual = { poliza: res.poliza, cliente: res.cliente, empresa: res.empresa, vehiculos: res.vehiculos };
 
   const p = res.poliza;
   const c = res.cliente;
@@ -1966,6 +2171,7 @@ async function verDetalle(id_poliza) {
 }
 
 function cerrarDetalle() {
+  polizaActual = null;
   document.getElementById('poliza-detalle').style.display = 'none';
   document.getElementById('polizas-resultados').style.display = ultimosBusqueda.length > 0 ? 'block' : 'none';
 }
@@ -3304,6 +3510,161 @@ async function guardarCobradorCat() {
   alerta('Cobrador guardado', 'verde');
   cerrarModalCobrador();
   cargarCobradoresCat();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FORMULARIO CAPTURA / EDICIÓN DE PÓLIZAS
+// ═══════════════════════════════════════════════════════════════
+
+async function cargarEmpresasForm() {
+  if (empresasCatalogo.length > 0) return;
+  const res = await api({ accion: 'listar_empresas', access_token: sesion.access_token });
+  if (!res.ok) return;
+  empresasCatalogo = res.empresas;
+  const sel = document.getElementById('fp-empresa');
+  // Limpiar opciones previas excepto la primera
+  while (sel.options.length > 1) sel.remove(1);
+  res.empresas.forEach(e => {
+    const opt = document.createElement('option');
+    opt.value = e.id_empresa;
+    opt.textContent = `${e.codigo} — ${e.nombre}`;
+    sel.appendChild(opt);
+  });
+}
+
+async function abrirFormPoliza(datos) {
+  document.getElementById('polizas-resultados').style.display = 'none';
+  document.getElementById('poliza-detalle').style.display    = 'none';
+  document.getElementById('poliza-form').style.display       = 'block';
+
+  await cargarEmpresasForm();
+
+  const esNueva = !datos;
+  document.getElementById('form-titulo').textContent = esNueva
+    ? 'Nueva Póliza'
+    : `Editar Póliza ${datos.poliza?.id_poliza || ''}`;
+
+  // Limpiar todos los campos
+  ['fp-id-poliza','fp-tipo-cobertura','fp-asesor','fp-cobrador',
+   'fp-inicio-vigencia','fp-termino-vigencia','fp-notas',
+   'fp-costo','fp-pago-inicial','fp-pagos-de',
+   'fp-nombre','fp-tel1','fp-tel2','fp-correo',
+   'fp-domicilio','fp-colonia','fp-municipio','fp-dom-cobro',
+   'fp-vehiculo','fp-modelo','fp-tipo-vehiculo','fp-color',
+   'fp-placas','fp-motor','fp-serie']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('fp-empresa').value     = '';
+  document.getElementById('fp-tipo-poliza').value = '';
+  document.getElementById('fp-tipo-cobro').value  = '';
+  document.getElementById('fp-moto').checked      = false;
+  document.getElementById('fp-id-poliza').disabled = false;
+
+  if (!esNueva) {
+    const p = datos.poliza  || {};
+    const c = datos.cliente || {};
+    const v = (datos.vehiculos || [])[0] || {};
+
+    document.getElementById('fp-id-poliza').value        = p.id_poliza || '';
+    document.getElementById('fp-id-poliza').disabled     = true;
+    document.getElementById('fp-empresa').value          = p.id_empresa || '';
+    document.getElementById('fp-tipo-poliza').value      = p.tipo_poliza || '';
+    document.getElementById('fp-tipo-cobertura').value   = p.tipo_cobertura || p.tipo_de_cobertura || '';
+    document.getElementById('fp-tipo-cobro').value       = p.tipo_cobro || '';
+    document.getElementById('fp-asesor').value           = p.asesor || '';
+    document.getElementById('fp-cobrador').value         = p.cobrador || '';
+    document.getElementById('fp-inicio-vigencia').value  = p.fecha_inicio_vigencia || '';
+    document.getElementById('fp-termino-vigencia').value = p.fecha_termino_vigencia || '';
+    document.getElementById('fp-notas').value            = p.notas || '';
+    document.getElementById('fp-costo').value            = p.costo || '';
+    document.getElementById('fp-pago-inicial').value     = p.pago_inicial || '';
+    document.getElementById('fp-pagos-de').value         = p.pagos_de || '';
+
+    document.getElementById('fp-nombre').value    = c.nombre || '';
+    document.getElementById('fp-tel1').value      = c.telefono_01 || '';
+    document.getElementById('fp-tel2').value      = c.telefono_02 || '';
+    document.getElementById('fp-correo').value    = c.correo_electronico || '';
+    document.getElementById('fp-domicilio').value = c.domicilio_particular || '';
+    document.getElementById('fp-colonia').value   = c.colonia || '';
+    document.getElementById('fp-municipio').value = c.municipio || '';
+    document.getElementById('fp-dom-cobro').value = c.domicilio_cobro || '';
+
+    document.getElementById('fp-vehiculo').value      = v.vehiculo || '';
+    document.getElementById('fp-modelo').value        = v.modelo || '';
+    document.getElementById('fp-tipo-vehiculo').value = v.tipo || '';
+    document.getElementById('fp-color').value         = v.color || '';
+    document.getElementById('fp-placas').value        = v.placas || '';
+    document.getElementById('fp-motor').value         = v.motor || '';
+    document.getElementById('fp-serie').value         = v.numero_serie || '';
+    document.getElementById('fp-moto').checked        = v.motocicleta || false;
+  }
+}
+
+function cerrarFormPoliza() {
+  document.getElementById('poliza-form').style.display = 'none';
+  if (polizaActual) {
+    document.getElementById('poliza-detalle').style.display = 'block';
+  } else {
+    document.getElementById('polizas-resultados').style.display =
+      ultimosBusqueda.length > 0 ? 'block' : 'none';
+  }
+}
+
+async function guardarPoliza() {
+  const idPoliza     = document.getElementById('fp-id-poliza').value.trim();
+  const nombre       = document.getElementById('fp-nombre').value.trim();
+  const vehiculoDesc = document.getElementById('fp-vehiculo').value.trim();
+  if (!idPoliza)     { alerta('El número de póliza es requerido', 'rojo'); return; }
+  if (!nombre)       { alerta('El nombre del cliente es requerido', 'rojo'); return; }
+  if (!vehiculoDesc) { alerta('La descripción del vehículo es requerida', 'rojo'); return; }
+
+  const res = await api({
+    accion:       'guardar_poliza',
+    access_token: sesion.access_token,
+    es_nueva:     !polizaActual,
+    poliza: {
+      id_poliza:              idPoliza,
+      id_empresa:             document.getElementById('fp-empresa').value || null,
+      tipo_poliza:            document.getElementById('fp-tipo-poliza').value || null,
+      tipo_cobertura:         document.getElementById('fp-tipo-cobertura').value || null,
+      tipo_cobro:             document.getElementById('fp-tipo-cobro').value || null,
+      asesor:                 document.getElementById('fp-asesor').value.trim() || null,
+      cobrador:               document.getElementById('fp-cobrador').value.trim() || null,
+      fecha_inicio_vigencia:  document.getElementById('fp-inicio-vigencia').value || null,
+      fecha_termino_vigencia: document.getElementById('fp-termino-vigencia').value || null,
+      notas:                  document.getElementById('fp-notas').value.trim() || null,
+      costo:                  parseFloat(document.getElementById('fp-costo').value) || null,
+      pago_inicial:           parseFloat(document.getElementById('fp-pago-inicial').value) || null,
+      pagos_de:               parseFloat(document.getElementById('fp-pagos-de').value) || null,
+    },
+    cliente: {
+      nombre:               nombre,
+      telefono_01:          document.getElementById('fp-tel1').value.trim() || null,
+      telefono_02:          document.getElementById('fp-tel2').value.trim() || null,
+      correo_electronico:   document.getElementById('fp-correo').value.trim() || null,
+      domicilio_particular: document.getElementById('fp-domicilio').value.trim() || null,
+      colonia:              document.getElementById('fp-colonia').value.trim() || null,
+      municipio:            document.getElementById('fp-municipio').value.trim() || null,
+      domicilio_cobro:      document.getElementById('fp-dom-cobro').value.trim() || null,
+    },
+    vehiculo: {
+      vehiculo:     vehiculoDesc,
+      modelo:       parseInt(document.getElementById('fp-modelo').value) || null,
+      tipo:         document.getElementById('fp-tipo-vehiculo').value.trim() || null,
+      color:        document.getElementById('fp-color').value.trim() || null,
+      placas:       document.getElementById('fp-placas').value.trim() || null,
+      motor:        document.getElementById('fp-motor').value.trim() || null,
+      numero_serie: document.getElementById('fp-serie').value.trim() || null,
+      motocicleta:  document.getElementById('fp-moto').checked,
+    }
+  });
+
+  if (!res.ok) { alerta(res.error || 'Error al guardar', 'rojo'); return; }
+  alerta('Póliza guardada correctamente', 'verde');
+  document.getElementById('fp-id-poliza').disabled = false;
+  const idGuardado = idPoliza;
+  polizaActual = null;
+  document.getElementById('poliza-form').style.display = 'none';
+  await verDetalle(idGuardado);
 }
 
 </script>

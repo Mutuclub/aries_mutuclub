@@ -1677,6 +1677,17 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('l-pass').addEventListener('keydown', e => {
     if (e.key === 'Enter') iniciarSesion();
   });
+
+  // MAYUSCULAS GLOBALES en todos los inputs/textareas de texto
+  const EXCLUIR_TIPOS = new Set(['password','email','number','date','checkbox','radio','hidden','submit','button','file','range','color','time','month','week','datetime-local']);
+  document.addEventListener('input', e => {
+    const el = e.target;
+    if (!['INPUT','TEXTAREA'].includes(el.tagName)) return;
+    if (EXCLUIR_TIPOS.has(el.type)) return;
+    const pos = el.selectionStart;
+    el.value = el.value.toUpperCase();
+    try { el.setSelectionRange(pos, pos); } catch(_) {}
+  });
 });
 
 // ── PANTALLAS ─────────────────────────────────────────────
@@ -2339,29 +2350,143 @@ const DATOS_GEO = {
     "Huejutla de Reyes": ["Centro","Barrio de Guadalupe"]
   },
   "Jalisco": {
-    "Guadalajara": ["Analco","Arcos Vallarta","Artesanos","Atlas","Bajío","Bases","Belén","Chapalita","Circunvalación Américas","Circunvalación Belisario","Colón Industrial","Country Club","Del Fresno","Del Gas","Echeverría","El Álamo","El Briseño","El Capullo","El Colli","El Mante","El Rosario","El Vergel","Estadio","Federalismo","Ferrocarril","Fray Matías","Guadalajara Centro","Huentitán al Barranco","Huentitán al Norte","Independencia","Jalisco","Jardín","La Aldea","La Calma","La Coronilla","La Gigantera","La Normal","La Perla","Lagos de Oriente","Las Conchas","Las Huertas","Lomas de Polanco","Medrano","Mexicaltzingo","Mezquitán Country","Monraz","Morelos","Oblatos","Olímpica","Oriente","Paraísos del Colli","Patria Vallarta","Polanco","Providencia","Rancho Nuevo","Reforma","Revolución","San Andrés","San Carlos","San Cipriano","San José Guadalajara","Santa Elena","Santa Margarita","Santa Mónica","Santa Rosa","Santa Tere","Seminario","Tetlán","Tlaquepaque Centro","Universidades","Valle de San Isidro","Vallarta Norte","Vallarta Poniente","Vallarta San Jorge","Versalles","Villas del Country","Zona Minerva"],
-    "Zapopan": ["Arenales Tapatíos","Arboledas","Arcos de Guadalupe","Colinas de San Javier","El Colli Urbano","El Refugio","Jardines de Vallarta","La Calma","Las Águilas","Las Cañadas","Las Moras","La Venta del Astillero","Lomas del Paraíso","Lomas Doctores","López Mateos Norte","López Mateos Sur","Metro Naciones","Miramar","Nextipac","Pinar de la Venta","Plazas del Sol","Prados Vallarta","Rancho Contento","Santa Ana Tepetitlán","Santa Esperia","Santa Margarita","Tabachines","Tepeyac","Tesistán","Vallarta San Jorge","Victoria","Villa Guerrero","Villas Universidad","Atemajac del Valle","Balcones de Oblatos","Ciudad Granja","El Briseño","El Iztépete","El Palomar","El Tigre","Jardines Alcalde","Jardines del Vergel","La Cima","Las Torres","Moctezuma","Montecristo","Nuevo México","Paseos del Sol","San Juan de Ocotán","Villas de Guadalupe","Vistas del Sol"],
-    "San Pedro Tlaquepaque": ["Centro","El Vergel","Lomas de San Pedrito","Las Juntas","San Pedrito","Lomas del Gallo","Hacienda Santa Fe","La Duraznera","El Campesino","Nuevo México","Tateposco","Las Huertas"],
-    "Tonalá": ["Centro","Santa Cruz de las Flores","El Rosario","Lomas de Tabachines","La Enramada","La Duraznera","El Camichín","Las Huertas","San Juanito","Puente Grande","Coyula","La Presita","La Capilla","Rancho El Jagüey"],
-    "Tlajomulco de Zúñiga": ["Tlajomulco Centro","Santa Cruz de las Flores","El Zapote","San Agustín","Valle Real","Chulavista","Hacienda Santa Fe","Coto la Paloma","Las Pintitas","San Sebastián el Grande","Jardines de Tlajomulco","Interlomas","Portal del Ángel","Loma Dorada","Banus","Mission Hills","Rinconada San José","San Isidro Mazatepec","Cajititlán"],
-    "El Salto": ["El Salto Centro","Las Fuentes","San José del Valle","Los Gavilanes","Toluquilla","El Verde","Parque Industrial El Salto","Santa Rosa","Villa El Salto"],
-    "Puerto Vallarta": ["Centro","Emiliano Zapata","Versalles","El Pitillal","5 de Diciembre","Las Gaviotas","Fluvial Vallarta","Lomas de la Cruz","3 de Diciembre","Insurgentes","El Remance","La Floresta","Ixtapa","Ramblases"],
-    "Lagos de Moreno": ["Centro","Las Rosas","Los Nogales","La Rivera","El Zapote","Rincón de los Álamos","Col. Primero de Mayo"],
-    "Tepatitlán de Morelos": ["Centro","Fraccionamiento Revolución","El Ranchito","Las Flores","Lomas Altas"],
-    "Ocotlán": ["Centro","Arboledas","Los Alcanfores","Hermosa Provincia","Industrial"],
-    "Zapotlán el Grande": ["Centro","Las Quintas","Jardines Coloniales","Atotonilco","Constitución","El Maguey"],
-    "Autlán de Navarro": ["Centro","El Chante","La Palmita","La Trinidad"],
-    "Arandas": ["Centro","Lomas","El Mirador","La Cantera"],
-    "San Juan de los Lagos": ["Centro","Los Alcanfores","La Ceja"],
-    "Ameca": ["Centro","Los Pocitos","La Cañada"],
-    "Tequila": ["Centro","Los Guayabos","El Arenal"],
-    "Tlaquepaque": ["Centro","Los Puestos","La Cofradía","San Sebastián"],
-    "Chapala": ["Chapala Centro","Ajijic","San Antonio Tlayacapan","San Juan Cosalá","Jocotepec"],
-    "Cihuatlán": ["Centro","Barra de Navidad","Melaque"],
-    "Tomatlán": ["Centro","El Tuito"],
-    "Mascota": ["Centro"],
-    "Tapalpa": ["Centro"],
-    "Zapotlanejo": ["Centro","Puente Grande"]
+    "Guadalajara": [
+      "Agua Blanca Industrial","Alameda","Alcalde Barranquitas","Analco","Arcos Vallarta","Artesanos",
+      "Atlas","Atzcapotzalco","Bajío","Balcones de la Cantera","Bases","Belén","Capuchinas",
+      "Chapalita","Chapalita Inn","Chapalita Oriente","Chapultepec Country","Circunvalación Américas",
+      "Circunvalación Belisario","Circunvalación Oblatos","Ciudad del Sol","Colón Industrial",
+      "Country Club","Del Fresno","Del Gas","Del Lago","Echeverría","El Álamo","El Briseño",
+      "El Capullo","El Colli","El Mante","El Retiro","El Rosario","El Vergel","Estadio",
+      "Exhausted Guadalajara","Federalismo","Ferrocarril","Fray Matías","Guadalajara Centro",
+      "Hidalgo","Huentitán al Barranco","Huentitán al Norte","Independencia","Jalisco","Jardín",
+      "Jardines Alcalde","Jardines de Los Arcos","Jardines del Bosque","Jardines del Country",
+      "Jardines del Nilo","Jardines del Sol","Jardines Universidad","La Aldea","La Aurora",
+      "La Calma","La Coronilla","La Federacha","La Gigantera","La Ladrillera","La Loma",
+      "La Normal","La Perla","La Providencia","La Tuzanía","Ladrón de Guevara","Lagos de Oriente",
+      "Las Américas","Las Conchas","Las Huertas","Las Palmas","Libertad","Lomas de Polanco",
+      "Lomas del Valle","Los Alcanfores","Medrano","Mexicaltzingo","Mezquitán Country",
+      "Mirador del Sol","Monraz","Morelos","Miramar","Nueva Santa María","Nueva Villita",
+      "Oblatos","Olímpica","Oriente","Paraísos del Colli","Patria Vallarta","Polanco",
+      "Prados Providencia","Providencia","Rancho Nuevo","Reforma","Residencial Victoria",
+      "Revolución","Rinconada del Bosque","San Andrés","San Carlos","San Cipriano",
+      "San José Guadalajara","San Miguel de Mezquitan","Santa Elena","Santa Margarita",
+      "Santa Mónica","Santa Rosa","Santa Tere","Seminario","Tabla Honda","Tetlán",
+      "Unidad Habitacional Los Álamos","Universidades","Valle de San Isidro","Vallarta Norte",
+      "Vallarta Poniente","Vallarta San Jorge","Versalles","Villas del Country",
+      "Vista Hermosa","Zona Minerva","Zona Plaza del Sol"
+    ],
+    "Zapopan": [
+      "Acueducto Residencial","Agave","Aldea del Parque","Americana","Arandas","Arboledas",
+      "Arboledas de la Tijera","Arcos de Guadalupe","Atemajac del Valle","Atemajac Poniente",
+      "Balcones de Oblatos","Bugambilias","Camino Real","Campo Bello","Cañadas del Bosque",
+      "Ciudad Granja","Colinas de San Javier","Colinas de Tabachines","Copala",
+      "El Briseño","El Colli Urbano","El Iztépete","El Palomar","El Refugio","El Tigre",
+      "Francisco Sarabia","Fraccionamiento La Estancia","Fraccionamiento Monraz",
+      "Jardines Alcalde","Jardines de Vallarta","Jardines del Bosque","Jardines del Vergel",
+      "La Calma","La Cima","La Estancia","La Venta del Astillero","Las Águilas","Las Cañadas",
+      "Las Moras","Las Palmas","Las Torres","Lomas del Bosque","Lomas del Paraíso",
+      "Lomas Doctores","López Mateos Norte","López Mateos Sur","Mariano Otero",
+      "Metro Naciones","Miramar","Moctezuma","Monraz","Montecristo",
+      "Nextipac","Nuevo México","Palo Blanco","Paseos de las Lomas","Paseos del Sol",
+      "Patria","Pinar de la Venta","Plazas del Sol","Prados de Providencia","Prados Vallarta",
+      "Rancho Contento","Rancho Las Bellas Artes","Residencial Bancario",
+      "Rinconada del Bosque","Rinconada del Parque","San Juan de Ocotán",
+      "San Rafael","Santa Ana Tepetitlán","Santa Esperia","Santa Fe","Santa Margarita",
+      "Tabachines","Tepeyac","Tesistán","Vallarta San Jorge","Victoria",
+      "Villa Guerrero","Villa Universitaria","Villas de Guadalupe","Villas Universidad",
+      "Vistas del Sol","Zoquipan"
+    ],
+    "San Pedro Tlaquepaque": [
+      "Agua Caliente","Alameda","Balcones de Santa María","Brisas de Chapala",
+      "Bugambilias","Cantarito","Centro","Cofradía","Conjunto Urbano Nueva Galicia",
+      "El Campesino","El Granjeno","El Órgano","El Vergel","Fraccionamiento Jardines",
+      "Hacienda Santa Fe","La Calerilla","La Duraznera","La Experiencia","La Joya",
+      "Las Américas","Las Fuentes","Las Huertas","Las Juntas","Las Pintitas",
+      "Lomas de San Pedrito","Lomas del Gallo","Los Pinos","Los Robles","Miravalle",
+      "Moctezuma","Nuevo México","Paseos del Bosque","Periférico Manuel Gómez Morín",
+      "San Pedrito","San Sebastián","Santa Anita","Tateposco","Tlaquepaque Centro",
+      "Valle de Tlaquepaque","Villas de San Isidro"
+    ],
+    "Tonalá": [
+      "Alcaparrosa","Arroyo del Coche","Bellavista","Camalotita","Cerrito Colorado",
+      "Centro","Ciudad Granja","Copalita","Coyula","El Barro","El Camichín",
+      "El Rosario","Entronque Zapotlanejo","La Capilla","La Duraznera","La Enramada",
+      "La Huerta","La Presita","Las Cañadas","Las Huertas","Las Juntas","Las Torres",
+      "Lomas de Tabachines","Los Eucaliptos","Marcelino García Barragán","Mozquitan",
+      "Nueva Galicia","Nuevo Vergel","Paseos del Valle","Puente Grande","Rancho El Jagüey",
+      "San Gaspar","San Juanito","Santa Cruz de las Flores","Santa Cruz de Bárcenas",
+      "Santo Niño de Atocha","Talpita","Tonalá Centro","Yahualica"
+    ],
+    "Tlajomulco de Zúñiga": [
+      "Alamedas de Zalatitán","Aldea Hacienda","Banus","Bugambilias",
+      "Cajititlán","Cerro del Cuatro","Chulavista","Ciudad Judicial",
+      "Conjunto Urbano Los Belenes","Coto La Paloma","El Zapote","Fraccionamiento Alamedas",
+      "Fraccionamiento Bonanza","Fraccionamiento Coto Providencia","Fraccionamiento Misión",
+      "Fracc Villas de San José","Hacienda Santa Fe","Hacienda Sonterra","Interlomas",
+      "Jardines de Tlajomulco","La Alameda","La Ciudadela","La Colonia","Loma Dorada",
+      "Los Cedros","Las Pintitas","Mission Hills","Molino de las Flores",
+      "Nuevo México","Palma Real","Parques Santa María","Portal del Ángel",
+      "Prados de la Venta","Puerta de Hierro","Residencial San Isidro",
+      "Rinconada San José","Rinconada Santa Rita","San Agustín","San Isidro Mazatepec",
+      "San Sebastián el Grande","Santa Cruz de las Flores","Santa Cruz del Valle",
+      "Santa Rosalía","Senderos","Tierra Blanca","Tlajomulco Centro",
+      "Valle Real","Villas de San Marcos","Vista del Valle","Zaragoza"
+    ],
+    "El Salto": [
+      "Belén","El Castillo","El Salto Centro","El Verde","Fraccionamiento Las Fuentes",
+      "Hacienda del Bosque","Las Fuentes","Los Alcanfores","Los Gavilanes",
+      "Parque Industrial El Salto","Parque Industrial Guadalajara","Portezuelo",
+      "San José del Valle","San José del Castillo","Santa Rosa","Toluquilla",
+      "Villa El Salto","Villa Fontana"
+    ],
+    "Juanacatlán": [
+      "Arroyo Seco","Centro","Copala","El Molino","La Cofradía","San Antonio",
+      "San Sebastián Agua Zarca"
+    ],
+    "Ixtlahuacán de los Membrillos": [
+      "Agua Caliente","Centro","El Cuatro","El Ocote","El Salto","La Palma",
+      "Las Mesas","Los Camachos","San Pablo","San Sebastián"
+    ],
+    "Zapotlanejo": [
+      "Centro","Atequiza","Cuquío","El Molino","Las Cañadas","Nextipac",
+      "Palo Alto","Puente Grande","San José el Verde","Santa Ana Tepetitlán",
+      "Zapotlanejo Centro"
+    ],
+    "Puerto Vallarta": [
+      "5 de Diciembre","Aeropuerto","Aldea del Mar","Amapas","Centro",
+      "Col. Emiliano Zapata","Col. Independencia","Conchas Chinas","El Pitillal",
+      "El Remance","El Salvador","Fluvial Vallarta","Francisco Villa",
+      "Insurgentes","Ixtapa","Jardines del Maguey","La Floresta","La Lagunilla",
+      "Las Gaviotas","Las Glorias","Lazaro Cardenas","Lomas de la Cruz",
+      "Los Mangos","Los Pinos","Palmar","Playas Gemelas","Pitillal Norte",
+      "Pitillal Sur","Ramblases","Residencial La Cruz","Versalles","Vista del Mar"
+    ],
+    "Lagos de Moreno": [
+      "Centro","Col. Aviación","Col. Industrial","El Encino","El Ranchito",
+      "Jardines del Valle","La Conchita","La Rivera","Las Rosas","Las Torres",
+      "Los Alcanfores","Los Nogales","Pedregal","Primero de Mayo","Rincón de los Álamos"
+    ],
+    "Tepatitlán de Morelos": [
+      "Centro","El Palote","El Ranchito","Fraccionamiento Revolución","Jardines de Tepa",
+      "La Providencia","Las Flores","Lomas Altas","Los Naranjos","San Cayetano"
+    ],
+    "Ocotlán": [
+      "Arboledas","Centro","El Quince","Hermosa Provincia","Industrial",
+      "La Capilla","Las Flores","Los Alcanfores"
+    ],
+    "Zapotlán el Grande": [
+      "Atotonilco","Bonanza","Centro","Constitución","El Maguey","El Quince",
+      "Jardines Coloniales","Las Colonias","Las Quintas"
+    ],
+    "Autlán de Navarro": ["Centro","El Chante","La Palmita","La Trinidad","Los Pocitos"],
+    "Arandas": ["Centro","El Mirador","La Cantera","Las Quintas","Lomas"],
+    "San Juan de los Lagos": ["Centro","La Ceja","Los Alcanfores","Rancho Nuevo"],
+    "Ameca": ["Centro","La Cañada","Los Pocitos","Vista Hermosa"],
+    "Tequila": ["Centro","El Arenal","El Chiquihuitillo","Los Guayabos"],
+    "Chapala": ["Ajijic","Chapala Centro","Jocotepec","San Antonio Tlayacapan","San Juan Cosalá"],
+    "Cihuatlán": ["Barra de Navidad","Centro","Melaque"],
+    "Mascota": ["Centro","La Yesca"],
+    "Tapalpa": ["Centro","El Corrido"]
   },
   "México": {
     "Ecatepec": ["Ciudad Azteca","Jardines de Morelos","La Florida","Las Américas","Metropolitana","Nueva York","San Cristóbal","Valle de Anáhuac","Xalostoc"],

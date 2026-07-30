@@ -745,8 +745,24 @@ tr:hover td { background: var(--gray50); }
                 </div>
                 <div class="campo">
                   <label>Tipo Cobertura</label>
-                  <input type="text" id="fp-tipo-cobertura" placeholder="Ej. Amplia Plus"
-                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                  <select id="fp-tipo-cobertura" onchange="onCoberturaChange()"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none">
+                    <option value="">— Selecciona —</option>
+                  </select>
+                </div>
+                <!-- Preview conceptos de la cobertura -->
+                <div id="fp-cob-preview" style="grid-column:1/-1;display:none;background:var(--gray50);border:1.5px solid var(--gray100);border-radius:var(--radius);padding:12px;font-size:12px">
+                  <div style="font-weight:700;color:var(--navy);margin-bottom:8px" id="fp-cob-preview-titulo">—</div>
+                  <table style="width:100%;border-collapse:collapse">
+                    <thead>
+                      <tr style="background:var(--gray100)">
+                        <th style="text-align:left;padding:4px 8px;font-size:11px">CONCEPTO</th>
+                        <th style="text-align:left;padding:4px 8px;font-size:11px">SUMA ASEGURADA</th>
+                        <th style="text-align:left;padding:4px 8px;font-size:11px">DEDUCIBLE</th>
+                      </tr>
+                    </thead>
+                    <tbody id="fp-cob-preview-body"></tbody>
+                  </table>
                 </div>
                 <div class="campo">
                   <label>Tipo Cobro</label>
@@ -1376,6 +1392,7 @@ tr:hover td { background: var(--gray50); }
           <button class="tab-btn"        onclick="catTab('tipo-poliza')" id="ctab-tipo-poliza">📄 Tipo de Póliza</button>
           <button class="tab-btn"        onclick="catTab('asesores')"    id="ctab-asesores">👤 Asesores</button>
           <button class="tab-btn"        onclick="catTab('cobradores')"  id="ctab-cobradores">🪙 Cobradores</button>
+          <button class="tab-btn"        onclick="catTab('coberturas')"  id="ctab-coberturas">🛡️ Coberturas</button>
         </div>
 
         <!-- TAB EMPRESAS -->
@@ -1444,6 +1461,42 @@ tr:hover td { background: var(--gray50); }
         </div>
       </div>
 
+        <!-- TAB COBERTURAS -->
+        <div id="cat-coberturas" style="display:none">
+          <div style="display:flex;gap:8px;margin-bottom:16px;align-items:center">
+            <button class="btn-accion btn-verde" onclick="abrirModalCobertura(null)">+ Nueva cobertura</button>
+            <button class="btn-accion btn-gris"  onclick="cargarCoberturasCat()">↺ Actualizar</button>
+            <span id="cob-seleccionada-label" style="font-size:12px;color:var(--gray300);margin-left:8px"></span>
+          </div>
+          <div style="display:grid;grid-template-columns:280px 1fr;gap:16px;min-height:320px">
+            <!-- Lista de coberturas -->
+            <div class="tabla-wrap" style="height:fit-content">
+              <table>
+                <thead><tr><th>Cobertura</th><th>Aplica a</th><th></th></tr></thead>
+                <tbody id="tbody-cat-coberturas"></tbody>
+              </table>
+            </div>
+            <!-- Panel de conceptos de la cobertura seleccionada -->
+            <div id="panel-conceptos" style="display:none">
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+                <div style="font-size:14px;font-weight:700;color:var(--navy)" id="panel-cob-nombre">—</div>
+                <button class="btn-accion btn-verde" style="padding:5px 14px;font-size:12px" onclick="abrirModalConcepto(null)">+ Concepto</button>
+              </div>
+              <div class="tabla-wrap">
+                <table>
+                  <thead><tr><th>#</th><th>Concepto</th><th>Suma Asegurada</th><th>Deducible</th><th></th></tr></thead>
+                  <tbody id="tbody-conceptos"></tbody>
+                </table>
+              </div>
+            </div>
+            <div id="panel-conceptos-vacio" style="display:flex;align-items:center;justify-content:center;color:var(--gray300);font-size:13px">
+              ← Selecciona una cobertura para ver sus conceptos
+            </div>
+          </div>
+        </div>
+
+      </div>
+
       <!-- Modal Empresa -->
       <div id="modal-empresa" class="modal" style="display:none">
         <div class="modal-box" style="max-width:400px">
@@ -1460,6 +1513,63 @@ tr:hover td { background: var(--gray50); }
           <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
             <button class="btn-accion btn-gris" onclick="cerrarModalEmpresa()">Cancelar</button>
             <button class="btn-accion btn-verde" onclick="guardarEmpresa()">Guardar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Cobertura -->
+      <div id="modal-cobertura" class="modal" style="display:none">
+        <div class="modal-box" style="max-width:400px">
+          <div class="modal-titulo" id="modal-cob-titulo">Cobertura</div>
+          <input type="hidden" id="cob-id">
+          <div class="campo"><label>Nombre *</label>
+            <input type="text" id="cob-nombre"
+              style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+          </div>
+          <div class="campo"><label>Aplica a</label>
+            <select id="cob-aplica"
+              style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none">
+              <option value="AMBOS">Autos y Motos</option>
+              <option value="AUTO">Solo Autos</option>
+              <option value="MOTO">Solo Motos</option>
+            </select>
+          </div>
+          <div class="campo"><label>Orden (para ordenar en listas)</label>
+            <input type="number" id="cob-orden" value="0" min="0"
+              style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+          </div>
+          <div class="campo" style="display:flex;align-items:center;gap:8px">
+            <input type="checkbox" id="cob-activa" checked style="width:16px;height:16px">
+            <label for="cob-activa" style="margin:0;font-weight:600">Activa</label>
+          </div>
+          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+            <button class="btn-accion btn-gris" onclick="cerrarModalCobertura()">Cancelar</button>
+            <button class="btn-accion btn-verde" onclick="guardarCobertura()">Guardar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Concepto -->
+      <div id="modal-concepto" class="modal" style="display:none">
+        <div class="modal-box" style="max-width:460px">
+          <div class="modal-titulo" id="modal-con-titulo">Concepto</div>
+          <input type="hidden" id="con-id">
+          <input type="hidden" id="con-id-cobertura">
+          <div class="campo"><label>Concepto *</label>
+            <input type="text" id="con-concepto" placeholder="Ej. ROBO TOTAL"
+              style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+          </div>
+          <div class="campo"><label>Suma Asegurada</label>
+            <input type="text" id="con-suma" placeholder="Ej. $100,000 / AMPARADA"
+              style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+          </div>
+          <div class="campo"><label>Deducible</label>
+            <input type="text" id="con-deducible" placeholder="Ej. 10% / vacío si no aplica"
+              style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+          </div>
+          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+            <button class="btn-accion btn-gris" onclick="cerrarModalConcepto()">Cancelar</button>
+            <button class="btn-accion btn-verde" onclick="guardarConcepto()">Guardar</button>
           </div>
         </div>
       </div>
@@ -2605,8 +2715,9 @@ const DATOS_GEO = {
 let ultimosBusqueda  = [];
 let polizaActual     = null;
 let empresasCatalogo   = [];
-let asesoresFormCache  = [];
+let asesoresFormCache   = [];
 let cobradoresFormCache = [];
+let coberturasFormCache = [];
 
 async function buscarPolizas() {
   const termino = document.getElementById('poliza-busqueda').value.trim();
@@ -4051,13 +4162,14 @@ async function imprimirRecepcion(id_recepcion) {
 // ═══════════════════════════════════════════════════════════════
 
 function catTab(tab) {
-  ['empresas','tipo-poliza','asesores','cobradores'].forEach(t => {
+  ['empresas','tipo-poliza','asesores','cobradores','coberturas'].forEach(t => {
     document.getElementById('cat-' + t).style.display     = t === tab ? 'block' : 'none';
     document.getElementById('ctab-' + t).classList.toggle('activo', t === tab);
   });
   if (tab === 'empresas')   cargarEmpresas();
   if (tab === 'asesores')   cargarAsesoresCat();
   if (tab === 'cobradores') cargarCobradoresCat();
+  if (tab === 'coberturas') cargarCoberturasCat();
 }
 
 // ── EMPRESAS ─────────────────────────────────────────────────
@@ -4202,6 +4314,141 @@ async function guardarCobradorCat() {
   cargarCobradoresCat();
 }
 
+// ── COBERTURAS ────────────────────────────────────────────────
+let coberturaSeleccionadaId = null;
+let coberturasCache = [];
+
+async function cargarCoberturasCat() {
+  const tbody = document.getElementById('tbody-cat-coberturas');
+  tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--gray300)">Cargando…</td></tr>';
+  const res = await api({ accion: 'listar_coberturas', access_token: sesion.access_token });
+  if (!res.ok) { tbody.innerHTML = '<tr><td colspan="3" style="color:var(--red)">Error al cargar</td></tr>'; return; }
+  coberturasCache = res.coberturas || [];
+  if (coberturasCache.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:24px;color:var(--gray300)">Sin coberturas registradas</td></tr>';
+    return;
+  }
+  const aplLabel = { AUTO: '🚗 Auto', MOTO: '🏍 Moto', AMBOS: '🚗🏍 Ambos' };
+  tbody.innerHTML = coberturasCache.map(c => `
+    <tr style="cursor:pointer" onclick="seleccionarCobertura(${c.id})" id="cob-row-${c.id}">
+      <td><strong>${esc(c.nombre)}</strong></td>
+      <td style="font-size:11px">${aplLabel[c.aplica_a] || c.aplica_a}</td>
+      <td>
+        <button class="btn-accion btn-gris" style="padding:3px 10px;font-size:11px"
+          onclick="event.stopPropagation();abrirModalCobertura(${JSON.stringify(c).split('"').join('&quot;')})">✏️</button>
+      </td>
+    </tr>`).join('');
+  // Si había una seleccionada, re-seleccionar
+  if (coberturaSeleccionadaId) seleccionarCobertura(coberturaSeleccionadaId);
+}
+
+async function seleccionarCobertura(id) {
+  coberturaSeleccionadaId = id;
+  // Resaltar fila
+  document.querySelectorAll('[id^="cob-row-"]').forEach(r => r.style.background = '');
+  const row = document.getElementById('cob-row-' + id);
+  if (row) row.style.background = 'var(--gray50)';
+
+  document.getElementById('panel-conceptos').style.display = 'block';
+  document.getElementById('panel-conceptos-vacio').style.display = 'none';
+  const tbody = document.getElementById('tbody-conceptos');
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--gray300)">Cargando…</td></tr>';
+
+  const res = await api({ accion: 'detalle_cobertura', access_token: sesion.access_token, id_cobertura: id });
+  if (!res.ok) { tbody.innerHTML = '<tr><td colspan="5" style="color:var(--red)">Error</td></tr>'; return; }
+
+  document.getElementById('panel-cob-nombre').textContent = res.cobertura.nombre;
+  document.getElementById('con-id-cobertura').value = id;
+
+  const conceptos = res.conceptos || [];
+  if (conceptos.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--gray300)">Sin conceptos — agrega el primero</td></tr>';
+    return;
+  }
+  tbody.innerHTML = conceptos.map((c, i) => `
+    <tr>
+      <td style="color:var(--gray300);font-size:12px">${c.orden != null ? c.orden + 1 : i + 1}</td>
+      <td><strong>${esc(c.concepto)}</strong></td>
+      <td>${esc(c.suma_asegurada || '—')}</td>
+      <td>${esc(c.deducible || '—')}</td>
+      <td style="display:flex;gap:4px">
+        <button class="btn-accion btn-gris" style="padding:3px 8px;font-size:11px"
+          onclick='abrirModalConcepto(${JSON.stringify(c)})'>✏️</button>
+        <button class="btn-accion" style="padding:3px 8px;font-size:11px;background:var(--red);color:#fff;border-radius:var(--radius)"
+          onclick="eliminarConcepto(${c.id})">🗑</button>
+      </td>
+    </tr>`).join('');
+}
+
+function abrirModalCobertura(c) {
+  document.getElementById('modal-cobertura').style.display = 'flex';
+  document.getElementById('modal-cob-titulo').textContent = c ? 'Editar Cobertura' : 'Nueva Cobertura';
+  document.getElementById('cob-id').value     = c?.id || '';
+  document.getElementById('cob-nombre').value = c?.nombre || '';
+  document.getElementById('cob-aplica').value = c?.aplica_a || 'AMBOS';
+  document.getElementById('cob-orden').value  = c?.orden ?? 0;
+  document.getElementById('cob-activa').checked = c ? (c.activa ?? true) : true;
+}
+function cerrarModalCobertura() { document.getElementById('modal-cobertura').style.display = 'none'; }
+
+async function guardarCobertura() {
+  const nombre = document.getElementById('cob-nombre').value.trim();
+  if (!nombre) { alerta('El nombre es requerido', 'rojo'); return; }
+  const id = document.getElementById('cob-id').value;
+  const res = await api({
+    accion: 'guardar_cobertura', access_token: sesion.access_token,
+    id: id ? Number(id) : null,
+    nombre,
+    aplica_a: document.getElementById('cob-aplica').value,
+    activa:   document.getElementById('cob-activa').checked,
+    orden:    parseInt(document.getElementById('cob-orden').value) || 0,
+  });
+  if (!res.ok) { alerta(res.error || 'Error al guardar', 'rojo'); return; }
+  alerta('Cobertura guardada', 'verde');
+  cerrarModalCobertura();
+  cargarCoberturasCat();
+  coberturasFormCache = []; // limpiar caché del formulario de pólizas
+}
+
+function abrirModalConcepto(c) {
+  document.getElementById('modal-concepto').style.display = 'flex';
+  document.getElementById('modal-con-titulo').textContent = c ? 'Editar Concepto' : 'Nuevo Concepto';
+  document.getElementById('con-id').value        = c?.id || '';
+  document.getElementById('con-concepto').value  = c?.concepto || '';
+  document.getElementById('con-suma').value      = c?.suma_asegurada || '';
+  document.getElementById('con-deducible').value = c?.deducible || '';
+  if (c?.id_cobertura) document.getElementById('con-id-cobertura').value = c.id_cobertura;
+}
+function cerrarModalConcepto() { document.getElementById('modal-concepto').style.display = 'none'; }
+
+async function guardarConcepto() {
+  const concepto = document.getElementById('con-concepto').value.trim();
+  if (!concepto) { alerta('El concepto es requerido', 'rojo'); return; }
+  const id = document.getElementById('con-id').value;
+  const idCob = document.getElementById('con-id-cobertura').value;
+  const res = await api({
+    accion: 'guardar_concepto', access_token: sesion.access_token,
+    id:            id ? Number(id) : null,
+    id_cobertura:  Number(idCob),
+    concepto,
+    suma_asegurada: document.getElementById('con-suma').value.trim() || null,
+    deducible:      document.getElementById('con-deducible').value.trim() || null,
+    orden:          document.querySelectorAll('#tbody-conceptos tr').length,
+  });
+  if (!res.ok) { alerta(res.error || 'Error al guardar', 'rojo'); return; }
+  alerta('Concepto guardado', 'verde');
+  cerrarModalConcepto();
+  seleccionarCobertura(Number(idCob));
+}
+
+async function eliminarConcepto(id) {
+  if (!confirm('¿Eliminar este concepto?')) return;
+  const res = await api({ accion: 'eliminar_concepto', access_token: sesion.access_token, id });
+  if (!res.ok) { alerta(res.error || 'Error', 'rojo'); return; }
+  alerta('Concepto eliminado', 'verde');
+  seleccionarCobertura(coberturaSeleccionadaId);
+}
+
 // ═══════════════════════════════════════════════════════════════
 // FORMULARIO CAPTURA / EDICIÓN DE PÓLIZAS
 // ═══════════════════════════════════════════════════════════════
@@ -4255,10 +4502,45 @@ async function cargarEmpresasForm() {
     }
   }
 
+  // Coberturas
+  if (coberturasFormCache.length === 0) {
+    const res = await api({ accion: 'listar_coberturas', access_token: sesion.access_token });
+    if (res.ok) {
+      coberturasFormCache = res.coberturas || [];
+      const sel = document.getElementById('fp-tipo-cobertura');
+      while (sel.options.length > 1) sel.remove(1);
+      coberturasFormCache.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.nombre;
+        opt.textContent = c.nombre;
+        opt.dataset.id = c.id;
+        sel.appendChild(opt);
+      });
+    }
+  }
+
   // Poblar select de estados
   poblarEstados();
   // Poblar marcas (autos por defecto)
   onTipoVehiculoChange();
+}
+
+async function onCoberturaChange() {
+  const sel   = document.getElementById('fp-tipo-cobertura');
+  const opt   = sel.options[sel.selectedIndex];
+  const idCob = opt?.dataset?.id;
+  const preview = document.getElementById('fp-cob-preview');
+  if (!idCob) { preview.style.display = 'none'; return; }
+  const res = await api({ accion: 'detalle_cobertura', access_token: sesion.access_token, id_cobertura: Number(idCob) });
+  if (!res.ok || !res.conceptos?.length) { preview.style.display = 'none'; return; }
+  document.getElementById('fp-cob-preview-titulo').textContent = res.cobertura.nombre;
+  document.getElementById('fp-cob-preview-body').innerHTML = res.conceptos.map(c => `
+    <tr>
+      <td style="padding:3px 8px;border-bottom:1px solid var(--gray100)">${esc(c.concepto)}</td>
+      <td style="padding:3px 8px;border-bottom:1px solid var(--gray100)">${esc(c.suma_asegurada || '—')}</td>
+      <td style="padding:3px 8px;border-bottom:1px solid var(--gray100)">${esc(c.deducible || '—')}</td>
+    </tr>`).join('');
+  preview.style.display = 'block';
 }
 
 function poblarEstados() {
@@ -4346,9 +4628,11 @@ async function abrirFormPoliza(datos) {
    'fp-color','fp-placas','fp-motor','fp-serie']
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   // reset selects póliza
-  document.getElementById('fp-empresa').value     = '';
-  document.getElementById('fp-tipo-poliza').value = '';
-  document.getElementById('fp-tipo-cobro').value  = '';
+  document.getElementById('fp-empresa').value       = '';
+  document.getElementById('fp-tipo-poliza').value   = '';
+  document.getElementById('fp-tipo-cobertura').value = '';
+  document.getElementById('fp-cob-preview').style.display = 'none';
+  document.getElementById('fp-tipo-cobro').value    = '';
   document.getElementById('fp-asesor').value      = '';
   document.getElementById('fp-cobrador').value    = '';
   document.getElementById('fp-estado').value      = '';

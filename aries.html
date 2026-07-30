@@ -871,22 +871,37 @@ tr:hover td { background: var(--gray50); }
 
             <!-- Vehículo -->
             <div class="card">
-              <div style="font-size:11px;font-weight:700;color:var(--gray300);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px">Vehículo</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+                <div style="font-size:11px;font-weight:700;color:var(--gray300);letter-spacing:1px;text-transform:uppercase">Vehículo</div>
+                <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--navy);cursor:pointer">
+                  <input type="checkbox" id="fp-moto" style="width:16px;height:16px" onchange="onTipoVehiculoChange()">
+                  Motocicleta
+                </label>
+              </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-                <div class="campo" style="grid-column:1/-1">
-                  <label>Descripción Vehículo *</label>
-                  <input type="text" id="fp-vehiculo" placeholder="Marca y submarca"
-                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                <!-- Descripción auto-generada (oculta, se usa para guardar) -->
+                <input type="hidden" id="fp-vehiculo">
+
+                <div class="campo">
+                  <label>Marca *</label>
+                  <select id="fp-marca" onchange="onMarcaVehChange()"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none">
+                    <option value="">— Selecciona —</option>
+                  </select>
                 </div>
                 <div class="campo">
-                  <label>Modelo (año)</label>
-                  <input type="number" id="fp-modelo" placeholder="2024"
-                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                  <label>Submarca / Modelo</label>
+                  <select id="fp-tipo-vehiculo" onchange="onSubmarcaVehChange()" disabled
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;opacity:.5">
+                    <option value="">— Selecciona marca —</option>
+                  </select>
                 </div>
                 <div class="campo">
-                  <label>Tipo</label>
-                  <input type="text" id="fp-tipo-vehiculo" placeholder="Sedan, SUV…"
-                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                  <label>Año</label>
+                  <select id="fp-modelo" onchange="actualizarDescVehiculo()" disabled
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;opacity:.5">
+                    <option value="">— Selecciona submarca —</option>
+                  </select>
                 </div>
                 <div class="campo">
                   <label>Color</label>
@@ -907,10 +922,6 @@ tr:hover td { background: var(--gray50); }
                   <label>No. Serie / VIN</label>
                   <input type="text" id="fp-serie"
                     style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
-                </div>
-                <div class="campo" style="display:flex;align-items:center;gap:8px">
-                  <input type="checkbox" id="fp-moto" style="width:18px;height:18px">
-                  <label for="fp-moto" style="margin:0;font-weight:600">Motocicleta</label>
                 </div>
               </div>
             </div>
@@ -1924,6 +1935,307 @@ function esc(str) {
   return String(str ?? '')
     .replace(/&/g,'&amp;').replace(/</g,'&lt;')
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── CATÁLOGO DE VEHÍCULOS (marca → submarca → años) ──────────
+const VEHICULOS_MX = {
+  // ── AUTOS ────────────────────────────────────────────────────
+  "Acura": {
+    "ILX": [], "MDX": [], "RDX": [], "TLX": []
+  },
+  "Audi": {
+    "A1": [], "A3": [], "A4": [], "A5": [], "A6": [], "A7": [],
+    "Q2": [], "Q3": [], "Q5": [], "Q7": [], "Q8": [],
+    "TT": [], "e-tron": []
+  },
+  "BMW": {
+    "Serie 1": [], "Serie 2": [], "Serie 3": [], "Serie 4": [], "Serie 5": [],
+    "X1": [], "X2": [], "X3": [], "X4": [], "X5": [], "X6": [], "X7": [],
+    "Z4": []
+  },
+  "Buick": {
+    "Enclave": [], "Encore": [], "Encore GX": [], "Envision": [], "LaCrosse": []
+  },
+  "Cadillac": {
+    "CT4": [], "CT5": [], "Escalade": [], "XT4": [], "XT5": [], "XT6": []
+  },
+  "Chevrolet": {
+    "Aveo": [], "Beat": [], "Blazer": [], "Camaro": [], "Captiva": [],
+    "Cavalier": [], "Colorado": [], "Corvette": [], "Cruze": [],
+    "Equinox": [], "Express": [], "Groove": [], "Malibu": [],
+    "Montana": [], "Onix": [], "S10": [], "Silverado": [],
+    "Sonic": [], "Spark": [], "Suburban": [], "Tahoe": [],
+    "Tornado": [], "Tracker": [], "Trailblazer": [], "Trax": []
+  },
+  "Chrysler": {
+    "300": [], "Pacifica": [], "Town & Country": [], "Voyager": []
+  },
+  "Dodge": {
+    "Attitude": [], "Challenger": [], "Charger": [], "Dart": [],
+    "Durango": [], "Journey": [], "Neon": [], "Ram 700": [],
+    "Ram 1500": [], "Ram 2500": [], "Viper": []
+  },
+  "Fiat": {
+    "500": [], "500X": [], "Cronos": [], "Fastback": [], "Mobi": [],
+    "Pulse": [], "Strada": [], "Toro": []
+  },
+  "Ford": {
+    "Bronco": [], "Bronco Sport": [], "EcoSport": [], "Edge": [],
+    "Escape": [], "Expedition": [], "Explorer": [], "F-150": [],
+    "F-250": [], "Fiesta": [], "Figo": [], "Fusion": [],
+    "Galaxy": [], "Ka": [], "Maverick": [], "Mustang": [],
+    "Ranger": [], "Territory": [], "Transit": []
+  },
+  "GMC": {
+    "Acadia": [], "Canyon": [], "Envoy": [], "Jimmy": [],
+    "Sierra": [], "Suburban": [], "Terrain": [], "Yukon": []
+  },
+  "Honda": {
+    "Accord": [], "BR-V": [], "City": [], "Civic": [], "CR-V": [],
+    "CR-Z": [], "Fit": [], "HR-V": [], "Insight": [], "Jazz": [],
+    "Odyssey": [], "Passport": [], "Pilot": [], "Ridgeline": []
+  },
+  "Hyundai": {
+    "Accent": [], "Creta": [], "Elantra": [], "Grand i10": [],
+    "HB20": [], "i10": [], "Ioniq": [], "Kona": [], "Santa Fe": [],
+    "Sonata": [], "Tucson": [], "Venue": []
+  },
+  "Infiniti": {
+    "Q50": [], "Q60": [], "Q70": [], "QX50": [], "QX60": [], "QX80": []
+  },
+  "Jeep": {
+    "Cherokee": [], "Compass": [], "Gladiator": [], "Grand Cherokee": [],
+    "Renegade": [], "Wrangler": []
+  },
+  "Kia": {
+    "Carnival": [], "Forte": [], "K5": [], "Niro": [], "Picanto": [],
+    "Rio": [], "Seltos": [], "Soluto": [], "Sorento": [], "Soul": [],
+    "Sportage": [], "Stinger": [], "Telluride": []
+  },
+  "Land Rover": {
+    "Defender": [], "Discovery": [], "Discovery Sport": [],
+    "Freelander": [], "Range Rover": [], "Range Rover Evoque": [],
+    "Range Rover Sport": [], "Range Rover Velar": []
+  },
+  "Lexus": {
+    "ES": [], "GX": [], "IS": [], "LX": [], "NX": [],
+    "RX": [], "UX": []
+  },
+  "Lincoln": {
+    "Aviator": [], "Continental": [], "Corsair": [],
+    "MKC": [], "MKX": [], "MKZ": [], "Nautilus": [], "Navigator": []
+  },
+  "Mazda": {
+    "2": [], "3": [], "5": [], "6": [], "CX-3": [], "CX-30": [],
+    "CX-5": [], "CX-50": [], "CX-9": [], "MX-5": [], "MX-30": []
+  },
+  "Mercedes-Benz": {
+    "Clase A": [], "Clase B": [], "Clase C": [], "Clase E": [],
+    "Clase G": [], "Clase S": [], "CLA": [], "CLS": [],
+    "GLA": [], "GLB": [], "GLC": [], "GLE": [], "GLS": [],
+    "SL": [], "SLC": []
+  },
+  "MG": {
+    "3": [], "5": [], "EHS": [], "HS": [], "Marvel R": [], "RX5": [],
+    "ZS": [], "ZS EV": []
+  },
+  "Mitsubishi": {
+    "ASX": [], "Eclipse Cross": [], "Galant": [], "L200": [],
+    "Lancer": [], "Mirage": [], "Montero": [], "Montero Sport": [],
+    "Outlander": [], "RVR": []
+  },
+  "Nissan": {
+    "Altima": [], "Armada": [], "Frontier": [], "Kicks": [], "Leaf": [],
+    "March": [], "Maxima": [], "Micra": [], "Murano": [], "NP300": [],
+    "Pathfinder": [], "Qashqai": [], "Rogue": [], "Sentra": [],
+    "Tiida": [], "Tsuru": [], "Urvan": [], "Versa": [], "X-Trail": [],
+    "Xterra": []
+  },
+  "Peugeot": {
+    "2008": [], "208": [], "3008": [], "301": [], "308": [],
+    "408": [], "5008": [], "508": [], "Partner": []
+  },
+  "Porsche": {
+    "718": [], "911": [], "Cayenne": [], "Macan": [], "Panamera": [],
+    "Taycan": []
+  },
+  "Ram": {
+    "700": [], "1500": [], "2500": [], "3500": [], "ProMaster": []
+  },
+  "Renault": {
+    "Captur": [], "Clio": [], "Duster": [], "Fluence": [], "Kangoo": [],
+    "Koleos": [], "Logan": [], "Oroch": [], "Sandero": [], "Stepway": []
+  },
+  "Seat": {
+    "Arona": [], "Ateca": [], "Ibiza": [], "León": [], "Tarraco": []
+  },
+  "Subaru": {
+    "BRZ": [], "Crosstrek": [], "Forester": [], "Impreza": [],
+    "Legacy": [], "Outback": [], "WRX": []
+  },
+  "Suzuki": {
+    "Baleno": [], "Ciaz": [], "Ertiga": [], "Grand Vitara": [],
+    "Ignis": [], "S-Cross": [], "Swift": [], "Vitara": []
+  },
+  "Tesla": {
+    "Model 3": [], "Model S": [], "Model X": [], "Model Y": []
+  },
+  "Toyota": {
+    "4Runner": [], "Avanza": [], "Avalon": [], "bZ4X": [],
+    "C-HR": [], "Camry": [], "Corolla": [], "Corolla Cross": [],
+    "FJ Cruiser": [], "GR86": [], "Highlander": [], "Land Cruiser": [],
+    "Prius": [], "RAV4": [], "Rush": [], "Sequoia": [], "Sienna": [],
+    "Tacoma": [], "Tundra": [], "Venza": [], "Yaris": []
+  },
+  "Volkswagen": {
+    "Amarok": [], "Beetle": [], "Caravelle": [], "Crafter": [],
+    "Golf": [], "Jetta": [], "Passat": [], "Polo": [],
+    "T-Cross": [], "T-Roc": [], "Taos": [], "Teramont": [],
+    "Tiguan": [], "Touareg": [], "Transporter": [], "Virtus": [], "Vento": []
+  },
+  "Volvo": {
+    "C40": [], "S60": [], "S90": [], "V60": [], "V90": [],
+    "XC40": [], "XC60": [], "XC90": []
+  },
+  // ── MOTOS ────────────────────────────────────────────────────
+  "🏍 Benelli": {
+    "502C": [], "Imperiale 400": [], "Leoncino 500": [],
+    "TNT 150": [], "TNT 150S": [], "TNT 25": [], "TRK 502": [],
+    "TRK 502X": []
+  },
+  "🏍 CF Moto": {
+    "150NK": [], "300NK": [], "400NK": [], "650MT": [],
+    "650NK": [], "700CL-X": [], "800MT": []
+  },
+  "🏍 Honda": {
+    "CB190R": [], "CB300R": [], "CB500F": [], "CB500X": [],
+    "CBR300R": [], "CBR500R": [], "CG 150": [], "CGL 125": [],
+    "CRF300L": [], "CRF300 Rally": [], "Elite 125": [],
+    "Forza 350": [], "NXR 160": [], "PCX 150": [],
+    "Twister 250": [], "Wave 110": [], "XR 150L": [], "XR 190L": []
+  },
+  "🏍 Italika": {
+    "AT110": [], "CS125": [], "DS150": [], "DM150": [],
+    "FT125": [], "FT150": [], "FT180": [], "GS150": [],
+    "GTS175": [], "RC150": [], "TS150": [], "XT110": [], "XTC125": [],
+    "WS150": [], "WS175": [], "ZS150": [], "Argon 250": []
+  },
+  "🏍 Kawasaki": {
+    "Ninja 300": [], "Ninja 400": [], "Ninja 650": [],
+    "Versys 300": [], "Versys 650": [],
+    "W175": [], "W800": [], "Z300": [], "Z400": [], "Z650": [],
+    "KLX 230": [], "KLX 300R": []
+  },
+  "🏍 Keeway": {
+    "Cafe Racer 152": [], "CR 152": [], "Flash 150": [],
+    "Hurricane 200": [], "RKS 125": [], "Superlight 200": [],
+    "TX 200": []
+  },
+  "🏍 KTM": {
+    "200 Duke": [], "390 Adventure": [], "390 Duke": [],
+    "250 Duke": [], "RC 390": [], "690 Duke": []
+  },
+  "🏍 Motos Nuevas": {
+    "Akt 125": [], "Akt 150": [], "Kymco Agility 125": [],
+    "Kymco Like 125": [], "Kymco People 150": [], "Vento V-Thunder 250": [],
+    "Vento Phantom R9": [], "Vento Rebellian 250": []
+  },
+  "🏍 Royal Enfield": {
+    "Bullet 350": [], "Classic 350": [], "Himalayan": [],
+    "Hunter 350": [], "Meteor 350": [], "Scram 411": [],
+    "Thunderbird 350": []
+  },
+  "🏍 Suzuki": {
+    "Address 110": [], "Avenis 125": [], "Bandit 650": [],
+    "DR 200S": [], "Gixxer 150": [], "GS500F": [],
+    "GW250": [], "Intruder 150": [], "Inazuma 250": [],
+    "V-Strom 250": [], "V-Strom 650": []
+  },
+  "🏍 TVS": {
+    "Apache RTR 160": [], "Apache RTR 200": [], "Metro Plus 110": [],
+    "Ntorq 125": [], "Raider 125": [], "Ronin 225": [], "Star City 110": []
+  },
+  "🏍 Vento": {
+    "Arcon 250": [], "Crossmax 250": [], "Phantom R9": [],
+    "Rebellian 250": [], "V-Thunder 250": [], "Workman 150": []
+  },
+  "🏍 Yamaha": {
+    "FZ 150": [], "FZ 250": [], "FZS 150": [], "FZS 250": [],
+    "MT-03": [], "MT-07": [], "MT-09": [], "NMAX 155": [],
+    "R3": [], "R6": [], "Ray ZR 125": [], "SZ 150": [],
+    "Tmax 530": [], "XT 250": [], "XSR 155": [], "YBR 125": [],
+    "YZFR3": []
+  }
+};
+
+function resetVehiculoSelects() {
+  const selMarca = document.getElementById('fp-marca');
+  const selSub   = document.getElementById('fp-tipo-vehiculo');
+  const selAnio  = document.getElementById('fp-modelo');
+  selMarca.innerHTML = '<option value="">— Selecciona —</option>';
+  selSub.innerHTML   = '<option value="">— Selecciona marca —</option>';
+  selSub.disabled = true; selSub.style.opacity = '.5';
+  selAnio.innerHTML  = '<option value="">— Selecciona submarca —</option>';
+  selAnio.disabled = true; selAnio.style.opacity = '.5';
+  document.getElementById('fp-vehiculo').value = '';
+}
+
+function onTipoVehiculoChange() {
+  const esMoto = document.getElementById('fp-moto').checked;
+  resetVehiculoSelects();
+  const selMarca = document.getElementById('fp-marca');
+  const marcas = Object.keys(VEHICULOS_MX)
+    .filter(m => esMoto ? m.startsWith('🏍') : !m.startsWith('🏍'))
+    .sort((a, b) => a.replace('🏍 ','').localeCompare(b.replace('🏍 ','')));
+  marcas.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = m.replace('🏍 ', '');
+    selMarca.appendChild(opt);
+  });
+}
+
+function onMarcaVehChange() {
+  const marca  = document.getElementById('fp-marca').value;
+  const selSub = document.getElementById('fp-tipo-vehiculo');
+  const selAnio = document.getElementById('fp-modelo');
+  selSub.innerHTML = '<option value="">— Selecciona submarca —</option>';
+  selSub.disabled = !marca; selSub.style.opacity = marca ? '1' : '.5';
+  selAnio.innerHTML = '<option value="">— Selecciona submarca —</option>';
+  selAnio.disabled = true; selAnio.style.opacity = '.5';
+  document.getElementById('fp-vehiculo').value = '';
+  if (!marca) return;
+  const submarcas = Object.keys(VEHICULOS_MX[marca] || {}).sort();
+  submarcas.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s; opt.textContent = s;
+    selSub.appendChild(opt);
+  });
+}
+
+function onSubmarcaVehChange() {
+  const marca    = document.getElementById('fp-marca').value;
+  const submarca = document.getElementById('fp-tipo-vehiculo').value;
+  const selAnio  = document.getElementById('fp-modelo');
+  selAnio.innerHTML = '<option value="">— Selecciona año —</option>';
+  selAnio.disabled = !submarca; selAnio.style.opacity = submarca ? '1' : '.5';
+  if (!submarca) return;
+  const anioActual = new Date().getFullYear();
+  for (let y = anioActual + 1; y >= 1990; y--) {
+    const opt = document.createElement('option');
+    opt.value = y; opt.textContent = y;
+    selAnio.appendChild(opt);
+  }
+  // auto-generar descripción al cambiar submarca también
+  actualizarDescVehiculo();
+}
+
+function actualizarDescVehiculo() {
+  const marca    = document.getElementById('fp-marca').value.replace('🏍 ', '');
+  const submarca = document.getElementById('fp-tipo-vehiculo').value;
+  const anio     = document.getElementById('fp-modelo').value;
+  document.getElementById('fp-vehiculo').value =
+    [marca, submarca, anio].filter(Boolean).join(' ');
 }
 
 // ── DATOS GEOGRÁFICOS (estado → municipio → colonias) ─────
@@ -3820,6 +4132,8 @@ async function cargarEmpresasForm() {
 
   // Poblar select de estados
   poblarEstados();
+  // Poblar marcas (autos por defecto)
+  onTipoVehiculoChange();
 }
 
 function poblarEstados() {
@@ -3904,9 +4218,9 @@ async function abrirFormPoliza(datos) {
    'fp-costo','fp-pago-inicial','fp-pagos-de',
    'fp-nombre','fp-tel1','fp-tel2','fp-correo',
    'fp-domicilio','fp-dom-cobro',
-   'fp-vehiculo','fp-modelo','fp-tipo-vehiculo','fp-color',
-   'fp-placas','fp-motor','fp-serie']
+   'fp-color','fp-placas','fp-motor','fp-serie']
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  // reset selects póliza
   document.getElementById('fp-empresa').value     = '';
   document.getElementById('fp-tipo-poliza').value = '';
   document.getElementById('fp-tipo-cobro').value  = '';
@@ -3920,7 +4234,6 @@ async function abrirFormPoliza(datos) {
   selMun.disabled = true; selMun.style.opacity = '.5';
   selCol.innerHTML = '<option value="">— Selecciona municipio —</option>';
   selCol.disabled = true; selCol.style.opacity = '.5';
-  document.getElementById('fp-moto').checked      = false;
   document.getElementById('fp-id-poliza').disabled = false;
 
   if (!esNueva) {
@@ -3972,14 +4285,36 @@ async function abrirFormPoliza(datos) {
     }
     document.getElementById('fp-dom-cobro').value = c.domicilio_cobro || '';
 
-    document.getElementById('fp-vehiculo').value      = v.vehiculo || '';
-    document.getElementById('fp-modelo').value        = v.modelo || '';
-    document.getElementById('fp-tipo-vehiculo').value = v.tipo || '';
+    // Cargar vehículo con cascada
+    document.getElementById('fp-moto').checked = v.motocicleta || false;
+    onTipoVehiculoChange(); // poblar marcas según tipo
+    if (v.vehiculo) {
+      // vehiculo guardado = "Marca Submarca Año" o texto libre
+      // Intentar desglosar: primero palabra = marca, segunda = submarca, resto = año
+      const partes = (v.vehiculo || '').split(' ');
+      const marcaGuardada    = partes[0] || '';
+      const submarcaGuardada = partes.slice(1, -1).join(' ') || partes[1] || '';
+      const anioGuardado     = partes[partes.length - 1] || '';
+
+      const selMarca = document.getElementById('fp-marca');
+      selMarca.value = marcaGuardada;
+      if (selMarca.value) {
+        onMarcaVehChange();
+        const selSub = document.getElementById('fp-tipo-vehiculo');
+        selSub.value = submarcaGuardada;
+        if (selSub.value) {
+          onSubmarcaVehChange();
+          document.getElementById('fp-modelo').value = anioGuardado;
+        }
+      } else {
+        // texto libre de registros viejos: mostrar en campo oculto tal cual
+        document.getElementById('fp-vehiculo').value = v.vehiculo;
+      }
+    }
     document.getElementById('fp-color').value         = v.color || '';
     document.getElementById('fp-placas').value        = v.placas || '';
     document.getElementById('fp-motor').value         = v.motor || '';
     document.getElementById('fp-serie').value         = v.numero_serie || '';
-    document.getElementById('fp-moto').checked        = v.motocicleta || false;
   }
 }
 
@@ -3996,9 +4331,15 @@ function cerrarFormPoliza() {
 async function guardarPoliza() {
   const idPoliza     = document.getElementById('fp-id-poliza').value.trim();
   const nombre       = document.getElementById('fp-nombre').value.trim();
-  const vehiculoDesc = document.getElementById('fp-vehiculo').value.trim();
-  if (!idPoliza)     { alerta('El número de póliza es requerido', 'rojo'); return; }
-  if (!nombre)       { alerta('El nombre del cliente es requerido', 'rojo'); return; }
+  if (!idPoliza) { alerta('El número de póliza es requerido', 'rojo'); return; }
+  if (!nombre)   { alerta('El nombre del cliente es requerido', 'rojo'); return; }
+  const marca    = document.getElementById('fp-marca').value.trim();
+  const submarca = document.getElementById('fp-tipo-vehiculo').value.trim();
+  const anio     = document.getElementById('fp-modelo').value;
+  // Descripción: combina los tres campos; si es registro viejo sin cascada, usa el hidden
+  const vehiculoDesc = marca
+    ? [marca, submarca, anio].filter(Boolean).join(' ')
+    : document.getElementById('fp-vehiculo').value.trim();
   if (!vehiculoDesc) { alerta('La descripción del vehículo es requerida', 'rojo'); return; }
 
   const res = await api({
@@ -4033,8 +4374,8 @@ async function guardarPoliza() {
     },
     vehiculo: {
       vehiculo:     vehiculoDesc,
-      modelo:       parseInt(document.getElementById('fp-modelo').value) || null,
-      tipo:         document.getElementById('fp-tipo-vehiculo').value.trim() || null,
+      modelo:       parseInt(anio) || null,
+      tipo:         submarca || null,
       color:        document.getElementById('fp-color').value.trim() || null,
       placas:       document.getElementById('fp-placas').value.trim() || null,
       motor:        document.getElementById('fp-motor').value.trim() || null,

@@ -761,17 +761,19 @@ tr:hover td { background: var(--gray50); }
                 </div>
                 <div class="campo">
                   <label>Asesor</label>
-                  <input type="text" id="fp-asesor" placeholder="Nombre del asesor"
-                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                  <select id="fp-asesor" style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none">
+                    <option value="">— Selecciona —</option>
+                  </select>
                 </div>
                 <div class="campo">
                   <label>Cobrador</label>
-                  <input type="text" id="fp-cobrador" placeholder="Nombre del cobrador"
-                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                  <select id="fp-cobrador" style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none">
+                    <option value="">— Selecciona —</option>
+                  </select>
                 </div>
                 <div class="campo">
                   <label>Inicio Vigencia</label>
-                  <input type="date" id="fp-inicio-vigencia"
+                  <input type="date" id="fp-inicio-vigencia" onchange="autoTerminoVigencia()"
                     style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
                 </div>
                 <div class="campo">
@@ -839,14 +841,25 @@ tr:hover td { background: var(--gray50); }
                     style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
                 </div>
                 <div class="campo">
-                  <label>Colonia</label>
-                  <input type="text" id="fp-colonia"
-                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                  <label>Estado</label>
+                  <select id="fp-estado" onchange="onEstadoChange()"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none">
+                    <option value="">— Selecciona —</option>
+                  </select>
                 </div>
                 <div class="campo">
                   <label>Municipio</label>
-                  <input type="text" id="fp-municipio"
-                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                  <select id="fp-municipio" onchange="onMunicipioChange()" disabled
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;opacity:.5">
+                    <option value="">— Selecciona estado —</option>
+                  </select>
+                </div>
+                <div class="campo" style="grid-column:1/-1">
+                  <label>Colonia</label>
+                  <select id="fp-colonia" disabled
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;opacity:.5">
+                    <option value="">— Selecciona municipio —</option>
+                  </select>
                 </div>
                 <div class="campo" style="grid-column:1/-1">
                   <label>Domicilio de Cobro</label>
@@ -1913,10 +1926,250 @@ function esc(str) {
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// ── DATOS GEOGRÁFICOS (estado → municipio → colonias) ─────
+const DATOS_GEO = {
+  "Aguascalientes": {
+    "Aguascalientes": ["Centro","Morelos","Insurgentes","Las Américas","Jardines de la Asunción","Valle de San José","Lindavista","Del Bosque","Ferrocarrilera","Ojocaliente"],
+    "Jesús María": ["Centro","La Cañada","Palo Alto"],
+    "Calvillo": ["Centro","La Quemada"],
+    "Rincón de Romos": ["Centro","Las Cañadas"],
+    "Pabellón de Arteaga": ["Centro","El Salitre"]
+  },
+  "Baja California": {
+    "Tijuana": ["Centro","Zona Río","Otay","La Mesa","Playas de Tijuana","Castillo","Garita","Libertad","El Florido","Villa del Campo"],
+    "Mexicali": ["Centro","Nueva","Pueblo Nuevo","Cuauhtémoc","Burocrática","Jardines del Lago","Federal"],
+    "Ensenada": ["Centro","Chapultepec","Lomas","El Sauzal","Jardines","Vista del Mar"],
+    "Tecate": ["Centro","Jardines de Tecate"],
+    "Rosarito": ["Centro","Las Gaviotas","Oceano"]
+  },
+  "Baja California Sur": {
+    "La Paz": ["Centro","El Manglito","Mezquitito","Pueblo Nuevo","Esterito","Las Palmas","Conchalito"],
+    "Los Cabos": ["San José del Cabo Centro","Cabo San Lucas Centro","El Tezal","Hacienda","Pedregal"],
+    "Comondú": ["Ciudad Constitución Centro","Cd. Insurgentes"],
+    "Mulegé": ["Santa Rosalía Centro","Loreto Centro"]
+  },
+  "Campeche": {
+    "Campeche": ["Centro","San Román","San Francisco","Guadalupe","Sampán","China","Bellavista"],
+    "Ciudad del Carmen": ["Centro","Renovación","Ind. 1","Aviación","Laguna Azul"],
+    "Calkiní": ["Centro","Bécal"],
+    "Champotón": ["Centro"]
+  },
+  "Chiapas": {
+    "Tuxtla Gutiérrez": ["Centro","Terán","Patria Nueva","Jardines de Tuxtla","La Cañada","Fovissste","Bugambilias","Las Granjas"],
+    "San Cristóbal de las Casas": ["Centro","El Cerrillo","Guadalupe","El Nogalito"],
+    "Tapachula": ["Centro","Héroes de Chapultepec","Magisterial","Las Vegas"],
+    "Comitán de Domínguez": ["Centro","San Sebastián","Bellavista"],
+    "Ocosingo": ["Centro"]
+  },
+  "Chihuahua": {
+    "Chihuahua": ["Centro","Obregón","San Felipe","Granjas","La Salle","Altavista","Cerro Grande","Mirador","Cumbres"],
+    "Ciudad Juárez": ["Centro","Partido Romero","Felipe Ángeles","Aztecas","Del Prado","Villas del Rey","Partido Iglesias","Revolución","Chaveña","Sierra Azul"],
+    "Delicias": ["Centro","Hidalgo","Reforma"],
+    "Cuauhtémoc": ["Centro","Nuevo","Jardines"],
+    "Parral": ["Centro","El Amparo","Barrio Chino"]
+  },
+  "Ciudad de México": {
+    "Álvaro Obregón": ["Santa Fe","Olivar de los Padres","Lomas de Plateros","Florida","Tlacopac","San Ángel","Axotla","Merced Gómez"],
+    "Azcapotzalco": ["Del Gas","San Marcos","Clavería","Pasteros","Tezozómoc","Santiago Ahuizotla"],
+    "Benito Juárez": ["Del Valle","Narvarte","Portales","Álamos","Insurgentes","Letrán Valle","Xoco","Ciudad de los Deportes"],
+    "Coyoacán": ["Del Carmen","Pedregal","Churubusco","Copilco","El Rosario","Parque San Andrés"],
+    "Cuajimalpa": ["Cuajimalpa","Contadero","Santa Fe","Zacamulpa"],
+    "Cuauhtémoc": ["Centro","Doctores","Tepito","Guerrero","Morelos","Buenavista","Obrera","Algarín","Paulino Navarro","Santa María la Ribera"],
+    "Gustavo A. Madero": ["Lindavista","San Bartolo Atepehuacan","Vallejo","Aragón","Tepeyac"],
+    "Iztacalco": ["Agrícola Oriental","Gabriel Ramos Millán","Pantitlán","Militar Marte","Tlacotal"],
+    "Iztapalapa": ["Iztapalapa","Ejército de Oriente","San Miguel Teotongo","Lomas de la Estancia","Paraje San Juan"],
+    "La Magdalena Contreras": ["San Jerónimo","Pedregal de San Nicolás","La Magdalena Contreras"],
+    "Miguel Hidalgo": ["Polanco","Lomas de Chapultepec","Anzures","Tacuba","Popotla","América","Daniel Garza"],
+    "Milpa Alta": ["Milpa Alta","San Pedro Atocpan","Villa Milpa Alta"],
+    "Tláhuac": ["Del Mar","San Juan Ixtayopan","La Turba","Zapotitla"],
+    "Tlalpan": ["Tlalpan Centro","Pedregal de Carrasco","Fuentes del Pedregal","San Pedro Mártir","Isidro Fabela"],
+    "Venustiano Carranza": ["Jardín Balbuena","Moctezuma","Pensil","Tepito","Merced"],
+    "Xochimilco": ["Xochimilco","Santa Cruz Acalpixca","San Gregorio Atlapulco","San Luis Tlaxialtemalco"]
+  },
+  "Coahuila": {
+    "Saltillo": ["Centro","República","Los Maestros","La Salle","Lomas del Valle","Las Granjas","San Jorge","Topochico","Villa Olímpica"],
+    "Torreón": ["Centro","Las Rosas","Los Ángeles","El Fresno","Las Américas","Villa de los Pinos","San Isidro","Primero de Mayo"],
+    "Monclova": ["Centro","Las Minervas","Siderpol","Colinas del Valle"],
+    "Piedras Negras": ["Centro","Alianza","Las Vegas"],
+    "Acuña": ["Centro","Ampliación","Las Torres"]
+  },
+  "Colima": {
+    "Colima": ["Centro","Las Víboras","Jardines de Colima","Residencial Camino Real","Villas del Sol","Tres Cruces"],
+    "Manzanillo": ["Centro","El Colomo","Salahua","Santiago","Las Brisas"],
+    "Tecomán": ["Centro","El Colomo","Lagunitas"],
+    "Villa de Álvarez": ["Centro","El Moralete","El Chaparral"]
+  },
+  "Durango": {
+    "Durango": ["Centro","El Calvario","Nueva Vizcaya","Las Vegas","Los Álamos","Las Flores","El Nayar"],
+    "Gómez Palacio": ["Centro","Las Torres","San Isidro","Las Rosas"],
+    "Lerdo": ["Centro","Ampliacón","Las Quintas"],
+    "Guadalupe Victoria": ["Centro"]
+  },
+  "Guanajuato": {
+    "León": ["Centro","Medina","Fracciones Médicas","Las Joyas","Los Paraísos","Valle del Campestre","Cañada de Alfaro","San Juan de Dios","La Martinica"],
+    "Guanajuato": ["Centro","Pastita","Valenciana","Marfil","La Cañada"],
+    "Irapuato": ["Centro","Jardines de Irapuato","Insurgentes","Villas de la Hacienda","Las Americas"],
+    "Celaya": ["Centro","San Cayetano","El Saucillo","Las Palmas","Tablitas del Lindero"],
+    "Salamanca": ["Centro","Salamanca","Industrial"],
+    "Silao": ["Centro","Las Trojes"],
+    "San Miguel de Allende": ["Centro","Insurgentes","Vista Hermosa","El Cortijo"]
+  },
+  "Guerrero": {
+    "Acapulco": ["Centro","Hornos","Pie de la Cuesta","Las Américas","Cumbres de Llano Largo","Puerto Marqués","Fraccionamiento las Playas"],
+    "Chilpancingo": ["Centro","Chilpancingo","Las Flores"],
+    "Iguala": ["Centro","Barrio de la Palma"],
+    "Zihuatanejo": ["Centro","Lázaro Cárdenas","Aguas Calientes"]
+  },
+  "Hidalgo": {
+    "Pachuca": ["Centro","Cubitos","Venta Prieta","El Arbolillo","Valle de San Javier","Fraccionamiento La Herradura"],
+    "Tulancingo": ["Centro","San Antonio","San Marcos"],
+    "Tula de Allende": ["Centro","Felipe Ángeles"],
+    "Huejutla de Reyes": ["Centro","Barrio de Guadalupe"]
+  },
+  "Jalisco": {
+    "Guadalajara": ["Analco","Arcos Vallarta","Artesanos","Atlas","Bajío","Bases","Belén","Chapalita","Circunvalación Américas","Circunvalación Belisario","Colón Industrial","Country Club","Del Fresno","Del Gas","Echeverría","El Álamo","El Briseño","El Capullo","El Colli","El Mante","El Rosario","El Vergel","Estadio","Federalismo","Ferrocarril","Fray Matías","Guadalajara Centro","Huentitán al Barranco","Huentitán al Norte","Independencia","Jalisco","Jardín","La Aldea","La Calma","La Coronilla","La Gigantera","La Normal","La Perla","Lagos de Oriente","Las Conchas","Las Huertas","Lomas de Polanco","Medrano","Mexicaltzingo","Mezquitán Country","Monraz","Morelos","Oblatos","Olímpica","Oriente","Paraísos del Colli","Patria Vallarta","Polanco","Providencia","Rancho Nuevo","Reforma","Revolución","San Andrés","San Carlos","San Cipriano","San José Guadalajara","Santa Elena","Santa Margarita","Santa Mónica","Santa Rosa","Santa Tere","Seminario","Tetlán","Tlaquepaque Centro","Universidades","Valle de San Isidro","Vallarta Norte","Vallarta Poniente","Vallarta San Jorge","Versalles","Villas del Country","Zona Minerva"],
+    "Zapopan": ["Arenales Tapatíos","Arboledas","Arcos de Guadalupe","Colinas de San Javier","El Colli Urbano","El Refugio","Jardines de Vallarta","La Calma","Las Águilas","Las Cañadas","Las Moras","La Venta del Astillero","Lomas del Paraíso","Lomas Doctores","López Mateos Norte","López Mateos Sur","Metro Naciones","Miramar","Nextipac","Pinar de la Venta","Plazas del Sol","Prados Vallarta","Rancho Contento","Santa Ana Tepetitlán","Santa Esperia","Santa Margarita","Tabachines","Tepeyac","Tesistán","Vallarta San Jorge","Victoria","Villa Guerrero","Villas Universidad","Atemajac del Valle","Balcones de Oblatos","Ciudad Granja","El Briseño","El Iztépete","El Palomar","El Tigre","Jardines Alcalde","Jardines del Vergel","La Cima","Las Torres","Moctezuma","Montecristo","Nuevo México","Paseos del Sol","San Juan de Ocotán","Villas de Guadalupe","Vistas del Sol"],
+    "San Pedro Tlaquepaque": ["Centro","El Vergel","Lomas de San Pedrito","Las Juntas","San Pedrito","Lomas del Gallo","Hacienda Santa Fe","La Duraznera","El Campesino","Nuevo México","Tateposco","Las Huertas"],
+    "Tonalá": ["Centro","Santa Cruz de las Flores","El Rosario","Lomas de Tabachines","La Enramada","La Duraznera","El Camichín","Las Huertas","San Juanito","Puente Grande","Coyula","La Presita","La Capilla","Rancho El Jagüey"],
+    "Tlajomulco de Zúñiga": ["Tlajomulco Centro","Santa Cruz de las Flores","El Zapote","San Agustín","Valle Real","Chulavista","Hacienda Santa Fe","Coto la Paloma","Las Pintitas","San Sebastián el Grande","Jardines de Tlajomulco","Interlomas","Portal del Ángel","Loma Dorada","Banus","Mission Hills","Rinconada San José","San Isidro Mazatepec","Cajititlán"],
+    "El Salto": ["El Salto Centro","Las Fuentes","San José del Valle","Los Gavilanes","Toluquilla","El Verde","Parque Industrial El Salto","Santa Rosa","Villa El Salto"],
+    "Puerto Vallarta": ["Centro","Emiliano Zapata","Versalles","El Pitillal","5 de Diciembre","Las Gaviotas","Fluvial Vallarta","Lomas de la Cruz","3 de Diciembre","Insurgentes","El Remance","La Floresta","Ixtapa","Ramblases"],
+    "Lagos de Moreno": ["Centro","Las Rosas","Los Nogales","La Rivera","El Zapote","Rincón de los Álamos","Col. Primero de Mayo"],
+    "Tepatitlán de Morelos": ["Centro","Fraccionamiento Revolución","El Ranchito","Las Flores","Lomas Altas"],
+    "Ocotlán": ["Centro","Arboledas","Los Alcanfores","Hermosa Provincia","Industrial"],
+    "Zapotlán el Grande": ["Centro","Las Quintas","Jardines Coloniales","Atotonilco","Constitución","El Maguey"],
+    "Autlán de Navarro": ["Centro","El Chante","La Palmita","La Trinidad"],
+    "Arandas": ["Centro","Lomas","El Mirador","La Cantera"],
+    "San Juan de los Lagos": ["Centro","Los Alcanfores","La Ceja"],
+    "Ameca": ["Centro","Los Pocitos","La Cañada"],
+    "Tequila": ["Centro","Los Guayabos","El Arenal"],
+    "Tlaquepaque": ["Centro","Los Puestos","La Cofradía","San Sebastián"],
+    "Chapala": ["Chapala Centro","Ajijic","San Antonio Tlayacapan","San Juan Cosalá","Jocotepec"],
+    "Cihuatlán": ["Centro","Barra de Navidad","Melaque"],
+    "Tomatlán": ["Centro","El Tuito"],
+    "Mascota": ["Centro"],
+    "Tapalpa": ["Centro"],
+    "Zapotlanejo": ["Centro","Puente Grande"]
+  },
+  "México": {
+    "Ecatepec": ["Ciudad Azteca","Jardines de Morelos","La Florida","Las Américas","Metropolitana","Nueva York","San Cristóbal","Valle de Anáhuac","Xalostoc"],
+    "Nezahualcóyotl": ["Benito Juárez","Bordo de Xochiaca","Evolución","México","Pantitlán","Reforma","Río de Luz","Sa. Juan Bosco","Valle de Aragón"],
+    "Naucalpan": ["Ciudad Satélite","Jardines de San Mateo","La Florida","Lomas de Bezares","San Lucas Tepetlacalco"],
+    "Tlalnepantla": ["Buenavista","Industrial","Las Arboledas","La Romana","Naucalpan"],
+    "Toluca": ["Centro","Cacalomacan","Del Parque","El Rincón","Independencia","La Michoacana","Las Américas","Morelos","Sánchez","Xcaret"],
+    "Chimalhuacán": ["Centro","Ejidos de San Pedro","Guadalupe Victoria"],
+    "Ixtapaluca": ["Centro","San Juan Tlihuaca","Barrio San Miguel"],
+    "Atizapán de Zaragoza": ["Ciudad Adolfo López Mateos","Prado Churubusco","San Salvador Atenco"],
+    "Coacalco": ["Centro","San Isidro","Valle de San Lorenzo"],
+    "Cuautitlán Izcalli": ["Centro","Cuauhtemoc","Jardines de San Sebastián"],
+    "Tultitlán": ["Centro","San Pablo de las Salinas","Santa María Cuautepec"],
+    "Texcoco": ["Centro","La Trinidad Tepehitec"]
+  },
+  "Michoacán": {
+    "Morelia": ["Centro","Chapultepec","Félix Ireta","Las Palmas","Lomas de la Soledad","Los Filtros","Nueva Chapultepec","Real de Oaxtepec","Ventura Puente"],
+    "Zamora": ["Centro","Jacona","Fraccionamiento Las Palmas"],
+    "Uruapan": ["Centro","La Providencia","La Zurda"],
+    "Apatzingán": ["Centro","El Polvorín","Valle Verde"],
+    "Lázaro Cárdenas": ["Centro","Las Guacamayas","Playa Azul"]
+  },
+  "Morelos": {
+    "Cuernavaca": ["Centro","Acapantzingo","Jardines de Cuernavaca","Lomas de la Selva","Miraval","Real de Tetela","Vista Hermosa"],
+    "Jiutepec": ["Centro","Cuautla","Morelos"],
+    "Cuautla": ["Centro","Ignacio Manuel Altamirano","Lomas del Paraíso"],
+    "Temixco": ["Centro","Acatlipa","Los Ángeles"]
+  },
+  "Nayarit": {
+    "Tepic": ["Centro","La Cantera","Menchaca","Jardines del Valle","Amalco","Los Fresnos"],
+    "Bahía de Banderas": ["Bucerías","Nuevo Vallarta","La Cruz de Huanacaxtle","Sayulita","Punta de Mita"],
+    "Compostela": ["Centro","Las Varas"]
+  },
+  "Nuevo León": {
+    "Monterrey": ["Centro","Anáhuac","Cumbres","Del Paseo Residencial","Independencia","La Fe","Mitras Centro","Mitras Norte","San Jerónimo","San Nicolás","Tecnológico","Valle del Mirador"],
+    "San Nicolás de los Garza": ["Centro","Anáhuac","Las Puentes","San Nicolás","Valle de San Jerónimo"],
+    "Guadalupe": ["Centro","Jardines de Guadalupe","San Mateo","Linda Vista"],
+    "Apodaca": ["Centro","Las Américas","Portal de San Marcos","San Francisco"],
+    "General Escobedo": ["Centro","Las Brisas","Ciudad Solidaridad"],
+    "Santa Catarina": ["Centro","Villa de San Marcos","Los Pinos"],
+    "San Pedro Garza García": ["Centro","Del Valle","Loma Larga","Fuentes del Valle"]
+  },
+  "Oaxaca": {
+    "Oaxaca de Juárez": ["Centro","Colonia Reforma","Electricistas","Estrella","Ex Marquesado","Loma Linda","Volcanes"],
+    "San Juan Bautista Tuxtepec": ["Centro","Cerro del Aire","Linda Vista"],
+    "Heroica Ciudad de Juchitán de Zaragoza": ["Centro","La Ventosa"],
+    "Salina Cruz": ["Centro","Las Flores"]
+  },
+  "Puebla": {
+    "Puebla": ["Centro","Anzures","El Carmen","La Paz","La Purísima","Las Animas","Lomas de Angelópolis","San Baltazar Campeche","San Marcos Mexicaltzingo","Xonaca"],
+    "Tehuacán": ["Centro","Insurgentes","Lomas del Sur"],
+    "San Martín Texmelucan": ["Centro","La Providencia"],
+    "Atlixco": ["Centro"]
+  },
+  "Querétaro": {
+    "Querétaro": ["Centro","Arboledas","El Campanario","Juriquilla","Las Américas","Los Ángeles","Prados de La Capilla","Satélite","Villas del Parque"],
+    "San Juan del Río": ["Centro","La Llave","Tierra Blanca"],
+    "Corregidora": ["El Pueblito","Candiles","Colinas del Sur"]
+  },
+  "Quintana Roo": {
+    "Benito Juárez": ["Centro","Cancún","El Palmar","Puerto Juárez","Región 94","Región 103","Smza 21","Smza 22"],
+    "Solidaridad": ["Playa del Carmen Centro","Ejidal","Aldea Zamá","Playacar"],
+    "Othón P. Blanco": ["Chetumal Centro","Calderitas","Huay-Pix"]
+  },
+  "San Luis Potosí": {
+    "San Luis Potosí": ["Centro","Arboledas","Fraccionamiento Tangamanga","Industrial Mexicana","Lomas","Morales","Prados","Tequisquiapan","Universidad"],
+    "Ciudad Valles": ["Centro","Bordo Blanco","El Barrial"],
+    "Matehuala": ["Centro","Juárez"]
+  },
+  "Sinaloa": {
+    "Culiacán": ["Centro","Bachigualato","Camino Real","Fracc. Las Quintas","Guadalupe","Humaya","Las Torres","Lomas de Guadalupe","Tierra Blanca"],
+    "Mazatlán": ["Centro","El Toreo","Lomas del Sol","Playas Sur","Playas Norte","Zona Dorada"],
+    "Los Mochis": ["Centro","Chapultepec","Las Vegas","San Rafael"]
+  },
+  "Sonora": {
+    "Hermosillo": ["Centro","Bugambilias","Las Quintas","Lomas de Hermosillo","Olivares","Raquet Club","San Benito","Satelite","Valle Verde"],
+    "Ciudad Obregón": ["Centro","Fracc. Bugambilias","Los Pinos","Pólvora"],
+    "Nogales": ["Centro","Fracc. Kennedy","Las Torres"],
+    "Guaymas": ["Centro","Las Playitas"]
+  },
+  "Tabasco": {
+    "Centro": ["Centro","Casa Blanca","El Recreo","Jardines","Leandro Valle","Primero de Mayo"],
+    "Cárdenas": ["Centro","Gaviotas","Fraccionamiento"],
+    "Comalcalco": ["Centro","Las Vegas"]
+  },
+  "Tamaulipas": {
+    "Tampico": ["Centro","Altamira","Arboledas","Cascajal","Chairel","Del Valle","Laguna de La Puerta","Las Etnias"],
+    "Reynosa": ["Centro","Del Lago","Loma Real","Los Pinos","Prados de Reynosa","Rodales"],
+    "Matamoros": ["Centro","Burócratas","Industrial","Juárez"],
+    "Nuevo Laredo": ["Centro","Balcones del Norte","Doctores"]
+  },
+  "Tlaxcala": {
+    "Tlaxcala": ["Centro","Nueva Castilla","San Esteban","Xicoténcatl"],
+    "Apizaco": ["Centro","Benito Juárez"],
+    "Huamantla": ["Centro"]
+  },
+  "Veracruz": {
+    "Veracruz": ["Centro","Boca del Río","Fracc. Jardines","Reforma","Vista del Mar","Xalapa"],
+    "Xalapa": ["Centro","Badillo","Chapultepec","Ferrocarrilera","Las Ánimas"],
+    "Coatzacoalcos": ["Centro","Fracc. Sabina","Las Palmas"],
+    "Poza Rica": ["Centro","Periférico","Venustiano Carranza"]
+  },
+  "Yucatán": {
+    "Mérida": ["Centro","Altabrisa","Campestre","Chuburná","Fraccionamiento Monterreal","Itzimná","Las Américas","Montebello","Pedregál","Polígono 108","Santa Ana","Santa Gertrudis Copó"],
+    "Valladolid": ["Centro","Barrio San Juan"],
+    "Tizimín": ["Centro"]
+  },
+  "Zacatecas": {
+    "Zacatecas": ["Centro","Campos Elíseos","Fracc. La Encantada","Jardines del Bosque","Lomas del Sol"],
+    "Fresnillo": ["Centro","Carlos Ramírez Ladewig"],
+    "Guadalupe": ["Centro","Tacoaleche"]
+  }
+};
+
 // ── PÓLIZAS ───────────────────────────────────────────────
 let ultimosBusqueda  = [];
 let polizaActual     = null;
-let empresasCatalogo = [];
+let empresasCatalogo   = [];
+let asesoresFormCache  = [];
+let cobradoresFormCache = [];
 
 async function buscarPolizas() {
   const termino = document.getElementById('poliza-busqueda').value.trim();
@@ -3517,19 +3770,120 @@ async function guardarCobradorCat() {
 // ═══════════════════════════════════════════════════════════════
 
 async function cargarEmpresasForm() {
-  if (empresasCatalogo.length > 0) return;
-  const res = await api({ accion: 'listar_empresas', access_token: sesion.access_token });
-  if (!res.ok) return;
-  empresasCatalogo = res.empresas;
-  const sel = document.getElementById('fp-empresa');
-  // Limpiar opciones previas excepto la primera
-  while (sel.options.length > 1) sel.remove(1);
-  res.empresas.forEach(e => {
+  // Empresas
+  if (empresasCatalogo.length === 0) {
+    const res = await api({ accion: 'listar_empresas', access_token: sesion.access_token });
+    if (res.ok) {
+      empresasCatalogo = res.empresas;
+      const sel = document.getElementById('fp-empresa');
+      while (sel.options.length > 1) sel.remove(1);
+      res.empresas.forEach(e => {
+        const opt = document.createElement('option');
+        opt.value = e.id_empresa;
+        opt.textContent = `${e.codigo} — ${e.nombre}`;
+        sel.appendChild(opt);
+      });
+    }
+  }
+
+  // Asesores
+  if (asesoresFormCache.length === 0) {
+    const res = await api({ accion: 'listar_asesores', access_token: sesion.access_token });
+    if (res.ok) {
+      asesoresFormCache = res.asesores.filter(a => a.activo !== false);
+      const sel = document.getElementById('fp-asesor');
+      while (sel.options.length > 1) sel.remove(1);
+      asesoresFormCache.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a.nombre;
+        opt.textContent = a.nombre;
+        sel.appendChild(opt);
+      });
+    }
+  }
+
+  // Cobradores
+  if (cobradoresFormCache.length === 0) {
+    const res = await api({ accion: 'listar_cobradores', access_token: sesion.access_token });
+    if (res.ok) {
+      cobradoresFormCache = res.cobradores.filter(c => c.activo !== false);
+      const sel = document.getElementById('fp-cobrador');
+      while (sel.options.length > 1) sel.remove(1);
+      cobradoresFormCache.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.nombre;
+        opt.textContent = c.nombre;
+        sel.appendChild(opt);
+      });
+    }
+  }
+
+  // Poblar select de estados
+  poblarEstados();
+}
+
+function poblarEstados() {
+  const sel = document.getElementById('fp-estado');
+  if (sel.options.length > 1) return; // ya poblado
+  Object.keys(DATOS_GEO).sort().forEach(est => {
     const opt = document.createElement('option');
-    opt.value = e.id_empresa;
-    opt.textContent = `${e.codigo} — ${e.nombre}`;
+    opt.value = est;
+    opt.textContent = est;
     sel.appendChild(opt);
   });
+}
+
+function onEstadoChange() {
+  const estado = document.getElementById('fp-estado').value;
+  const selMun = document.getElementById('fp-municipio');
+  const selCol = document.getElementById('fp-colonia');
+
+  // Reset municipio
+  selMun.innerHTML = '<option value="">— Selecciona municipio —</option>';
+  selMun.disabled = !estado;
+  selMun.style.opacity = estado ? '1' : '.5';
+
+  // Reset colonia
+  selCol.innerHTML = '<option value="">— Selecciona municipio —</option>';
+  selCol.disabled = true;
+  selCol.style.opacity = '.5';
+
+  if (!estado) return;
+  const municipios = Object.keys(DATOS_GEO[estado] || {}).sort();
+  municipios.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = m;
+    selMun.appendChild(opt);
+  });
+}
+
+function onMunicipioChange() {
+  const estado   = document.getElementById('fp-estado').value;
+  const municipio = document.getElementById('fp-municipio').value;
+  const selCol   = document.getElementById('fp-colonia');
+
+  selCol.innerHTML = '<option value="">— Selecciona colonia —</option>';
+  selCol.disabled = !municipio;
+  selCol.style.opacity = municipio ? '1' : '.5';
+
+  if (!estado || !municipio) return;
+  const colonias = (DATOS_GEO[estado]?.[municipio] || []).sort();
+  colonias.forEach(col => {
+    const opt = document.createElement('option');
+    opt.value = col;
+    opt.textContent = col;
+    selCol.appendChild(opt);
+  });
+}
+
+function autoTerminoVigencia() {
+  const inicio  = document.getElementById('fp-inicio-vigencia').value;
+  const termino = document.getElementById('fp-termino-vigencia');
+  if (!inicio || termino.value) return; // no sobreescribir si ya tiene valor
+  const d = new Date(inicio + 'T00:00:00');
+  d.setFullYear(d.getFullYear() + 1);
+  termino.value = d.toISOString().split('T')[0];
 }
 
 async function abrirFormPoliza(datos) {
@@ -3545,17 +3899,27 @@ async function abrirFormPoliza(datos) {
     : `Editar Póliza ${datos.poliza?.id_poliza || ''}`;
 
   // Limpiar todos los campos
-  ['fp-id-poliza','fp-tipo-cobertura','fp-asesor','fp-cobrador',
+  ['fp-id-poliza','fp-tipo-cobertura',
    'fp-inicio-vigencia','fp-termino-vigencia','fp-notas',
    'fp-costo','fp-pago-inicial','fp-pagos-de',
    'fp-nombre','fp-tel1','fp-tel2','fp-correo',
-   'fp-domicilio','fp-colonia','fp-municipio','fp-dom-cobro',
+   'fp-domicilio','fp-dom-cobro',
    'fp-vehiculo','fp-modelo','fp-tipo-vehiculo','fp-color',
    'fp-placas','fp-motor','fp-serie']
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   document.getElementById('fp-empresa').value     = '';
   document.getElementById('fp-tipo-poliza').value = '';
   document.getElementById('fp-tipo-cobro').value  = '';
+  document.getElementById('fp-asesor').value      = '';
+  document.getElementById('fp-cobrador').value    = '';
+  document.getElementById('fp-estado').value      = '';
+  // reset cascada geo
+  const selMun = document.getElementById('fp-municipio');
+  const selCol = document.getElementById('fp-colonia');
+  selMun.innerHTML = '<option value="">— Selecciona estado —</option>';
+  selMun.disabled = true; selMun.style.opacity = '.5';
+  selCol.innerHTML = '<option value="">— Selecciona municipio —</option>';
+  selCol.disabled = true; selCol.style.opacity = '.5';
   document.getElementById('fp-moto').checked      = false;
   document.getElementById('fp-id-poliza').disabled = false;
 
@@ -3584,8 +3948,28 @@ async function abrirFormPoliza(datos) {
     document.getElementById('fp-tel2').value      = c.telefono_02 || '';
     document.getElementById('fp-correo').value    = c.correo_electronico || '';
     document.getElementById('fp-domicilio').value = c.domicilio_particular || '';
-    document.getElementById('fp-colonia').value   = c.colonia || '';
-    document.getElementById('fp-municipio').value = c.municipio || '';
+    // Cargar cascada geográfica si hay datos
+    if (c.estado) {
+      document.getElementById('fp-estado').value = c.estado;
+      onEstadoChange();
+      if (c.municipio) {
+        document.getElementById('fp-municipio').value = c.municipio;
+        onMunicipioChange();
+        if (c.colonia) document.getElementById('fp-colonia').value = c.colonia;
+      }
+    } else {
+      // Compatibilidad con registros viejos: poner municipio/colonia como opción libre
+      if (c.municipio) {
+        const selMun = document.getElementById('fp-municipio');
+        selMun.innerHTML = `<option value="${c.municipio}">${c.municipio}</option>`;
+        selMun.disabled = false; selMun.style.opacity = '1';
+      }
+      if (c.colonia) {
+        const selCol = document.getElementById('fp-colonia');
+        selCol.innerHTML = `<option value="${c.colonia}">${c.colonia}</option>`;
+        selCol.disabled = false; selCol.style.opacity = '1';
+      }
+    }
     document.getElementById('fp-dom-cobro').value = c.domicilio_cobro || '';
 
     document.getElementById('fp-vehiculo').value      = v.vehiculo || '';
@@ -3627,8 +4011,8 @@ async function guardarPoliza() {
       tipo_poliza:            document.getElementById('fp-tipo-poliza').value || null,
       tipo_cobertura:         document.getElementById('fp-tipo-cobertura').value || null,
       tipo_cobro:             document.getElementById('fp-tipo-cobro').value || null,
-      asesor:                 document.getElementById('fp-asesor').value.trim() || null,
-      cobrador:               document.getElementById('fp-cobrador').value.trim() || null,
+      asesor:                 document.getElementById('fp-asesor').value || null,
+      cobrador:               document.getElementById('fp-cobrador').value || null,
       fecha_inicio_vigencia:  document.getElementById('fp-inicio-vigencia').value || null,
       fecha_termino_vigencia: document.getElementById('fp-termino-vigencia').value || null,
       notas:                  document.getElementById('fp-notas').value.trim() || null,
@@ -3642,8 +4026,9 @@ async function guardarPoliza() {
       telefono_02:          document.getElementById('fp-tel2').value.trim() || null,
       correo_electronico:   document.getElementById('fp-correo').value.trim() || null,
       domicilio_particular: document.getElementById('fp-domicilio').value.trim() || null,
-      colonia:              document.getElementById('fp-colonia').value.trim() || null,
-      municipio:            document.getElementById('fp-municipio').value.trim() || null,
+      estado:               document.getElementById('fp-estado').value || null,
+      municipio:            document.getElementById('fp-municipio').value || null,
+      colonia:              document.getElementById('fp-colonia').value || null,
       domicilio_cobro:      document.getElementById('fp-dom-cobro').value.trim() || null,
     },
     vehiculo: {

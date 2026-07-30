@@ -1400,7 +1400,7 @@ tr:hover td { background: var(--gray50); }
           <div class="tabla-wrap">
             <table>
               <thead><tr><th>Nombre</th><th>% Comisión</th><th>Puede Cobrar</th><th>Activo</th><th></th></tr></thead>
-              <tbody id="tbody-asesores-cat"></tbody>
+              <tbody id="tbody-cat-asesores"></tbody>
             </table>
           </div>
         </div>
@@ -1414,7 +1414,7 @@ tr:hover td { background: var(--gray50); }
           <div class="tabla-wrap">
             <table>
               <thead><tr><th>Nombre</th><th>% Comisión</th><th>Gasolina</th><th>Activo</th><th></th></tr></thead>
-              <tbody id="tbody-cobradores-cat"></tbody>
+              <tbody id="tbody-cat-cobradores"></tbody>
             </table>
           </div>
         </div>
@@ -3415,7 +3415,7 @@ async function guardarEmpresa() {
 // ── ASESORES ─────────────────────────────────────────────────
 async function cargarAsesoresCat() {
   const res = await api({ accion: 'listar_asesores_admin', access_token: sesion.access_token });
-  const tbody = document.getElementById('tbody-asesores-cat');
+  const tbody = document.getElementById('tbody-cat-asesores');
   if (!res.ok) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--red)">Error al cargar</td></tr>'; return; }
   const lista = res.asesores || [];
   if (lista.length === 0) {
@@ -3465,7 +3465,7 @@ async function guardarAsesorCat() {
 // ── COBRADORES ────────────────────────────────────────────────
 async function cargarCobradoresCat() {
   const res = await api({ accion: 'listar_cobradores_admin', access_token: sesion.access_token });
-  const tbody = document.getElementById('tbody-cobradores-cat');
+  const tbody = document.getElementById('tbody-cat-cobradores');
   if (!res.ok) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--red)">Error al cargar</td></tr>'; return; }
   const lista = res.cobradores || [];
   if (lista.length === 0) {

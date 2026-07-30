@@ -718,9 +718,7 @@ tr:hover td { background: var(--gray50); }
             <button class="btn-accion btn-verde" onclick="guardarPoliza()" style="margin-left:auto;padding:9px 24px">💾 Guardar</button>
           </div>
 
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-
-            <!-- Datos de Póliza -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px">
             <div class="card">
               <div style="font-size:11px;font-weight:700;color:var(--gray300);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px">Datos de Póliza</div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -938,6 +936,76 @@ tr:hover td { background: var(--gray50); }
                   <label>No. Serie / VIN</label>
                   <input type="text" id="fp-serie"
                     style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+              </div>
+            </div>
+
+            <!-- Datos Varios -->
+            <div class="card">
+              <div style="font-size:11px;font-weight:700;color:var(--gray300);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px">Datos Varios</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="campo" style="grid-column:1/-1">
+                  <label>Fecha de Entrega al Asesor</label>
+                  <input type="date" id="fp-fecha-asesor"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo" style="grid-column:1/-1">
+                  <label>Fecha de Impresión de Tarjeta</label>
+                  <input type="date" id="fp-fecha-impresion"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo" style="grid-column:1/-1">
+                  <label>Fecha de Envío a Cobranza</label>
+                  <input type="date" id="fp-fecha-cobranza"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo">
+                  <label>Envío a Cobro</label>
+                  <input type="date" id="fp-envio-cobro"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo">
+                  <label>Retorno de Cobro</label>
+                  <input type="date" id="fp-retorno-cobro"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+              </div>
+            </div>
+
+            <!-- Activación -->
+            <div class="card">
+              <div style="font-size:11px;font-weight:700;color:var(--gray300);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px">Activación</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="campo" style="grid-column:1/-1">
+                  <label>Activación</label>
+                  <select id="fp-activacion"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none">
+                    <option value="">— Selecciona —</option>
+                    <option value="PENDIENTE">PENDIENTE</option>
+                    <option value="PAGADA">PAGADA</option>
+                    <option value="EXENTA">EXENTA</option>
+                    <option value="CANCELADA">CANCELADA</option>
+                  </select>
+                </div>
+                <div class="campo" style="grid-column:1/-1">
+                  <label>Fecha Activación</label>
+                  <input type="date" id="fp-fecha-activacion"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo">
+                  <label>Recibo</label>
+                  <input type="text" id="fp-act-recibo"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo">
+                  <label>Monto</label>
+                  <input type="number" id="fp-act-monto" placeholder="0.00" min="0" step="0.01"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo" style="grid-column:1/-1">
+                  <label>Notas Activación</label>
+                  <textarea id="fp-act-notas" rows="3" placeholder="Observaciones de activación…"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;resize:vertical;box-sizing:border-box"></textarea>
                 </div>
               </div>
             </div>
@@ -4630,7 +4698,10 @@ async function abrirFormPoliza(datos) {
    'fp-costo','fp-pago-inicial','fp-pagos-de',
    'fp-nombre','fp-tel1','fp-tel2','fp-correo',
    'fp-domicilio','fp-dom-cobro',
-   'fp-color','fp-placas','fp-motor','fp-serie']
+   'fp-color','fp-placas','fp-motor','fp-serie',
+   'fp-fecha-asesor','fp-fecha-impresion','fp-fecha-cobranza',
+   'fp-envio-cobro','fp-retorno-cobro',
+   'fp-fecha-activacion','fp-act-recibo','fp-act-monto','fp-act-notas']
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   // reset selects póliza
   document.getElementById('fp-empresa').value       = '';
@@ -4640,6 +4711,7 @@ async function abrirFormPoliza(datos) {
   document.getElementById('fp-tipo-cobro').value    = '';
   document.getElementById('fp-asesor').value      = '';
   document.getElementById('fp-cobrador').value    = '';
+  document.getElementById('fp-activacion').value  = '';
   document.getElementById('fp-estado').value      = '';
   // reset cascada geo
   const selMun = document.getElementById('fp-municipio');
@@ -4669,6 +4741,18 @@ async function abrirFormPoliza(datos) {
     document.getElementById('fp-costo').value            = p.costo || '';
     document.getElementById('fp-pago-inicial').value     = p.pago_inicial || '';
     document.getElementById('fp-pagos-de').value         = p.pagos_de || '';
+    // Datos Varios
+    document.getElementById('fp-fecha-asesor').value     = p.fecha_entrega_asesor || '';
+    document.getElementById('fp-fecha-impresion').value  = p.fecha_impresion_tarjeta || '';
+    document.getElementById('fp-fecha-cobranza').value   = p.fecha_envio_cobranza || '';
+    document.getElementById('fp-envio-cobro').value      = p.envio_cobro || '';
+    document.getElementById('fp-retorno-cobro').value    = p.retorno_cobro || '';
+    // Activación
+    document.getElementById('fp-activacion').value       = p.activacion || '';
+    document.getElementById('fp-fecha-activacion').value = p.fecha_activacion || '';
+    document.getElementById('fp-act-recibo').value       = p.activacion_recibo || '';
+    document.getElementById('fp-act-monto').value        = p.activacion_monto || '';
+    document.getElementById('fp-act-notas').value        = p.activacion_notas || '';
 
     document.getElementById('fp-nombre').value    = c.nombre || '';
     document.getElementById('fp-tel1').value      = c.telefono_01 || '';
@@ -4769,11 +4853,23 @@ async function guardarPoliza() {
       asesor:                 document.getElementById('fp-asesor').value || null,
       cobrador:               document.getElementById('fp-cobrador').value || null,
       fecha_inicio_vigencia:  document.getElementById('fp-inicio-vigencia').value || null,
-      fecha_termino_vigencia: document.getElementById('fp-termino-vigencia').value || null,
-      notas:                  document.getElementById('fp-notas').value.trim() || null,
-      costo:                  parseFloat(document.getElementById('fp-costo').value) || null,
-      pago_inicial:           parseFloat(document.getElementById('fp-pago-inicial').value) || null,
-      pagos_de:               parseFloat(document.getElementById('fp-pagos-de').value) || null,
+      fecha_termino_vigencia:  document.getElementById('fp-termino-vigencia').value || null,
+      notas:                   document.getElementById('fp-notas').value.trim() || null,
+      costo:                   parseFloat(document.getElementById('fp-costo').value) || null,
+      pago_inicial:            parseFloat(document.getElementById('fp-pago-inicial').value) || null,
+      pagos_de:                parseFloat(document.getElementById('fp-pagos-de').value) || null,
+      // Datos Varios
+      fecha_entrega_asesor:    document.getElementById('fp-fecha-asesor').value || null,
+      fecha_impresion_tarjeta: document.getElementById('fp-fecha-impresion').value || null,
+      fecha_envio_cobranza:    document.getElementById('fp-fecha-cobranza').value || null,
+      envio_cobro:             document.getElementById('fp-envio-cobro').value || null,
+      retorno_cobro:           document.getElementById('fp-retorno-cobro').value || null,
+      // Activación
+      activacion:              document.getElementById('fp-activacion').value || null,
+      fecha_activacion:        document.getElementById('fp-fecha-activacion').value || null,
+      activacion_recibo:       document.getElementById('fp-act-recibo').value.trim() || null,
+      activacion_monto:        parseFloat(document.getElementById('fp-act-monto').value) || null,
+      activacion_notas:        document.getElementById('fp-act-notas').value.trim() || null,
     },
     cliente: {
       nombre:               nombre,

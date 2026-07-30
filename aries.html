@@ -628,7 +628,7 @@ tr:hover td { background: var(--gray50); }
             <button class="btn-accion btn-azul" onclick="abrirFormPoliza(polizaActual)" style="padding:7px 18px;font-size:13px">✏️ Actualizar</button>
           </div>
 
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px">
 
             <!-- Card Póliza -->
             <div class="card">
@@ -684,6 +684,30 @@ tr:hover td { background: var(--gray50); }
             <div class="card">
               <div style="font-size:11px;font-weight:700;color:var(--gray300);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Vehículo</div>
               <div id="d-vehiculos-lista"></div>
+            </div>
+
+            <!-- Card Datos Varios -->
+            <div class="card">
+              <div style="font-size:11px;font-weight:700;color:var(--gray300);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Datos Varios</div>
+              <div class="detalle-grid">
+                <span class="dl">Entrega al Asesor</span><span id="d-fecha-asesor">—</span>
+                <span class="dl">Impresión Tarjeta</span><span id="d-fecha-impresion">—</span>
+                <span class="dl">Envío a Cobranza</span><span id="d-fecha-cobranza">—</span>
+                <span class="dl">Envío a Cobro</span><span id="d-envio-cobro">—</span>
+                <span class="dl">Retorno de Cobro</span><span id="d-retorno-cobro">—</span>
+              </div>
+            </div>
+
+            <!-- Card Activación -->
+            <div class="card">
+              <div style="font-size:11px;font-weight:700;color:var(--gray300);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Activación</div>
+              <div class="detalle-grid">
+                <span class="dl">Activación</span><span id="d-activacion">—</span>
+                <span class="dl">Fecha Activación</span><span id="d-fecha-activacion">—</span>
+                <span class="dl">Recibo</span><span id="d-act-recibo">—</span>
+                <span class="dl">Monto</span><span id="d-act-monto">—</span>
+                <span class="dl">Notas</span><span id="d-act-notas" style="white-space:pre-wrap">—</span>
+              </div>
             </div>
 
           </div>
@@ -2857,7 +2881,9 @@ async function verDetalle(id_poliza) {
    'd-inicio','d-termino','d-estatus-header','d-expira-header',
    'd-costo','d-pago-inicial','d-pagos-de','d-pagado',
    'd-saldo','d-saldo-por-pagar','d-meses-atraso','d-prox-pago','d-nombre','d-tel1','d-tel2',
-   'd-correo','d-domicilio','d-colonia','d-municipio','d-dom-cobro']
+   'd-correo','d-domicilio','d-colonia','d-municipio','d-dom-cobro',
+   'd-fecha-asesor','d-fecha-impresion','d-fecha-cobranza','d-envio-cobro','d-retorno-cobro',
+   'd-activacion','d-fecha-activacion','d-act-recibo','d-act-monto','d-act-notas']
     .forEach(id => { const el = document.getElementById(id); if (el) el.textContent = 'Cargando…'; });
 
   const res = await api({ accion: 'detalle_poliza', access_token: sesion.access_token, id_poliza });
@@ -2954,6 +2980,30 @@ async function verDetalle(id_poliza) {
   document.getElementById('d-colonia').textContent   = c.colonia || '—';
   document.getElementById('d-municipio').textContent = c.municipio || '—';
   document.getElementById('d-dom-cobro').textContent = c.domicilio_cobro || '—';
+
+  // ── Datos Varios ──────────────────────────────────────────
+  document.getElementById('d-fecha-asesor').textContent    = fmtFecha(p.fecha_entrega_asesor) || '—';
+  document.getElementById('d-fecha-impresion').textContent = fmtFecha(p.fecha_impresion_tarjeta) || '—';
+  document.getElementById('d-fecha-cobranza').textContent  = fmtFecha(p.fecha_envio_cobranza) || '—';
+  document.getElementById('d-envio-cobro').textContent     = fmtFecha(p.envio_cobro) || '—';
+  document.getElementById('d-retorno-cobro').textContent   = fmtFecha(p.retorno_cobro) || '—';
+
+  // ── Activación ────────────────────────────────────────────
+  const actBadge = {
+    'PENDIENTE':  { bg:'#FFF3E0', color:'#7B3900' },
+    'PAGADA':     { bg:'#E8F5EE', color:'#1A6B3C' },
+    'EXENTA':     { bg:'#E0F0FF', color:'#1B2A6B' },
+    'CANCELADA':  { bg:'#FEEEEE', color:'#C0392B' },
+  };
+  const actVal = p.activacion || '';
+  const actCol = actBadge[actVal];
+  document.getElementById('d-activacion').innerHTML = actVal
+    ? `<span style="background:${actCol?.bg || '#E8ECF5'};color:${actCol?.color || '#4A5568'};padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700">${actVal}</span>`
+    : '—';
+  document.getElementById('d-fecha-activacion').textContent = fmtFecha(p.fecha_activacion) || '—';
+  document.getElementById('d-act-recibo').textContent       = p.activacion_recibo || '—';
+  document.getElementById('d-act-monto').textContent        = p.activacion_monto ? fmtMonto(p.activacion_monto) : '—';
+  document.getElementById('d-act-notas').textContent        = p.activacion_notas || '—';
 
   // Vehículos
   const vLista = document.getElementById('d-vehiculos-lista');

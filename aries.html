@@ -1479,6 +1479,7 @@ tr:hover td { background: var(--gray50); }
                 <th>Nombre</th>
                 <th>Correo</th>
                 <th>Rol</th>
+                <th>Nombre en pólizas</th>
                 <th>Estado</th>
                 <th>Acciones</th>
               </tr>
@@ -1809,12 +1810,16 @@ tr:hover td { background: var(--gray50); }
     </div>
     <div class="campo">
       <label>Rol</label>
-      <select id="m-rol">
+      <select id="m-rol" onchange="toggleCampoNombrePoliza('m-rol','m-campo-nombre-poliza')">
         <option value="agente">Agente / Asesor</option>
         <option value="cobrador">Cobrador</option>
         <option value="operaciones">Operaciones</option>
         <option value="administrador">Administrador</option>
       </select>
+    </div>
+    <div class="campo" id="m-campo-nombre-poliza">
+      <label>Nombre en pólizas <span style="font-weight:400;color:var(--gray300)">(tal como aparece en cobrador/asesor — solo para cobrador y agente)</span></label>
+      <input type="text" id="m-nombre-poliza" placeholder="Ej. JOSE RODRIGUEZ TORRES">
     </div>
     <div class="modal-btns">
       <button class="btn-accion btn-gris" onclick="cerrarModal('modal-crear')">Cancelar</button>
@@ -1834,7 +1839,7 @@ tr:hover td { background: var(--gray50); }
     </div>
     <div class="campo">
       <label>Rol</label>
-      <select id="e-rol">
+      <select id="e-rol" onchange="toggleCampoNombrePoliza('e-rol','e-campo-nombre-poliza')">
         <option value="agente">Agente / Asesor</option>
         <option value="cobrador">Cobrador</option>
         <option value="operaciones">Operaciones</option>
@@ -1844,6 +1849,10 @@ tr:hover td { background: var(--gray50); }
     <div class="campo">
       <label>Nueva contraseña <span style="font-weight:400;color:var(--gray300)">(dejar en blanco para no cambiar)</span></label>
       <input type="password" id="e-pass" placeholder="Mínimo 8 caracteres">
+    </div>
+    <div class="campo" id="e-campo-nombre-poliza">
+      <label>Nombre en pólizas <span style="font-weight:400;color:var(--gray300)">(tal como aparece en cobrador/asesor — solo para cobrador y agente)</span></label>
+      <input type="text" id="e-nombre-poliza" placeholder="Ej. JOSE RODRIGUEZ TORRES">
     </div>
     <div class="modal-btns">
       <button class="btn-accion btn-gris" onclick="cerrarModal('modal-editar')">Cancelar</button>
@@ -1985,20 +1994,35 @@ function configurarUI(usuario) {
   document.getElementById('top-nombre').textContent = usuario.nombre;
   document.getElementById('top-rol').textContent    = usuario.rol;
   document.getElementById('top-avatar').textContent = usuario.nombre.charAt(0).toUpperCase();
-  document.getElementById('bienvenida-titulo').textContent = `Bienvenido, ${usuario.nombre.split(' ')[0]}`;
+  document.getElementById('bienvenida-titulo').textContent = 'Bienvenido, ' + usuario.nombre.split(' ')[0];
 
-  const esAdmin = usuario.rol === 'administrador';
+  const rol      = usuario.rol;
+  const esAdmin  = rol === 'administrador';
+  const esOps    = rol === 'operaciones';
+  const esCob    = rol === 'cobrador';
+  const esAgente = rol === 'agente';
 
-  // Módulos según rol
-  const cobrador = ['cobrador','administrador'].includes(usuario.rol);
-  const ops      = ['operaciones','administrador'].includes(usuario.rol);
+  // Polizas: todos ven el modulo (filtro de datos en backend)
+  setVisible('nav-polizas',   true);
+  setVisible('nav-clientes',  esAdmin || esOps);
 
-  setVisible('nav-cobranza',  cobrador);
-  setVisible('nav-siniestros', ops || usuario.rol === 'agente');
-  setVisible('sec-admin',    esAdmin);
-  setVisible('nav-usuarios', esAdmin);
-  setVisible('nav-catalogos',esAdmin);
-  setVisible('nav-reportes', esAdmin);
+  // Cobranza Cobradores: admin, operaciones, cobrador
+  setVisible('nav-cobranza',  esAdmin || esOps || esCob);
+
+  // Cobranza Oficina: admin, operaciones
+  setVisible('nav-oficina',   esAdmin || esOps);
+
+  // Depositos: admin, operaciones
+  setVisible('nav-depositos', esAdmin || esOps);
+
+  // Siniestros: admin, operaciones, agente
+  setVisible('nav-siniestros', esAdmin || esOps || esAgente);
+
+  // Seccion Administracion
+  setVisible('sec-admin',     esAdmin);
+  setVisible('nav-usuarios',  esAdmin);
+  setVisible('nav-catalogos', esAdmin || esOps);
+  setVisible('nav-reportes',  esAdmin);
 }
 
 function setVisible(id, visible) {
@@ -2045,6 +2069,7 @@ async function cargarUsuarios() {
       <td><strong>${esc(u.nombre)}</strong></td>
       <td style="color:var(--gray600)">${esc(u.email)}</td>
       <td><span class="badge badge-${u.rol}">${u.rol}</span></td>
+      <td style="font-size:12px;color:var(--gray600)">${u.nombre_poliza || '<span style=\"color:var(--gray300)\">—</span>'}</td>
       <td><span class="badge badge-${u.activo ? 'activo' : 'inactivo'}">${u.activo ? 'Activo' : 'Inactivo'}</span></td>
       <td style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn-accion btn-gris" style="padding:5px 12px;font-size:12px"
@@ -2065,16 +2090,25 @@ async function cargarUsuarios() {
 }
 
 function abrirModalCrear() {
-  ['m-nombre','m-email','m-pass'].forEach(id => document.getElementById(id).value = '');
+  ['m-nombre','m-email','m-pass','m-nombre-poliza'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('m-rol').value = 'agente';
+  toggleCampoNombrePoliza('m-rol', 'm-campo-nombre-poliza');
   document.getElementById('modal-crear').classList.add('visible');
 }
 
+function toggleCampoNombrePoliza(rolId, campoId) {
+  const rol = document.getElementById(rolId).value;
+  const campo = document.getElementById(campoId);
+  if (campo) campo.style.display = (rol === 'cobrador' || rol === 'agente') ? '' : 'none';
+}
+
 function abrirModalEditar(u) {
-  document.getElementById('e-id').value     = u.id;
-  document.getElementById('e-nombre').value = u.nombre;
-  document.getElementById('e-rol').value    = u.rol;
-  document.getElementById('e-pass').value   = '';
+  document.getElementById('e-id').value           = u.id;
+  document.getElementById('e-nombre').value       = u.nombre;
+  document.getElementById('e-rol').value          = u.rol;
+  document.getElementById('e-pass').value         = '';
+  document.getElementById('e-nombre-poliza').value = u.nombre_poliza || '';
+  toggleCampoNombrePoliza('e-rol', 'e-campo-nombre-poliza');
   document.getElementById('modal-editar').classList.add('visible');
 }
 
@@ -2083,16 +2117,20 @@ function cerrarModal(id) {
 }
 
 async function crearUsuario() {
-  const nombre = document.getElementById('m-nombre').value.trim();
-  const email  = document.getElementById('m-email').value.trim();
-  const pass   = document.getElementById('m-pass').value;
-  const rol    = document.getElementById('m-rol').value;
+  const nombre        = document.getElementById('m-nombre').value.trim();
+  const email         = document.getElementById('m-email').value.trim();
+  const pass          = document.getElementById('m-pass').value;
+  const rol           = document.getElementById('m-rol').value;
+  const nombrePoliza  = document.getElementById('m-nombre-poliza').value.trim() || null;
 
   if (!nombre || !email || !pass) { alerta('Completa todos los campos', 'rojo'); return; }
-  if (pass.length < 8) { alerta('La contraseña debe tener al menos 8 caracteres', 'rojo'); return; }
+  if (pass.length < 8) { alerta('La contrasena debe tener al menos 8 caracteres', 'rojo'); return; }
+  if ((rol === 'cobrador' || rol === 'agente') && !nombrePoliza) {
+    alerta('El nombre en polizas es requerido para cobrador y agente', 'rojo'); return;
+  }
 
   const res = await api({ accion: 'crear_usuario', access_token: sesion.access_token,
-                          nombre, email, password: pass, rol });
+                          nombre, email, password: pass, rol, nombre_poliza: nombrePoliza });
   if (res.ok) {
     cerrarModal('modal-crear');
     alerta(res.mensaje, 'verde');
@@ -2103,17 +2141,21 @@ async function crearUsuario() {
 }
 
 async function guardarEdicion() {
-  const id     = document.getElementById('e-id').value;
-  const nombre = document.getElementById('e-nombre').value.trim();
-  const rol    = document.getElementById('e-rol').value;
-  const pass   = document.getElementById('e-pass').value;
+  const id           = document.getElementById('e-id').value;
+  const nombre       = document.getElementById('e-nombre').value.trim();
+  const rol          = document.getElementById('e-rol').value;
+  const pass         = document.getElementById('e-pass').value;
+  const nombrePoliza = document.getElementById('e-nombre-poliza').value.trim() || null;
 
-  if (!nombre) { alerta('El nombre no puede estar vacío', 'rojo'); return; }
-  if (pass && pass.length < 8) { alerta('La contraseña debe tener al menos 8 caracteres', 'rojo'); return; }
+  if (!nombre) { alerta('El nombre no puede estar vacio', 'rojo'); return; }
+  if (pass && pass.length < 8) { alerta('La contrasena debe tener al menos 8 caracteres', 'rojo'); return; }
+  if ((rol === 'cobrador' || rol === 'agente') && !nombrePoliza) {
+    alerta('El nombre en polizas es requerido para cobrador y agente', 'rojo'); return;
+  }
 
-  // 1. Actualizar nombre y rol
+  // 1. Actualizar nombre, rol y nombre_poliza
   const res = await api({ accion: 'actualizar_usuario', access_token: sesion.access_token,
-                          id, nombre, rol });
+                          id, nombre, rol, nombre_poliza: nombrePoliza });
   if (!res.ok) { alerta(res.error, 'rojo'); return; }
 
   // 2. Cambiar contraseña si se proporcionó

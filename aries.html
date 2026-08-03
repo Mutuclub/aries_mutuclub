@@ -1841,6 +1841,10 @@ tr:hover td { background: var(--gray50); }
         <option value="administrador">Administrador</option>
       </select>
     </div>
+    <div class="campo">
+      <label>Nueva contraseña <span style="font-weight:400;color:var(--gray300)">(dejar en blanco para no cambiar)</span></label>
+      <input type="password" id="e-pass" placeholder="Mínimo 8 caracteres">
+    </div>
     <div class="modal-btns">
       <button class="btn-accion btn-gris" onclick="cerrarModal('modal-editar')">Cancelar</button>
       <button class="btn-accion btn-verde" onclick="guardarEdicion()">Guardar</button>
@@ -2042,13 +2046,19 @@ async function cargarUsuarios() {
       <td style="color:var(--gray600)">${esc(u.email)}</td>
       <td><span class="badge badge-${u.rol}">${u.rol}</span></td>
       <td><span class="badge badge-${u.activo ? 'activo' : 'inactivo'}">${u.activo ? 'Activo' : 'Inactivo'}</span></td>
-      <td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn-accion btn-gris" style="padding:5px 12px;font-size:12px"
-          onclick='abrirModalEditar(${JSON.stringify(u)})'>Editar</button>
-        ${u.activo && u.id !== sesion.usuario.id
-          ? `<button class="btn-accion btn-rojo" style="padding:5px 12px;font-size:12px;margin-left:6px"
-              onclick="desactivar('${u.id}','${esc(u.nombre)}')">Desactivar</button>`
-          : ''}
+          onclick='abrirModalEditar(${JSON.stringify(u)})'>✏️ Editar</button>
+        ${u.id !== sesion.usuario.id ? `
+          ${u.activo
+            ? `<button class="btn-accion" style="padding:5px 12px;font-size:12px;background:#f59e0b;color:white;border:none;border-radius:var(--radius);cursor:pointer"
+                onclick="desactivar('${u.id}','${esc(u.nombre)}')">⏸ Desactivar</button>`
+            : `<button class="btn-accion btn-verde" style="padding:5px 12px;font-size:12px"
+                onclick="reactivar('${u.id}','${esc(u.nombre)}')">▶ Reactivar</button>`
+          }
+          <button class="btn-accion" style="padding:5px 12px;font-size:12px;background:var(--red);color:white;border:none;border-radius:var(--radius);cursor:pointer"
+            onclick="eliminarUsuario('${u.id}','${esc(u.nombre)}')">🗑 Eliminar</button>
+        ` : '<span style="font-size:12px;color:var(--gray300)">(tú)</span>'}
       </td>
     </tr>
   `).join('') || '<tr><td colspan="5" style="text-align:center;padding:24px">Sin usuarios</td></tr>';
@@ -2064,6 +2074,7 @@ function abrirModalEditar(u) {
   document.getElementById('e-id').value     = u.id;
   document.getElementById('e-nombre').value = u.nombre;
   document.getElementById('e-rol').value    = u.rol;
+  document.getElementById('e-pass').value   = '';
   document.getElementById('modal-editar').classList.add('visible');
 }
 
@@ -2095,29 +2106,54 @@ async function guardarEdicion() {
   const id     = document.getElementById('e-id').value;
   const nombre = document.getElementById('e-nombre').value.trim();
   const rol    = document.getElementById('e-rol').value;
+  const pass   = document.getElementById('e-pass').value;
 
   if (!nombre) { alerta('El nombre no puede estar vacío', 'rojo'); return; }
+  if (pass && pass.length < 8) { alerta('La contraseña debe tener al menos 8 caracteres', 'rojo'); return; }
 
+  // 1. Actualizar nombre y rol
   const res = await api({ accion: 'actualizar_usuario', access_token: sesion.access_token,
                           id, nombre, rol });
-  if (res.ok) {
-    cerrarModal('modal-editar');
-    alerta(res.mensaje, 'verde');
-    cargarUsuarios();
-    // Actualizar topbar si se editó el propio usuario
-    if (id === sesion.usuario.id) {
-      sesion.usuario.nombre = nombre;
-      sesion.usuario.rol    = rol;
-      configurarUI(sesion.usuario);
-    }
+  if (!res.ok) { alerta(res.error, 'rojo'); return; }
+
+  // 2. Cambiar contraseña si se proporcionó
+  if (pass) {
+    const resPass = await api({ accion: 'cambiar_password', access_token: sesion.access_token,
+                                id, nueva_password: pass });
+    if (!resPass.ok) { alerta(resPass.error, 'rojo'); return; }
+    alerta('Usuario actualizado y contraseña cambiada', 'verde');
   } else {
-    alerta(res.error, 'rojo');
+    alerta(res.mensaje, 'verde');
+  }
+
+  cerrarModal('modal-editar');
+  cargarUsuarios();
+  if (id === sesion.usuario.id) {
+    sesion.usuario.nombre = nombre;
+    sesion.usuario.rol    = rol;
+    configurarUI(sesion.usuario);
   }
 }
 
 async function desactivar(id, nombre) {
   if (!confirm(`¿Desactivar a ${nombre}? No podrá iniciar sesión.`)) return;
   const res = await api({ accion: 'desactivar_usuario', access_token: sesion.access_token, id });
+  if (res.ok) { alerta(res.mensaje, 'verde'); cargarUsuarios(); }
+  else alerta(res.error, 'rojo');
+}
+
+async function reactivar(id, nombre) {
+  if (!confirm(`¿Reactivar a ${nombre}?`)) return;
+  const res = await api({ accion: 'actualizar_usuario', access_token: sesion.access_token,
+                          id, activo: true });
+  if (res.ok) { alerta(`${nombre} reactivado`, 'verde'); cargarUsuarios(); }
+  else alerta(res.error, 'rojo');
+}
+
+async function eliminarUsuario(id, nombre) {
+  if (!confirm(`¿Eliminar permanentemente a ${nombre}?\n\nEsta acción no se puede deshacer.`)) return;
+  if (!confirm(`Confirma: ¿eliminar a ${nombre} de forma definitiva?`)) return;
+  const res = await api({ accion: 'eliminar_usuario', access_token: sesion.access_token, id });
   if (res.ok) { alerta(res.mensaje, 'verde'); cargarUsuarios(); }
   else alerta(res.error, 'rojo');
 }

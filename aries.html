@@ -559,6 +559,9 @@ tr:hover td { background: var(--gray50); }
       <div class="nav-item" onclick="irA('usuarios')" id="nav-usuarios" style="display:none">
         <span class="nav-icon">🔑</span> Usuarios
       </div>
+      <div class="nav-item" onclick="irA('permisos')" id="nav-permisos" style="display:none">
+        <span class="nav-icon">🛡️</span> Permisos
+      </div>
       <div class="nav-item" onclick="irA('catalogos')" id="nav-catalogos" style="display:none">
         <span class="nav-icon">🗂️</span> Catálogos
       </div>
@@ -1463,6 +1466,41 @@ tr:hover td { background: var(--gray50); }
       </div>
 
       <!-- USUARIOS (solo admin) -->
+
+      <!-- PERMISOS (solo admin) -->
+      <div class="vista" id="v-permisos">
+        <div class="vista-titulo">Permisos del sistema</div>
+        <div class="vista-sub">Configura qué módulos puede ver cada rol y añade excepciones por usuario</div>
+
+        <!-- Tabs: Por Rol / Por Usuario -->
+        <div style="display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid var(--gray100)">
+          <button class="tab-btn activo" id="ptab-roles"   onclick="permisosTab('roles')"  >🏷️ Por Rol</button>
+          <button class="tab-btn"        id="ptab-usuarios" onclick="permisosTab('usuarios')">👤 Por Usuario</button>
+        </div>
+
+        <!-- Vista por Rol -->
+        <div id="p-vista-roles">
+          <div style="font-size:13px;color:var(--gray300);margin-bottom:16px">
+            Activa o desactiva módulos para cada rol. Afecta a todos los usuarios de ese rol salvo que tengan una excepción individual.
+          </div>
+          <div class="tabla-wrap" id="tabla-permisos-roles"></div>
+        </div>
+
+        <!-- Vista por Usuario -->
+        <div id="p-vista-usuarios" style="display:none">
+          <div style="font-size:13px;color:var(--gray300);margin-bottom:16px">
+            Las excepciones individuales tienen prioridad sobre el rol. Úsalas para dar o quitar acceso a un usuario específico.
+          </div>
+          <div style="margin-bottom:16px;display:flex;gap:12px;align-items:center">
+            <select id="p-sel-usuario" onchange="cargarPermisosUsuario()" style="padding:9px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);min-width:280px">
+              <option value="">— Selecciona un usuario —</option>
+            </select>
+            <span id="p-rol-usuario" style="font-size:12px;color:var(--gray300)"></span>
+          </div>
+          <div id="tabla-permisos-usuario"></div>
+        </div>
+      </div>
+
       <div class="vista" id="v-usuarios">
         <div class="vista-titulo">Usuarios del sistema</div>
         <div class="vista-sub">Alta, edición y desactivación de cuentas</div>
@@ -1972,9 +2010,14 @@ async function restaurarSesion(token) {
   }
 }
 
-function guardarSesion(data) {
+async function guardarSesion(data) {
   sesion = data;
   sessionStorage.setItem('aries_token', data.access_token);
+  // Cargar permisos efectivos del usuario antes de configurar la UI
+  try {
+    const rp = await api({ accion: 'mis_permisos', access_token: data.access_token });
+    sesion.permisos = rp.ok ? rp.permisos : {};
+  } catch(e) { sesion.permisos = {}; }
   configurarUI(data.usuario);
   mostrarPantalla('p-app');
   irA('inicio');
@@ -1996,33 +2039,26 @@ function configurarUI(usuario) {
   document.getElementById('top-avatar').textContent = usuario.nombre.charAt(0).toUpperCase();
   document.getElementById('bienvenida-titulo').textContent = 'Bienvenido, ' + usuario.nombre.split(' ')[0];
 
-  const rol      = usuario.rol;
-  const esAdmin  = rol === 'administrador';
-  const esOps    = rol === 'operaciones';
-  const esCob    = rol === 'cobrador';
-  const esAgente = rol === 'agente';
+  const esAdmin = usuario.rol === 'administrador';
+  // Permisos efectivos cargados en sesion.permisos por guardarSesion
+  const p = (sesion && sesion.permisos) ? sesion.permisos : {};
 
-  // Polizas: todos ven el modulo (filtro de datos en backend)
-  setVisible('nav-polizas',   true);
-  setVisible('nav-clientes',  esAdmin || esOps);
+  // Modulos configurables — usan permisos dinamicos
+  setVisible('nav-polizas',    p.polizas   !== false);
+  setVisible('nav-cobranza',   !!p.cobranza);
+  setVisible('nav-oficina',    !!p.oficina);
+  setVisible('nav-depositos',  !!p.depositos);
+  setVisible('nav-siniestros', !!p.siniestros);
+  setVisible('nav-catalogos',  !!p.catalogos || esAdmin);
+  setVisible('nav-reportes',   !!p.reportes  || esAdmin);
 
-  // Cobranza Cobradores: admin, operaciones, cobrador
-  setVisible('nav-cobranza',  esAdmin || esOps || esCob);
+  // Clientes: admin y operaciones siempre
+  setVisible('nav-clientes', esAdmin || usuario.rol === 'operaciones');
 
-  // Cobranza Oficina: admin, operaciones
-  setVisible('nav-oficina',   esAdmin || esOps);
-
-  // Depositos: admin, operaciones
-  setVisible('nav-depositos', esAdmin || esOps);
-
-  // Siniestros: admin, operaciones, agente
-  setVisible('nav-siniestros', esAdmin || esOps || esAgente);
-
-  // Seccion Administracion
-  setVisible('sec-admin',     esAdmin);
-  setVisible('nav-usuarios',  esAdmin);
-  setVisible('nav-catalogos', esAdmin || esOps);
-  setVisible('nav-reportes',  esAdmin);
+  // Seccion Administracion — solo admin
+  setVisible('sec-admin',    esAdmin);
+  setVisible('nav-usuarios', esAdmin);
+  setVisible('nav-permisos', esAdmin);
 }
 
 function setVisible(id, visible) {
@@ -2041,6 +2077,7 @@ function irA(vista) {
   if (n) n.classList.add('activo');
 
   if (vista === 'usuarios')  cargarUsuarios();
+  if (vista === 'permisos')   cargarPermisos();
   if (vista === 'cobranza')  iniciarCobranza();
   if (vista === 'oficina')   iniciarOficina();
   if (vista === 'depositos') iniciarDepositos();
@@ -5387,6 +5424,181 @@ async function registrarHistorialVehiculo(id_poliza) {
     },
     notas: null
   });
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// MÓDULO DE PERMISOS
+// ═══════════════════════════════════════════════════════════════
+
+const MODULOS_LABELS = {
+  polizas:   '📋 Pólizas',
+  cobranza:  '💰 Cobranza Cobradores',
+  oficina:   '🏢 Cobranza Oficina',
+  depositos: '🏦 Depósitos',
+  siniestros:'🚗 Siniestros',
+  catalogos: '🗂️ Catálogos',
+  reportes:  '📊 Reportes'
+};
+const ROLES_LABELS = { administrador:'Administrador', operaciones:'Operaciones', cobrador:'Cobrador', agente:'Agente' };
+let permisosData = { permisos:[], modulos:[], usuarios:[] };
+
+async function cargarPermisos() {
+  const res = await api({ accion:'listar_permisos', access_token:sesion.access_token });
+  if (!res.ok) { alerta(res.error,'rojo'); return; }
+  permisosData.permisos = res.permisos;
+  permisosData.modulos  = res.modulos || Object.keys(MODULOS_LABELS);
+
+  // Cargar usuarios para el selector
+  const ru = await api({ accion:'listar_usuarios', access_token:sesion.access_token });
+  permisosData.usuarios = ru.ok ? ru.usuarios : [];
+
+  renderTablaRoles();
+  poblarSelectorUsuarios();
+}
+
+function permisosTab(tab) {
+  document.getElementById('p-vista-roles').style.display    = tab==='roles'    ? '' : 'none';
+  document.getElementById('p-vista-usuarios').style.display = tab==='usuarios' ? '' : 'none';
+  document.getElementById('ptab-roles').classList.toggle('activo',   tab==='roles');
+  document.getElementById('ptab-usuarios').classList.toggle('activo', tab==='usuarios');
+}
+
+function getPermiso(entidad, entidad_id, modulo) {
+  const r = permisosData.permisos.find(p => p.entidad===entidad && p.entidad_id===entidad_id && p.modulo===modulo);
+  return r ? r.permitido : null; // null = sin regla explícita
+}
+
+// ── TABLA POR ROL ─────────────────────────────────────────────
+function renderTablaRoles() {
+  const roles   = ['administrador','operaciones','cobrador','agente'];
+  const modulos = permisosData.modulos;
+  let html = '<table style="width:100%;border-collapse:collapse;font-size:13px">';
+  html += '<thead><tr><th style="text-align:left;padding:10px 14px;background:var(--gray50);color:var(--gray300);font-size:11px;text-transform:uppercase;letter-spacing:1px">Módulo</th>';
+  roles.forEach(r => {
+    html += `<th style="padding:10px 14px;background:var(--gray50);color:var(--navy);font-size:12px;text-align:center">${ROLES_LABELS[r]}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  modulos.forEach(m => {
+    html += `<tr style="border-bottom:1px solid var(--gray100)">`;
+    html += `<td style="padding:10px 14px;font-weight:600;color:var(--navy)">${MODULOS_LABELS[m] || m}</td>`;
+    roles.forEach(r => {
+      const val = getPermiso('rol', r, m);
+      // Admin siempre activo y no editable
+      const esAdmin = r === 'administrador';
+      const checked = esAdmin ? true : (val !== null ? val : false);
+      const disabled = esAdmin ? 'disabled title="El administrador siempre tiene acceso a todo"' : '';
+      html += `<td style="text-align:center;padding:10px">
+        <input type="checkbox" ${checked?'checked':''} ${disabled}
+          onchange="togglePermisosRol('${r}','${m}',this.checked)"
+          style="width:18px;height:18px;cursor:${esAdmin?'default':'pointer'}">
+      </td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('tabla-permisos-roles').innerHTML = html;
+}
+
+async function togglePermisosRol(rol, modulo, checked) {
+  const res = await api({ accion:'guardar_permiso', access_token:sesion.access_token,
+    entidad:'rol', entidad_id:rol, modulo, permitido:checked });
+  if (!res.ok) { alerta(res.error,'rojo'); await cargarPermisos(); return; }
+  // Actualizar dato local
+  const idx = permisosData.permisos.findIndex(p => p.entidad==='rol' && p.entidad_id===rol && p.modulo===modulo);
+  if (idx >= 0) permisosData.permisos[idx].permitido = checked;
+  else permisosData.permisos.push({ entidad:'rol', entidad_id:rol, modulo, permitido:checked });
+  alerta(`Permiso ${checked?'activado':'desactivado'} para ${ROLES_LABELS[rol]} — ${MODULOS_LABELS[modulo]||modulo}`, checked?'verde':'rojo');
+}
+
+// ── TABLA POR USUARIO ─────────────────────────────────────────
+function poblarSelectorUsuarios() {
+  const sel = document.getElementById('p-sel-usuario');
+  sel.innerHTML = '<option value="">— Selecciona un usuario —</option>';
+  permisosData.usuarios.forEach(u => {
+    sel.innerHTML += `<option value="${esc(u.id)}" data-rol="${esc(u.rol)}">${esc(u.nombre)} (${esc(u.rol)})</option>`;
+  });
+}
+
+function cargarPermisosUsuario() {
+  const sel = document.getElementById('p-sel-usuario');
+  const uid = sel.value;
+  if (!uid) { document.getElementById('tabla-permisos-usuario').innerHTML = ''; return; }
+  const opt = sel.options[sel.selectedIndex];
+  const rol = opt.dataset.rol;
+  document.getElementById('p-rol-usuario').textContent = 'Rol: ' + (ROLES_LABELS[rol]||rol);
+  renderTablaUsuario(uid, rol);
+}
+
+function renderTablaUsuario(uid, rol) {
+  const modulos = permisosData.modulos;
+  let html = '<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr>';
+  html += '<th style="text-align:left;padding:10px 14px;background:var(--gray50);color:var(--gray300);font-size:11px;text-transform:uppercase;letter-spacing:1px">Módulo</th>';
+  html += '<th style="padding:10px 14px;background:var(--gray50);color:var(--gray300);font-size:11px;text-transform:uppercase;text-align:center">Permiso del Rol</th>';
+  html += '<th style="padding:10px 14px;background:var(--gray50);color:var(--navy);font-size:11px;text-transform:uppercase;text-align:center">Excepción Individual</th>';
+  html += '<th style="padding:10px 14px;background:var(--gray50);color:var(--gray300);font-size:11px;text-transform:uppercase;text-align:center">Acceso Efectivo</th>';
+  html += '<th style="padding:10px 14px;background:var(--gray50);color:var(--gray300);font-size:11px;text-transform:uppercase;text-align:center">Acciones</th>';
+  html += '</tr></thead><tbody>';
+
+  modulos.forEach(m => {
+    const permisoRol = getPermiso('rol', rol, m);
+    const permisoUsr = getPermiso('usuario', uid, m);
+    const efectivo   = permisoUsr !== null ? permisoUsr : (permisoRol !== null ? permisoRol : false);
+    const tieneExcepcion = permisoUsr !== null;
+
+    const iconRol = permisoRol ? '✅' : '❌';
+    const iconEfectivo = efectivo ? '<span style="color:#1A6B3C;font-weight:700">✅ Sí</span>' : '<span style="color:#C0392B;font-weight:700">❌ No</span>';
+
+    let excepcionHtml = '<span style="color:var(--gray300);font-size:12px">— sin excepción —</span>';
+    if (tieneExcepcion) {
+      excepcionHtml = permisoUsr
+        ? '<span style="background:#E8F5EE;color:#1A6B3C;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600">✅ Activado</span>'
+        : '<span style="background:#FEEEEE;color:#C0392B;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600">❌ Bloqueado</span>';
+    }
+
+    let accionesHtml = `
+      <button class="btn-accion btn-verde" style="padding:4px 10px;font-size:11px" onclick="setExcepcion('${uid}','${m}',true)">✅ Activar</button>
+      <button class="btn-accion" style="padding:4px 10px;font-size:11px;background:var(--red);color:white;border:none;border-radius:var(--radius);cursor:pointer" onclick="setExcepcion('${uid}','${m}',false)">❌ Bloquear</button>`;
+    if (tieneExcepcion) {
+      accionesHtml += `<button class="btn-accion btn-gris" style="padding:4px 10px;font-size:11px;margin-left:4px" onclick="quitarExcepcion('${uid}','${m}')">↩ Heredar rol</button>`;
+    }
+
+    html += `<tr style="border-bottom:1px solid var(--gray100)">
+      <td style="padding:10px 14px;font-weight:600;color:var(--navy)">${MODULOS_LABELS[m]||m}</td>
+      <td style="padding:10px;text-align:center">${iconRol}</td>
+      <td style="padding:10px;text-align:center">${excepcionHtml}</td>
+      <td style="padding:10px;text-align:center">${iconEfectivo}</td>
+      <td style="padding:10px;text-align:center;white-space:nowrap">${accionesHtml}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('tabla-permisos-usuario').innerHTML = html;
+}
+
+async function setExcepcion(uid, modulo, valor) {
+  const res = await api({ accion:'guardar_permiso', access_token:sesion.access_token,
+    entidad:'usuario', entidad_id:uid, modulo, permitido:valor });
+  if (!res.ok) { alerta(res.error,'rojo'); return; }
+  const idx = permisosData.permisos.findIndex(p => p.entidad==='usuario' && p.entidad_id===uid && p.modulo===modulo);
+  if (idx>=0) permisosData.permisos[idx].permitido = valor;
+  else permisosData.permisos.push({ entidad:'usuario', entidad_id:uid, modulo, permitido:valor });
+  const sel = document.getElementById('p-sel-usuario');
+  const rol = sel.options[sel.selectedIndex].dataset.rol;
+  renderTablaUsuario(uid, rol);
+  alerta(`Excepción ${valor?'activada':'bloqueada'}: ${MODULOS_LABELS[modulo]||modulo}`, valor?'verde':'rojo');
+}
+
+async function quitarExcepcion(uid, modulo) {
+  const res = await api({ accion:'eliminar_permiso', access_token:sesion.access_token,
+    entidad:'usuario', entidad_id:uid, modulo });
+  if (!res.ok) { alerta(res.error,'rojo'); return; }
+  const idx = permisosData.permisos.findIndex(p => p.entidad==='usuario' && p.entidad_id===uid && p.modulo===modulo);
+  if (idx>=0) permisosData.permisos.splice(idx,1);
+  const sel = document.getElementById('p-sel-usuario');
+  const rol = sel.options[sel.selectedIndex].dataset.rol;
+  renderTablaUsuario(uid, rol);
+  alerta('Excepción eliminada — el usuario hereda el permiso de su rol', 'verde');
 }
 
 </script>

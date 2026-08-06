@@ -846,6 +846,24 @@ tr:hover td { background: var(--gray50); }
             <div class="card">
               <div style="font-size:11px;font-weight:700;color:var(--gray300);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px">Finanzas</div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="campo" style="grid-column:1/-1">
+                  <label>Tipo de Vehículo (Tarifa)</label>
+                  <select id="fp-tipo-veh-tarifa" onchange="onTarifaChange()"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none">
+                    <option value="">— Selecciona tipo de vehículo —</option>
+                    <option>Auto</option>
+                    <option>Pick Up</option>
+                    <option>Motocicleta</option>
+                    <option>3.5 Toneladas</option>
+                    <option>Plataforma o Autoescuela</option>
+                    <option>Moto Taxi PF</option>
+                    <option>Moto Taxi</option>
+                    <option>Taxi</option>
+                    <option>Auto y Pick Up $100,000</option>
+                    <option>Pasajeros</option>
+                    <option>Plataforma</option>
+                  </select>
+                </div>
                 <div class="campo">
                   <label>Costo Total</label>
                   <input type="number" id="fp-costo" placeholder="0.00" min="0" step="0.01"
@@ -2942,6 +2960,7 @@ let empresasCatalogo   = [];
 let asesoresFormCache   = [];
 let cobradoresFormCache = [];
 let coberturasFormCache = [];
+let tarifasFormCache    = [];
 
 async function buscarPolizas() {
   const termino = document.getElementById('poliza-busqueda').value.trim();
@@ -4866,6 +4885,12 @@ async function cargarEmpresasForm() {
     }
   }
 
+  // Tarifas
+  if (tarifasFormCache.length === 0) {
+    const res = await api({ accion: 'listar_tarifas', access_token: sesion.access_token });
+    if (res.ok) tarifasFormCache = res.tarifas || [];
+  }
+
   // Poblar select de estados
   poblarEstados();
   // Poblar marcas (autos por defecto)
@@ -4888,6 +4913,41 @@ async function onCoberturaChange() {
       <td style="padding:3px 8px;border-bottom:1px solid var(--gray100)">${esc(c.deducible || '—')}</td>
     </tr>`).join('');
   preview.style.display = 'block';
+  // Intentar autocompletar tarifa si ya hay tipo de vehículo seleccionado
+  autocompletarTarifa();
+}
+
+function onTarifaChange() {
+  autocompletarTarifa();
+}
+
+function autocompletarTarifa() {
+  // Determinar la cobertura base (Terceros / Limitada / Amplia) a partir del nombre de cobertura
+  const nomCobertura = document.getElementById('fp-tipo-cobertura').value || '';
+  const tipoVeh      = document.getElementById('fp-tipo-veh-tarifa').value || '';
+  if (!nomCobertura || !tipoVeh) return;
+
+  // Mapear el nombre del catálogo a la clave de cobertura de la tabla tarifas
+  let coberturaKey = '';
+  const nom = nomCobertura.toUpperCase();
+  if (nom.includes('TERCERO'))  coberturaKey = 'Terceros';
+  else if (nom.includes('LIMIT')) coberturaKey = 'Limitada';
+  else if (nom.includes('AMPL')) coberturaKey = 'Amplia';
+  else return; // cobertura no mapeada, no autocompletar
+
+  const tarifa = tarifasFormCache.find(t =>
+    t.cobertura === coberturaKey && t.tipo_vehiculo === tipoVeh
+  );
+  if (!tarifa) return;
+
+  // Solo sobreescribir si los campos están vacíos (no pisar edición manual)
+  const campoCosto  = document.getElementById('fp-costo');
+  const campoPago   = document.getElementById('fp-pago-inicial');
+  const campoPagos  = document.getElementById('fp-pagos-de');
+
+  if (!campoCosto.value)  campoCosto.value  = tarifa.costo;
+  if (!campoPago.value)   campoPago.value   = tarifa.pago_inicial;
+  if (!campoPagos.value)  campoPagos.value  = tarifa.mensualidad;
 }
 
 function poblarEstados() {
@@ -5011,11 +5071,12 @@ async function abrirFormPoliza(datos, placasPreCargadas, prefillRenovacion, poli
    'fp-fecha-activacion','fp-act-recibo','fp-act-monto','fp-act-notas']
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   // reset selects póliza
-  document.getElementById('fp-empresa').value       = '';
-  document.getElementById('fp-tipo-poliza').value   = '';
-  document.getElementById('fp-tipo-cobertura').value = '';
+  document.getElementById('fp-empresa').value          = '';
+  document.getElementById('fp-tipo-poliza').value      = '';
+  document.getElementById('fp-tipo-cobertura').value   = '';
   document.getElementById('fp-cob-preview').style.display = 'none';
-  document.getElementById('fp-tipo-cobro').value    = '';
+  document.getElementById('fp-tipo-veh-tarifa').value  = '';
+  document.getElementById('fp-tipo-cobro').value       = '';
   document.getElementById('fp-asesor').value      = '';
   document.getElementById('fp-cobrador').value    = '';
   document.getElementById('fp-activacion').value  = '';

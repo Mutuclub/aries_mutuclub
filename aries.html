@@ -5085,33 +5085,34 @@ function onTarifaChange() {
   autocompletarTarifa();
 }
 
-function autocompletarTarifa() {
-  // Determinar la cobertura base (Terceros / Limitada / Amplia) a partir del nombre de cobertura
+async function autocompletarTarifa() {
   const nomCobertura = document.getElementById('fp-tipo-cobertura').value || '';
   const tipoVeh      = document.getElementById('fp-tipo-veh-tarifa').value || '';
   if (!nomCobertura || !tipoVeh) return;
 
-  // Mapear el nombre del catálogo a la clave de cobertura de la tabla tarifas
+  // Recargar cache si está vacío
+  if (tarifasFormCache.length === 0) {
+    const res = await api({ accion: 'listar_tarifas', access_token: sesion.access_token });
+    if (res.ok) tarifasFormCache = res.tarifas || [];
+  }
+
+  // Mapear nombre del catálogo → clave en aries_tarifas
   let coberturaKey = '';
   const nom = nomCobertura.toUpperCase();
-  if (nom.includes('TERCERO'))  coberturaKey = 'Terceros';
-  else if (nom.includes('LIMIT')) coberturaKey = 'Limitada';
-  else if (nom.includes('AMPL')) coberturaKey = 'Amplia';
-  else return; // cobertura no mapeada, no autocompletar
+  if      (nom.includes('TERCERO')) coberturaKey = 'Terceros';
+  else if (nom.includes('LIMIT'))   coberturaKey = 'Limitada';
+  else if (nom.includes('AMPL'))    coberturaKey = 'Amplia';
+  else return;
 
   const tarifa = tarifasFormCache.find(t =>
     t.cobertura === coberturaKey && t.tipo_vehiculo === tipoVeh
   );
   if (!tarifa) return;
 
-  // Solo sobreescribir si los campos están vacíos (no pisar edición manual)
-  const campoCosto  = document.getElementById('fp-costo');
-  const campoPago   = document.getElementById('fp-pago-inicial');
-  const campoPagos  = document.getElementById('fp-pagos-de');
-
-  if (!campoCosto.value)  campoCosto.value  = tarifa.costo;
-  if (!campoPago.value)   campoPago.value   = tarifa.pago_inicial;
-  if (!campoPagos.value)  campoPagos.value  = tarifa.mensualidad;
+  // Siempre sobreescribir al seleccionar cobertura o tipo de vehículo
+  document.getElementById('fp-costo').value        = tarifa.costo;
+  document.getElementById('fp-pago-inicial').value = tarifa.pago_inicial;
+  document.getElementById('fp-pagos-de').value     = tarifa.mensualidad;
 }
 
 function poblarEstados() {

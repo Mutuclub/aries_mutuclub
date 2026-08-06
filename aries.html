@@ -1559,6 +1559,7 @@ tr:hover td { background: var(--gray50); }
           <button class="tab-btn"        onclick="catTab('asesores')"    id="ctab-asesores">👤 Asesores</button>
           <button class="tab-btn"        onclick="catTab('cobradores')"  id="ctab-cobradores">🪙 Cobradores</button>
           <button class="tab-btn"        onclick="catTab('coberturas')"  id="ctab-coberturas">🛡️ Coberturas</button>
+          <button class="tab-btn"        onclick="catTab('tarifas')"     id="ctab-tarifas">💲 Tarifas</button>
         </div>
 
         <!-- TAB EMPRESAS -->
@@ -1661,6 +1662,91 @@ tr:hover td { background: var(--gray50); }
           </div>
         </div>
 
+        <!-- TAB TARIFAS -->
+        <div id="cat-tarifas" style="display:none">
+          <div class="toolbar" style="margin-bottom:16px">
+            <button class="btn-accion btn-verde" onclick="abrirModalTarifa(null)">+ Nueva tarifa</button>
+            <button class="btn-accion btn-gris"  onclick="cargarTarifasCat()">↺ Actualizar</button>
+          </div>
+          <div class="tabla-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Cobertura</th>
+                  <th>Tipo de Vehículo</th>
+                  <th style="text-align:right">Costo</th>
+                  <th style="text-align:right">Pago Inicial</th>
+                  <th style="text-align:right">Mensualidad</th>
+                  <th>Activo</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="tbody-cat-tarifas"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Tarifa -->
+      <div id="modal-tarifa" class="modal" style="display:none">
+        <div class="modal-box" style="max-width:460px">
+          <div class="modal-titulo" id="modal-tarifa-titulo">Tarifa</div>
+          <input type="hidden" id="tar-id">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px">
+            <div class="campo">
+              <label>Cobertura *</label>
+              <select id="tar-cobertura"
+                style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none">
+                <option value="">— Selecciona —</option>
+                <option>Terceros</option>
+                <option>Limitada</option>
+                <option>Amplia</option>
+              </select>
+            </div>
+            <div class="campo">
+              <label>Tipo de Vehículo *</label>
+              <select id="tar-tipo-vehiculo"
+                style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none">
+                <option value="">— Selecciona —</option>
+                <option>Auto</option>
+                <option>Pick Up</option>
+                <option>Motocicleta</option>
+                <option>3.5 Toneladas</option>
+                <option>Plataforma o Autoescuela</option>
+                <option>Moto Taxi PF</option>
+                <option>Moto Taxi</option>
+                <option>Taxi</option>
+                <option>Auto y Pick Up $100,000</option>
+                <option>Pasajeros</option>
+                <option>Plataforma</option>
+              </select>
+            </div>
+            <div class="campo">
+              <label>Costo Total</label>
+              <input type="number" id="tar-costo" placeholder="0.00" min="0" step="0.01"
+                style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+            </div>
+            <div class="campo">
+              <label>Pago Inicial</label>
+              <input type="number" id="tar-pago-inicial" placeholder="0.00" min="0" step="0.01"
+                style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+            </div>
+            <div class="campo">
+              <label>Mensualidad</label>
+              <input type="number" id="tar-mensualidad" placeholder="0.00" min="0" step="0.01"
+                style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+            </div>
+            <div class="campo" style="display:flex;align-items:center;gap:8px;padding-top:24px">
+              <input type="checkbox" id="tar-activo" checked style="width:16px;height:16px">
+              <label for="tar-activo" style="margin:0;font-weight:600">Activa</label>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
+            <button class="btn-accion btn-gris"  onclick="cerrarModalTarifa()">Cancelar</button>
+            <button class="btn-accion btn-verde"  onclick="guardarTarifaCat()">Guardar</button>
+          </div>
+        </div>
       </div>
 
       <!-- Modal Empresa -->
@@ -4523,7 +4609,7 @@ async function imprimirRecepcion(id_recepcion) {
 // ═══════════════════════════════════════════════════════════════
 
 function catTab(tab) {
-  ['empresas','tipo-poliza','asesores','cobradores','coberturas'].forEach(t => {
+  ['empresas','tipo-poliza','asesores','cobradores','coberturas','tarifas'].forEach(t => {
     document.getElementById('cat-' + t).style.display     = t === tab ? 'block' : 'none';
     document.getElementById('ctab-' + t).classList.toggle('activo', t === tab);
   });
@@ -4531,6 +4617,84 @@ function catTab(tab) {
   if (tab === 'asesores')   cargarAsesoresCat();
   if (tab === 'cobradores') cargarCobradoresCat();
   if (tab === 'coberturas') cargarCoberturasCat();
+  if (tab === 'tarifas')    cargarTarifasCat();
+}
+
+// ── TARIFAS ──────────────────────────────────────────────────
+const FMT_MONEDA = v => '$' + Number(v || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+async function cargarTarifasCat() {
+  const tbody = document.getElementById('tbody-cat-tarifas');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--gray300)">Cargando…</td></tr>';
+  const res = await api({ accion: 'listar_tarifas', access_token: sesion.access_token });
+  if (!res.ok) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--red)">Error al cargar tarifas</td></tr>';
+    return;
+  }
+  if (!res.tarifas.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--gray300)">Sin tarifas registradas</td></tr>';
+    return;
+  }
+  tbody.innerHTML = res.tarifas.map(t => `
+    <tr>
+      <td><strong>${esc(t.cobertura)}</strong></td>
+      <td>${esc(t.tipo_vehiculo)}</td>
+      <td style="text-align:right">${FMT_MONEDA(t.costo)}</td>
+      <td style="text-align:right">${FMT_MONEDA(t.pago_inicial)}</td>
+      <td style="text-align:right">${FMT_MONEDA(t.mensualidad)}</td>
+      <td style="text-align:center">
+        <span class="badge ${t.activo ? 'badge-admin' : 'badge-gris'}" style="font-size:11px">
+          ${t.activo ? 'Sí' : 'No'}
+        </span>
+      </td>
+      <td>
+        <button class="btn-accion btn-gris" style="padding:4px 10px;font-size:12px"
+          onclick='abrirModalTarifa(${JSON.stringify(t)})'>Editar</button>
+      </td>
+    </tr>`).join('');
+}
+
+function abrirModalTarifa(t) {
+  document.getElementById('modal-tarifa-titulo').textContent = t ? 'Editar Tarifa' : 'Nueva Tarifa';
+  document.getElementById('tar-id').value            = t?.id || '';
+  document.getElementById('tar-cobertura').value     = t?.cobertura || '';
+  document.getElementById('tar-tipo-vehiculo').value = t?.tipo_vehiculo || '';
+  document.getElementById('tar-costo').value         = t?.costo || '';
+  document.getElementById('tar-pago-inicial').value  = t?.pago_inicial || '';
+  document.getElementById('tar-mensualidad').value   = t?.mensualidad || '';
+  document.getElementById('tar-activo').checked      = t ? t.activo !== false : true;
+  document.getElementById('modal-tarifa').style.display = 'flex';
+}
+
+function cerrarModalTarifa() {
+  document.getElementById('modal-tarifa').style.display = 'none';
+}
+
+async function guardarTarifaCat() {
+  const cobertura     = document.getElementById('tar-cobertura').value.trim();
+  const tipo_vehiculo = document.getElementById('tar-tipo-vehiculo').value.trim();
+  const costo         = document.getElementById('tar-costo').value;
+  const pago_inicial  = document.getElementById('tar-pago-inicial').value;
+  const mensualidad   = document.getElementById('tar-mensualidad').value;
+  const activo        = document.getElementById('tar-activo').checked;
+  const id            = document.getElementById('tar-id').value;
+
+  if (!cobertura || !tipo_vehiculo)
+    return alert('Selecciona cobertura y tipo de vehículo');
+
+  const res = await api({
+    accion: 'guardar_tarifa',
+    access_token: sesion.access_token,
+    id: id ? Number(id) : null,
+    cobertura, tipo_vehiculo, costo, pago_inicial, mensualidad, activo
+  });
+
+  if (!res.ok) return alert('Error: ' + res.error);
+
+  cerrarModalTarifa();
+  // Limpiar cache del formulario para que recargue al abrir siguiente póliza
+  tarifasFormCache = [];
+  cargarTarifasCat();
 }
 
 // ── EMPRESAS ─────────────────────────────────────────────────

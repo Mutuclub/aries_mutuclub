@@ -3528,15 +3528,26 @@ async function generarPoliza() {
 
   const win = window.open('poliza_print.html', '_blank',
     'width=900,height=700,menubar=yes,toolbar=yes');
-  // Esperar a que cargue y enviar datos
-  const enviar = () => {
-    try {
+
+  if (!win) {
+    alerta('El navegador bloqueó la ventana de impresión. Permite las ventanas emergentes para este sitio y vuelve a intentarlo.', 'rojo');
+    return;
+  }
+
+  // Handshake: esperar que poliza_print.html avise que está listo
+  const onListo = (e) => {
+    if (e.source === win && e.data === 'POLIZA_PRINT_LISTO') {
+      window.removeEventListener('message', onListo);
       win.postMessage({ tipo: 'IMPRIMIR_POLIZA', datos }, '*');
-    } catch(e) {
-      setTimeout(enviar, 300);
     }
   };
-  setTimeout(enviar, 800);
+  window.addEventListener('message', onListo);
+
+  // Fallback: si tarda más de 8 segundos, enviar de todas formas
+  setTimeout(() => {
+    window.removeEventListener('message', onListo);
+    try { win.postMessage({ tipo: 'IMPRIMIR_POLIZA', datos }, '*'); } catch(e) {}
+  }, 8000);
 }
 
 function cerrarDetalle() {

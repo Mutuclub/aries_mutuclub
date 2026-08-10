@@ -505,6 +505,11 @@ window.addEventListener('message', function(e) {
     renderPoliza(e.data.datos);
   }
 });
+
+// Avisar al padre que esta página ya está lista para recibir datos
+if (window.opener) {
+  window.opener.postMessage('POLIZA_PRINT_LISTO', '*');
+}
 </script>
 
 </body>

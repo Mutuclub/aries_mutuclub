@@ -548,6 +548,9 @@ tr:hover td { background: var(--gray50); }
       <div class="nav-item" onclick="irA('oficina')" id="nav-oficina">
         <span class="nav-icon">🏢</span> Oficina
       </div>
+      <div class="nav-item" onclick="irA('activaciones')" id="nav-activaciones">
+        <span class="nav-icon">⚡</span> Activaciones
+      </div>
       <div class="nav-item" onclick="irA('depositos')" id="nav-depositos">
         <span class="nav-icon">🏦</span> Depósitos
       </div>
@@ -721,6 +724,8 @@ tr:hover td { background: var(--gray50); }
                 <span class="dl">Fecha Activación</span><span id="d-fecha-activacion">—</span>
                 <span class="dl">Recibo</span><span id="d-act-recibo">—</span>
                 <span class="dl">Monto</span><span id="d-act-monto">—</span>
+                <span class="dl">Monto Tipo</span><span id="d-act-tipo-pago">—</span>
+                <span class="dl">Banco</span><span id="d-act-banco">—</span>
                 <span class="dl">Notas</span><span id="d-act-notas" style="white-space:pre-wrap">—</span>
               </div>
             </div>
@@ -1064,6 +1069,22 @@ tr:hover td { background: var(--gray50); }
                   <input type="number" id="fp-act-monto" placeholder="0.00" min="0" step="0.01"
                     style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
                 </div>
+                <div class="campo">
+                  <label>Monto Tipo</label>
+                  <select id="fp-act-tipo-pago"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none">
+                    <option value="">— Selecciona —</option>
+                    <option value="EFECTIVO">Efectivo</option>
+                    <option value="DEPOSITO">Depósito</option>
+                    <option value="TRANSFERENCIA">Transferencia</option>
+                    <option value="AJUSTE">Ajuste</option>
+                  </select>
+                </div>
+                <div class="campo">
+                  <label>Banco</label>
+                  <input type="text" id="fp-act-banco" placeholder="Nombre del banco"
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
                 <div class="campo" style="grid-column:1/-1">
                   <label>Notas Activación</label>
                   <textarea id="fp-act-notas" rows="3" placeholder="Observaciones de activación…"
@@ -1257,11 +1278,12 @@ tr:hover td { background: var(--gray50); }
                   <th>No. Recibo</th>
                   <th>Monto</th>
                   <th>Comisión</th>
+                  <th>Notas</th>
                   <th></th>
                 </tr>
               </thead>
               <tbody id="tbody-recibos-of">
-                <tr id="tr-vacio-of"><td colspan="10" style="text-align:center;padding:20px;color:var(--gray300)">Agrega recibos con el botón +</td></tr>
+                <tr id="tr-vacio-of"><td colspan="11" style="text-align:center;padding:20px;color:var(--gray300)">Agrega recibos con el botón +</td></tr>
               </tbody>
             </table>
           </div>
@@ -1343,6 +1365,101 @@ tr:hover td { background: var(--gray50); }
                 <tr><th>Nombre</th><th>Comisión</th><th>Puede cobrar</th><th>Activo</th><th>Acciones</th></tr>
               </thead>
               <tbody id="tbody-asesores-cat"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTIVACIONES -->
+      <div class="vista" id="v-activaciones">
+        <div class="vista-titulo">Activaciones</div>
+
+        <!-- TABS -->
+        <div style="display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid var(--gray100)">
+          <button class="tab-btn activo" onclick="actTab('captura')" id="atab-captura">📥 Captura</button>
+          <button class="tab-btn" onclick="actTab('historial')" id="atab-historial">📋 Historial</button>
+        </div>
+
+        <!-- TAB CAPTURA ACTIVACIONES -->
+        <div id="act-captura">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+            <div class="campo">
+              <label>Fecha de registro</label>
+              <input type="date" id="act-fecha"
+                style="width:100%;padding:11px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:15px;background:var(--gray50);outline:none">
+            </div>
+          </div>
+
+          <!-- Tabla de renglones -->
+          <div class="tabla-wrap" style="margin-bottom:16px;overflow-x:auto">
+            <table style="min-width:1100px">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Póliza</th>
+                  <th>Cliente</th>
+                  <th>Asesor</th>
+                  <th>No. Recibo</th>
+                  <th>Fecha Recibo</th>
+                  <th>Activación</th>
+                  <th>Monto Tipo</th>
+                  <th>Banco</th>
+                  <th>Monto</th>
+                  <th>Notas</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="tbody-act">
+                <tr id="tr-vacio-act"><td colspan="12" style="text-align:center;padding:20px;color:var(--gray300)">Agrega registros con el botón +</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div style="display:flex;gap:10px;margin-bottom:24px">
+            <button class="btn-accion btn-verde" onclick="agregarRenglonAct()" style="padding:9px 16px">+ Agregar</button>
+          </div>
+
+          <button class="btn-accion btn-verde" onclick="guardarActivaciones()" style="padding:12px 32px;font-size:15px">💾 Guardar</button>
+        </div>
+
+        <!-- TAB HISTORIAL ACTIVACIONES -->
+        <div id="act-historial" style="display:none">
+          <div style="display:flex;gap:10px;margin-bottom:16px;align-items:flex-end;flex-wrap:wrap">
+            <div class="campo" style="margin:0">
+              <label>Desde</label>
+              <input type="date" id="act-hist-desde" style="padding:9px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;outline:none">
+            </div>
+            <div class="campo" style="margin:0">
+              <label>Hasta</label>
+              <input type="date" id="act-hist-hasta" style="padding:9px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;outline:none">
+            </div>
+            <div class="campo" style="margin:0">
+              <label>Póliza</label>
+              <input type="text" id="act-hist-poliza" placeholder="Opcional" style="padding:9px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;outline:none;width:110px">
+            </div>
+            <button class="btn-accion btn-verde" onclick="cargarHistorialAct()" style="padding:9px 18px">Buscar</button>
+          </div>
+          <div class="tabla-wrap" style="overflow-x:auto">
+            <table style="min-width:1000px">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Póliza</th>
+                  <th>Cliente</th>
+                  <th>Asesor</th>
+                  <th>No. Recibo</th>
+                  <th>F. Recibo</th>
+                  <th>Activación</th>
+                  <th>Monto Tipo</th>
+                  <th>Banco</th>
+                  <th>Monto</th>
+                  <th>Notas</th>
+                  <th>Registró</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-historial-act">
+                <tr><td colspan="12" style="text-align:center;padding:24px;color:var(--gray300)">Selecciona un rango de fechas</td></tr>
+              </tbody>
             </table>
           </div>
         </div>
@@ -2150,8 +2267,9 @@ function configurarUI(usuario) {
   // Modulos configurables — usan permisos dinamicos
   setVisible('nav-polizas',    p.polizas   !== false);
   setVisible('nav-cobranza',   !!p.cobranza);
-  setVisible('nav-oficina',    !!p.oficina);
-  setVisible('nav-depositos',  !!p.depositos);
+  setVisible('nav-oficina',       !!p.oficina);
+  setVisible('nav-activaciones',  !!p.activaciones || !!p.oficina || esAdmin);
+  setVisible('nav-depositos',     !!p.depositos);
   setVisible('nav-siniestros', !!p.siniestros);
   setVisible('nav-catalogos',  !!p.catalogos || esAdmin);
   setVisible('nav-reportes',   !!p.reportes  || esAdmin);
@@ -2183,8 +2301,9 @@ function irA(vista) {
   if (vista === 'usuarios')  cargarUsuarios();
   if (vista === 'permisos')   cargarPermisos();
   if (vista === 'cobranza')  iniciarCobranza();
-  if (vista === 'oficina')   iniciarOficina();
-  if (vista === 'depositos') iniciarDepositos();
+  if (vista === 'oficina')      iniciarOficina();
+  if (vista === 'activaciones') iniciarActivaciones();
+  if (vista === 'depositos')    iniciarDepositos();
   if (vista === 'catalogos') { catTab('empresas'); }
 }
 
@@ -3120,7 +3239,7 @@ async function verDetalle(id_poliza) {
    'd-saldo','d-saldo-por-pagar','d-meses-atraso','d-prox-pago','d-nombre','d-tel1','d-tel2',
    'd-correo','d-domicilio','d-colonia','d-cp','d-municipio','d-dom-cobro',
    'd-fecha-asesor','d-fecha-impresion','d-fecha-cobranza','d-envio-cobro','d-retorno-cobro',
-   'd-activacion','d-fecha-activacion','d-act-recibo','d-act-monto','d-act-notas']
+   'd-activacion','d-fecha-activacion','d-act-recibo','d-act-monto','d-act-tipo-pago','d-act-banco','d-act-notas']
     .forEach(id => { const el = document.getElementById(id); if (el) el.textContent = 'Cargando…'; });
 
   const res = await api({ accion: 'detalle_poliza', access_token: sesion.access_token, id_poliza });
@@ -3267,6 +3386,8 @@ async function verDetalle(id_poliza) {
   document.getElementById('d-fecha-activacion').textContent = fmtFecha(p.fecha_activacion) || '—';
   document.getElementById('d-act-recibo').textContent       = p.activacion_recibo || '—';
   document.getElementById('d-act-monto').textContent        = p.activacion_monto ? fmtMonto(p.activacion_monto) : '—';
+  document.getElementById('d-act-tipo-pago').textContent    = p.activacion_tipo_pago || '—';
+  document.getElementById('d-act-banco').textContent        = p.activacion_banco || '—';
   document.getElementById('d-act-notas').textContent        = p.activacion_notas || '—';
 
   // Vehículos
@@ -3913,6 +4034,7 @@ function agregarRenglonOf(tipo) {
       <td><input class="rec-input" id="of-monto-${n}" type="number" placeholder="0.00" step="0.01"
         oninput="actualizarResumenOf()" style="width:90px;text-align:right"></td>
       <td><span id="of-com-${n}" style="font-size:12px;color:var(--red)">—</span></td>
+      <td><input class="rec-input" id="of-notas-${n}" placeholder="Notas…" style="width:130px;font-size:12px"></td>
       <td><button onclick="eliminarRenglonOf(${n})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px">✕</button></td>
     `;
     document.getElementById('tbody-recibos-of').appendChild(tr);
@@ -3925,6 +4047,7 @@ function agregarRenglonOf(tipo) {
       <td>${tipoBadge}<input type="hidden" id="of-tipo-${n}" value="${tipo}"></td>
       <td colspan="6"><input class="rec-input" id="of-rec-${n}" placeholder="No. Recibo" style="width:140px"></td>
       <td></td>
+      <td><input class="rec-input" id="of-notas-${n}" placeholder="Notas…" style="width:130px;font-size:12px"></td>
       <td><button onclick="eliminarRenglonOf(${n})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px">✕</button></td>
     `;
     document.getElementById('tbody-recibos-of').appendChild(tr);
@@ -3964,13 +4087,15 @@ async function guardarRecepcionOf() {
       const clienteNombre = document.getElementById('of-cli-' + n)?.textContent || '';
       const pct         = getPctAsesor(asesorNombre);
       const comision    = pct > 0 ? monto * pct / 100 : 0;
+      const notasRec = document.getElementById('of-notas-' + n)?.value.trim() || null;
       if (monto > 0) recibos.push({
         tipo: 'COBRADO', id_poliza: poliza, numero_recibo: numRec, monto,
         fecha_recibo: fechaRec, asesor_nombre: asesorNombre,
-        cliente_nombre: clienteNombre, comision, pct
+        cliente_nombre: clienteNombre, comision, pct, notas: notasRec
       });
     } else {
-      recibos.push({ tipo, id_poliza: null, numero_recibo: numRec, monto: 0, fecha_recibo: null });
+      const notasRec2 = document.getElementById('of-notas-' + n)?.value.trim() || null;
+      recibos.push({ tipo, id_poliza: null, numero_recibo: numRec, monto: 0, fecha_recibo: null, notas: notasRec2 });
     }
   });
 
@@ -3991,7 +4116,7 @@ async function guardarRecepcionOf() {
   alerta(`✓ ${r.num_recibos} recibos guardados — Caja: ${fmtMonto(r.efectivo_caja)}`, 'verde');
 
   document.getElementById('tbody-recibos-of').innerHTML =
-    '<tr id="tr-vacio-of"><td colspan="10" style="text-align:center;padding:20px;color:var(--gray300)">Agrega recibos con el botón +</td></tr>';
+    '<tr id="tr-vacio-of"><td colspan="11" style="text-align:center;padding:20px;color:var(--gray300)">Agrega recibos con el botón +</td></tr>';
   document.getElementById('of-notas').value = '';
   ofRenglonCount = 0;
   actualizarResumenOf();
@@ -5244,8 +5369,10 @@ async function abrirFormPoliza(datos, placasPreCargadas, prefillRenovacion, poli
   document.getElementById('fp-tipo-cobro').value       = '';
   document.getElementById('fp-asesor').value      = '';
   document.getElementById('fp-cobrador').value    = '';
-  document.getElementById('fp-activacion').value  = '';
-  document.getElementById('fp-estado').value      = '';
+  document.getElementById('fp-activacion').value       = '';
+  document.getElementById('fp-act-tipo-pago').value    = '';
+  document.getElementById('fp-act-banco').value        = '';
+  document.getElementById('fp-estado').value           = '';
   // reset cascada geo
   const selMun = document.getElementById('fp-municipio');
   const selCol = document.getElementById('fp-colonia');
@@ -5306,6 +5433,8 @@ async function abrirFormPoliza(datos, placasPreCargadas, prefillRenovacion, poli
     document.getElementById('fp-fecha-activacion').value = p.fecha_activacion || '';
     document.getElementById('fp-act-recibo').value       = p.activacion_recibo || '';
     document.getElementById('fp-act-monto').value        = p.activacion_monto || '';
+    document.getElementById('fp-act-tipo-pago').value    = p.activacion_tipo_pago || '';
+    document.getElementById('fp-act-banco').value        = p.activacion_banco || '';
     document.getElementById('fp-act-notas').value        = p.activacion_notas || '';
 
     document.getElementById('fp-nombre').value    = c.nombre || '';
@@ -5494,6 +5623,8 @@ async function guardarPoliza() {
       fecha_activacion:        document.getElementById('fp-fecha-activacion').value || null,
       activacion_recibo:       document.getElementById('fp-act-recibo').value.trim() || null,
       activacion_monto:        parseFloat(document.getElementById('fp-act-monto').value) || null,
+      activacion_tipo_pago:    document.getElementById('fp-act-tipo-pago').value || null,
+      activacion_banco:        document.getElementById('fp-act-banco').value.trim() || null,
       activacion_notas:        document.getElementById('fp-act-notas').value.trim() || null,
     },
     cliente: {
@@ -5825,6 +5956,197 @@ async function quitarExcepcion(uid, modulo) {
   const rol = sel.options[sel.selectedIndex].dataset.rol;
   renderTablaUsuario(uid, rol);
   alerta('Excepción eliminada — el usuario hereda el permiso de su rol', 'verde');
+}
+
+// ── ACTIVACIONES ──────────────────────────────────────────
+
+let actRenglonCount = 0;
+
+function actTab(tab) {
+  ['captura','historial'].forEach(t => {
+    const el  = document.getElementById('act-' + t);
+    const btn = document.getElementById('atab-' + t);
+    if (el)  el.style.display  = t === tab ? 'block' : 'none';
+    if (btn) btn.classList.toggle('activo', t === tab);
+  });
+  if (tab === 'historial') cargarHistorialAct();
+}
+
+function iniciarActivaciones() {
+  document.getElementById('act-fecha').value      = new Date().toISOString().split('T')[0];
+  document.getElementById('act-hist-desde').value = new Date().toISOString().split('T')[0];
+  document.getElementById('act-hist-hasta').value = new Date().toISOString().split('T')[0];
+}
+
+async function buscarClienteRenglonAct(n) {
+  const poliza  = document.getElementById('act-pol-' + n).value.trim();
+  const spanCli = document.getElementById('act-cli-' + n);
+  const spanAs  = document.getElementById('act-as-'  + n);
+  if (!poliza) { spanCli.textContent = '—'; spanAs.textContent = '—'; return; }
+  spanCli.textContent = '…';
+  const res = await api({ accion: 'buscar_polizas', access_token: sesion.access_token, termino: poliza });
+  if (res.ok && res.polizas.length > 0) {
+    const p = res.polizas.find(x => x.id_poliza === poliza) || res.polizas[0];
+    spanCli.textContent = p.nombre_cliente || '—';
+    spanAs.textContent  = p.asesor || '—';
+    spanCli.style.color = '';
+  } else {
+    spanCli.textContent = 'No encontrada';
+    spanCli.style.color = 'var(--red)';
+    spanAs.textContent  = '—';
+  }
+}
+
+function agregarRenglonAct() {
+  const vacio = document.getElementById('tr-vacio-act');
+  if (vacio) vacio.remove();
+
+  actRenglonCount++;
+  const n  = actRenglonCount;
+  const tr = document.createElement('tr');
+  tr.id = 'tr-act-' + n;
+
+  tr.innerHTML = `
+    <td style="color:var(--gray600);font-size:13px;width:28px">${n}</td>
+    <td><input class="rec-input" id="act-pol-${n}" placeholder="Póliza"
+      onblur="buscarClienteRenglonAct(${n})" style="width:90px"></td>
+    <td><span id="act-cli-${n}" style="font-size:12px;color:var(--gray600);min-width:100px;display:inline-block">—</span></td>
+    <td><span id="act-as-${n}"  style="font-size:12px;color:var(--gray600);min-width:80px;display:inline-block">—</span></td>
+    <td><input class="rec-input" id="act-rec-${n}" placeholder="No. Recibo" style="width:100px"></td>
+    <td><input class="rec-input" id="act-frec-${n}" type="date" style="width:130px"></td>
+    <td>
+      <select id="act-estatus-${n}" class="rec-input" style="width:120px;padding:5px 8px">
+        <option value="">— Sel —</option>
+        <option value="PENDIENTE">Pendiente</option>
+        <option value="PAGADA">Pagada</option>
+        <option value="EXENTA">Exenta</option>
+        <option value="CANCELADA">Cancelada</option>
+      </select>
+    </td>
+    <td>
+      <select id="act-tipo-${n}" class="rec-input" style="width:130px;padding:5px 8px">
+        <option value="">— Sel —</option>
+        <option value="EFECTIVO">Efectivo</option>
+        <option value="DEPOSITO">Depósito</option>
+        <option value="TRANSFERENCIA">Transferencia</option>
+        <option value="AJUSTE">Ajuste</option>
+      </select>
+    </td>
+    <td><input class="rec-input" id="act-banco-${n}" placeholder="Banco" style="width:110px"></td>
+    <td><input class="rec-input" id="act-monto-${n}" type="number" placeholder="0.00" step="0.01" style="width:90px;text-align:right"></td>
+    <td><input class="rec-input" id="act-notas-${n}" placeholder="Notas…" style="width:130px;font-size:12px"></td>
+    <td><button onclick="eliminarRenglonAct(${n})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px">✕</button></td>
+  `;
+  document.getElementById('tbody-act').appendChild(tr);
+
+  // Pre-llenar fecha de recibo con la fecha de registro
+  const fechaReg = document.getElementById('act-fecha').value;
+  if (fechaReg) document.getElementById('act-frec-' + n).value = fechaReg;
+
+  document.getElementById('act-pol-' + n).focus();
+}
+
+function eliminarRenglonAct(n) {
+  const tr = document.getElementById('tr-act-' + n);
+  if (tr) tr.remove();
+  if (document.getElementById('tbody-act').children.length === 0) {
+    const vacio = document.createElement('tr');
+    vacio.id = 'tr-vacio-act';
+    vacio.innerHTML = '<td colspan="12" style="text-align:center;padding:20px;color:var(--gray300)">Agrega registros con el botón +</td>';
+    document.getElementById('tbody-act').appendChild(vacio);
+  }
+}
+
+async function guardarActivaciones() {
+  const fecha = document.getElementById('act-fecha').value;
+  if (!fecha) { alerta('Selecciona una fecha de registro', 'rojo'); return; }
+
+  const registros = [];
+  document.querySelectorAll('tr[id^="tr-act-"]').forEach(tr => {
+    const n         = tr.id.replace('tr-act-', '');
+    const poliza    = document.getElementById('act-pol-'    + n)?.value.trim() || null;
+    const cliente   = document.getElementById('act-cli-'   + n)?.textContent.trim() || null;
+    const asesor    = document.getElementById('act-as-'    + n)?.textContent.trim() || null;
+    const recibo    = document.getElementById('act-rec-'   + n)?.value.trim() || null;
+    const fechaRec  = document.getElementById('act-frec-'  + n)?.value || null;
+    const estatus   = document.getElementById('act-estatus-'+ n)?.value || null;
+    const tipo      = document.getElementById('act-tipo-'  + n)?.value || null;
+    const banco     = document.getElementById('act-banco-' + n)?.value.trim() || null;
+    const monto     = parseFloat(document.getElementById('act-monto-'+ n)?.value) || 0;
+    const notas     = document.getElementById('act-notas-' + n)?.value.trim() || null;
+
+    if (poliza) {
+      registros.push({ fecha_registro: fecha, id_poliza: poliza,
+        cliente_nombre: cliente === '—' ? null : cliente,
+        asesor_nombre:  asesor  === '—' ? null : asesor,
+        numero_recibo: recibo, fecha_recibo: fechaRec,
+        activacion: estatus, tipo_pago: tipo, banco, monto, notas });
+    }
+  });
+
+  if (registros.length === 0) { alerta('Agrega al menos un registro con póliza', 'rojo'); return; }
+
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = 'Guardando…';
+
+  const res = await api({ accion: 'guardar_activaciones', access_token: sesion.access_token, registros });
+
+  btn.disabled = false; btn.textContent = '💾 Guardar';
+
+  if (!res.ok) { alerta(res.error || 'Error al guardar', 'rojo'); return; }
+
+  alerta(`✅ ${registros.length} registro(s) guardado(s) correctamente`, 'verde');
+
+  // Limpiar captura
+  document.getElementById('tbody-act').innerHTML =
+    '<tr id="tr-vacio-act"><td colspan="12" style="text-align:center;padding:20px;color:var(--gray300)">Agrega registros con el botón +</td></tr>';
+  actRenglonCount = 0;
+}
+
+async function cargarHistorialAct() {
+  const desde  = document.getElementById('act-hist-desde').value;
+  const hasta  = document.getElementById('act-hist-hasta').value;
+  const poliza = document.getElementById('act-hist-poliza').value.trim();
+  const tbody  = document.getElementById('tbody-historial-act');
+  tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--gray300)">Cargando…</td></tr>';
+
+  const res = await api({ accion: 'historial_activaciones', access_token: sesion.access_token,
+                          fecha_inicio: desde, fecha_fin: hasta, id_poliza: poliza || null });
+  if (!res.ok) { alerta(res.error, 'rojo'); return; }
+
+  if (!res.registros || res.registros.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--gray300)">Sin registros en ese período</td></tr>';
+    return;
+  }
+
+  const actBadge = {
+    'PENDIENTE':  { bg:'#FEF3C7', color:'#92400E' },
+    'PAGADA':     { bg:'#E8F5EE', color:'#1A6B3C' },
+    'EXENTA':     { bg:'#E0F0FF', color:'#1B2A6B' },
+    'CANCELADA':  { bg:'#FEEEEE', color:'#C0392B' },
+  };
+
+  tbody.innerHTML = res.registros.map(r => {
+    const ab = actBadge[r.activacion] || {};
+    const badgeAct = r.activacion
+      ? `<span style="background:${ab.bg||'#E8ECF5'};color:${ab.color||'#4A5568'};padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700">${r.activacion}</span>`
+      : '—';
+    return `
+      <tr>
+        <td style="font-size:12px">${fmtFecha(r.fecha_registro || r.creado_en)}</td>
+        <td style="font-weight:600">${esc(r.id_poliza||'—')}</td>
+        <td style="font-size:12px">${esc(r.cliente_nombre||'—')}</td>
+        <td style="font-size:12px">${esc(r.asesor_nombre||'—')}</td>
+        <td style="font-size:12px">${esc(r.numero_recibo||'—')}</td>
+        <td style="font-size:12px">${fmtFecha(r.fecha_recibo)||'—'}</td>
+        <td>${badgeAct}</td>
+        <td style="font-size:12px">${esc(r.tipo_pago||'—')}</td>
+        <td style="font-size:12px">${esc(r.banco||'—')}</td>
+        <td style="text-align:right;font-weight:600;color:var(--navy)">${r.monto ? fmtMonto(r.monto) : '—'}</td>
+        <td style="font-size:12px;color:var(--gray600)">${esc(r.notas||'—')}</td>
+        <td style="font-size:11px;color:var(--gray300)">${esc(r.registrado_por||'—')}</td>
+      </tr>`;
+  }).join('');
 }
 
 </script>

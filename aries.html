@@ -2060,6 +2060,36 @@ tr:hover td { background: var(--gray50); }
           <button class="btn-accion btn-azul" onclick="generarReporteRenovaciones()">🖨 Generar reporte</button>
         </div>
 
+        <!-- ── MORA 30 DÍAS ── -->
+        <div class="card" style="max-width:520px;margin-bottom:24px">
+          <div style="font-size:15px;font-weight:700;color:var(--navy);margin-bottom:16px">⚠️ Enviadas a Cobro sin Pago (30+ días)</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px">
+            <div class="campo" style="margin:0">
+              <label>Cobrador</label>
+              <select id="rep-mora-cobrador" style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none">
+                <option value="">— Todos —</option>
+              </select>
+            </div>
+            <div class="campo" style="margin:0">
+              <label>Asesor</label>
+              <select id="rep-mora-asesor" style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none">
+                <option value="">— Todos —</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+            <div class="campo" style="margin:0">
+              <label>Envío a Cobro desde</label>
+              <input type="date" id="rep-mora-desde" style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none">
+            </div>
+            <div class="campo" style="margin:0">
+              <label>Envío a Cobro hasta</label>
+              <input type="date" id="rep-mora-hasta" style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none">
+            </div>
+          </div>
+          <button class="btn-accion btn-azul" onclick="generarReporteMora()">🖨 Generar reporte</button>
+        </div>
+
       </div>
 
     </main>
@@ -6253,7 +6283,7 @@ async function cargarCobradoresReporte() {
         res2.asesores.map(a => `<option value="${esc(a.nombre)}">${esc(a.nombre)}</option>`).join('');
     }
   }
-  // Años (año actual ± 2)
+  // Años renovaciones (año actual ± 2)
   const selAnio = document.getElementById('rep-ren-anio');
   if (selAnio) {
     const hoy = new Date();
@@ -6263,10 +6293,27 @@ async function cargarCobradoresReporte() {
       optsAnio += `<option value="${y}" ${y === anioActual ? 'selected' : ''}>${y}</option>`;
     }
     selAnio.innerHTML = optsAnio;
-    // Preseleccionar mes actual
     const mesActual = String(hoy.getMonth() + 1).padStart(2, '0');
     const selMes = document.getElementById('rep-ren-mes');
     if (selMes) selMes.value = mesActual;
+  }
+  // Cobradores selector mora
+  const selMoraCob = document.getElementById('rep-mora-cobrador');
+  if (selMoraCob) {
+    const resCob = await api({ accion: 'listar_cobradores', access_token: sesion.access_token });
+    if (resCob.ok) {
+      selMoraCob.innerHTML = '<option value="">— Todos —</option>' +
+        resCob.cobradores.map(c => `<option value="${esc(c.nombre)}">${esc(c.nombre)}</option>`).join('');
+    }
+  }
+  // Asesores selector mora
+  const selMoraAs = document.getElementById('rep-mora-asesor');
+  if (selMoraAs) {
+    const resAs = await api({ accion: 'listar_asesores_admin', access_token: sesion.access_token });
+    if (resAs.ok) {
+      selMoraAs.innerHTML = '<option value="">— Todos —</option>' +
+        resAs.asesores.map(a => `<option value="${esc(a.nombre)}">${esc(a.nombre)}</option>`).join('');
+    }
   }
 }
 
@@ -6469,6 +6516,101 @@ async function generarReporteRenovaciones() {
 </html>`;
 
   const win = window.open('', '_blank', 'width=1200,height=700');
+  win.document.write(htmlDoc);
+  win.document.close();
+}
+
+// ── REPORTE: MORA 30 DÍAS ────────────────────────────────────
+async function generarReporteMora() {
+  const cobrador = document.getElementById('rep-mora-cobrador').value;
+  const asesor   = document.getElementById('rep-mora-asesor').value;
+  const desde    = document.getElementById('rep-mora-desde').value;
+  const hasta    = document.getElementById('rep-mora-hasta').value;
+
+  const res = await api({
+    accion:       'reporte_mora_30',
+    access_token: sesion.access_token,
+    cobrador:     cobrador || null,
+    asesor:       asesor   || null,
+    desde:        desde    || null,
+    hasta:        hasta    || null
+  });
+
+  if (!res.ok) { alerta(res.error || 'Error al generar reporte', 'rojo'); return; }
+
+  const polizas = res.polizas || [];
+  if (!polizas.length) { alerta('Sin resultados para los filtros seleccionados.', 'naranja'); return; }
+
+  const fmt  = f => f ? new Date(f + 'T12:00:00').toLocaleDateString('es-MX', { day:'2-digit', month:'2-digit', year:'numeric' }) : '—';
+  const fmtM = n => n != null && n !== '' ? '$' + Number(n).toLocaleString('es-MX', { minimumFractionDigits:2, maximumFractionDigits:2 }) : '—';
+
+  const filtros = [
+    cobrador ? `Cobrador: ${cobrador}` : '',
+    asesor   ? `Asesor: ${asesor}`     : '',
+    desde    ? `Desde: ${fmt(desde)}`  : '',
+    hasta    ? `Hasta: ${fmt(hasta)}`  : '',
+    !cobrador && !asesor && !desde && !hasta ? 'Todas las pólizas con 30+ días sin pago' : ''
+  ].filter(Boolean).join('  |  ');
+
+  const filas = polizas.map((p, i) => `
+    <tr style="${i % 2 === 1 ? 'background:#f8f8f8' : ''}">
+      <td>${esc(p.id_poliza||'—')}</td>
+      <td>${esc(p.nombre_cliente||'—')}</td>
+      <td>${esc(p.asesor||'—')}</td>
+      <td>${esc(p.cobrador||'—')}</td>
+      <td style="text-align:right">${fmtM(p.costo)}</td>
+      <td style="text-align:center">${fmt(p.fecha_envio_cobranza)}</td>
+      <td style="text-align:center;font-weight:600;color:#c0392b">${p.dias_sin_pago}</td>
+    </tr>`).join('');
+
+  const totalMonto = polizas.reduce((s, p) => s + (parseFloat(p.costo) || 0), 0);
+
+  const htmlDoc = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Mora 30+ Días</title>
+  <style>
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:Arial,sans-serif; font-size:11px; padding:18px; color:#000; }
+    .filtros { text-align:center; font-size:10px; color:#555; margin-bottom:14px; font-weight:600; }
+    table { width:100%; border-collapse:collapse; }
+    th { background:#1B2A6B; color:#fff; padding:5px 7px; font-size:10px; text-align:left; }
+    td { padding:4px 7px; border-bottom:1px solid #e0e0e0; font-size:10px; vertical-align:top; }
+    .r { text-align:right; }
+    .c { text-align:center; }
+    .total-row td { font-weight:bold; border-top:2px solid #1B2A6B; background:#eef0f8; }
+    @media print { body { padding:10px; } }
+  </style>
+</head>
+<body>
+  <div class="filtros">${filtros}</div>
+  <table>
+    <thead>
+      <tr>
+        <th>PÓLIZA</th>
+        <th>NOMBRE</th>
+        <th>ASESOR</th>
+        <th>COBRADOR</th>
+        <th class="r">MONTO</th>
+        <th class="c">ENVÍO A COBRO</th>
+        <th class="c">DÍAS SIN PAGO</th>
+      </tr>
+    </thead>
+    <tbody>${filas}</tbody>
+    <tfoot>
+      <tr class="total-row">
+        <td colspan="4">Total: ${polizas.length} póliza${polizas.length !== 1 ? 's' : ''}</td>
+        <td class="r">${fmtM(totalMonto)}</td>
+        <td colspan="2"></td>
+      </tr>
+    </tfoot>
+  </table>
+  <script>window.onload=function(){window.print();};<\/script>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank', 'width=900,height=650');
   win.document.write(htmlDoc);
   win.document.close();
 }

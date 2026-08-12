@@ -2025,6 +2025,41 @@ tr:hover td { background: var(--gray50); }
           <button class="btn-accion btn-azul" onclick="generarReporteTarjetas()">🖨 Generar reporte</button>
         </div>
 
+        <!-- ── RENOVACIONES ── -->
+        <div class="card" style="max-width:520px;margin-bottom:24px">
+          <div style="font-size:15px;font-weight:700;color:var(--navy);margin-bottom:16px">📋 Renovaciones</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px">
+            <div class="campo" style="margin:0">
+              <label>Asesor</label>
+              <select id="rep-ren-asesor" style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none">
+                <option value="">— Todos —</option>
+              </select>
+            </div>
+            <div class="campo" style="margin:0">
+              <label>Año</label>
+              <select id="rep-ren-anio" style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none"></select>
+            </div>
+            <div class="campo" style="margin:0">
+              <label>Mes</label>
+              <select id="rep-ren-mes" style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none">
+                <option value="01">Enero</option>
+                <option value="02">Febrero</option>
+                <option value="03">Marzo</option>
+                <option value="04">Abril</option>
+                <option value="05">Mayo</option>
+                <option value="06">Junio</option>
+                <option value="07">Julio</option>
+                <option value="08">Agosto</option>
+                <option value="09">Septiembre</option>
+                <option value="10">Octubre</option>
+                <option value="11">Noviembre</option>
+                <option value="12">Diciembre</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn-accion btn-azul" onclick="generarReporteRenovaciones()">🖨 Generar reporte</button>
+        </div>
+
       </div>
 
     </main>
@@ -6200,12 +6235,39 @@ async function cargarHistorialAct() {
 <script>
 // ── REPORTE: TARJETAS ASIGNADAS PARA COBRO ───────────────
 async function cargarCobradoresReporte() {
+  // Cobradores
   const sel = document.getElementById('rep-cobrador');
-  if (!sel) return;
-  const res = await api({ accion: 'listar_cobradores', access_token: sesion.access_token });
-  if (!res.ok) return;
-  sel.innerHTML = '<option value="">— Todos —</option>' +
-    res.cobradores.map(c => `<option value="${esc(c.nombre)}">${esc(c.nombre)}</option>`).join('');
+  if (sel) {
+    const res = await api({ accion: 'listar_cobradores', access_token: sesion.access_token });
+    if (res.ok) {
+      sel.innerHTML = '<option value="">— Todos —</option>' +
+        res.cobradores.map(c => `<option value="${esc(c.nombre)}">${esc(c.nombre)}</option>`).join('');
+    }
+  }
+  // Asesores
+  const selAs = document.getElementById('rep-ren-asesor');
+  if (selAs) {
+    const res2 = await api({ accion: 'listar_asesores_admin', access_token: sesion.access_token });
+    if (res2.ok) {
+      selAs.innerHTML = '<option value="">— Todos —</option>' +
+        res2.asesores.map(a => `<option value="${esc(a.nombre)}">${esc(a.nombre)}</option>`).join('');
+    }
+  }
+  // Años (año actual ± 2)
+  const selAnio = document.getElementById('rep-ren-anio');
+  if (selAnio) {
+    const hoy = new Date();
+    const anioActual = hoy.getFullYear();
+    let optsAnio = '';
+    for (let y = anioActual - 1; y <= anioActual + 2; y++) {
+      optsAnio += `<option value="${y}" ${y === anioActual ? 'selected' : ''}>${y}</option>`;
+    }
+    selAnio.innerHTML = optsAnio;
+    // Preseleccionar mes actual
+    const mesActual = String(hoy.getMonth() + 1).padStart(2, '0');
+    const selMes = document.getElementById('rep-ren-mes');
+    if (selMes) selMes.value = mesActual;
+  }
 }
 
 async function generarReporteTarjetas() {
@@ -6296,6 +6358,117 @@ async function generarReporteTarjetas() {
 </html>`;
 
   const win = window.open('', '_blank', 'width=900,height=650');
+  win.document.write(htmlDoc);
+  win.document.close();
+}
+
+// ── REPORTE: RENOVACIONES ────────────────────────────────────
+async function generarReporteRenovaciones() {
+  const asesor = document.getElementById('rep-ren-asesor').value;
+  const anio   = document.getElementById('rep-ren-anio').value;
+  const mes    = document.getElementById('rep-ren-mes').value;
+
+  if (!anio || !mes) { alerta('Selecciona año y mes.', 'rojo'); return; }
+
+  const res = await api({
+    accion:       'reporte_renovaciones',
+    access_token: sesion.access_token,
+    asesor:       asesor || null,
+    anio:         anio,
+    mes:          mes
+  });
+
+  if (!res.ok) { alerta(res.error || 'Error al generar reporte', 'rojo'); return; }
+
+  const polizas = res.polizas || [];
+  if (!polizas.length) { alerta('Sin resultados para los filtros seleccionados.', 'naranja'); return; }
+
+  const fmt  = f => f ? new Date(f + 'T12:00:00').toLocaleDateString('es-MX', { day:'2-digit', month:'2-digit', year:'numeric' }) : '—';
+  const fmtM = n => n != null && n !== '' ? '$' + Number(n).toLocaleString('es-MX', { minimumFractionDigits:2, maximumFractionDigits:2 }) : '—';
+
+  const mesesNombre = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const titulo = `Vencimiento: ${mesesNombre[parseInt(mes)]} ${anio}${asesor ? ' | Asesor: ' + asesor : ''}`;
+
+  const filas = polizas.map((p, i) => `
+    <tr style="${i % 2 === 1 ? 'background:#f8f8f8' : ''}">
+      <td>${esc(p.asesor||'—')}</td>
+      <td>${esc(p.id_poliza||'—')}</td>
+      <td style="text-align:center"><span style="font-weight:600;color:${p.vigente ? '#1a7a3c' : '#c0392b'}">${p.vigente ? 'VIGENTE' : 'EXPIRADA'}</span></td>
+      <td>${esc(p.estatus_pago||'—')}<br><span style="font-size:9px;color:#555">${fmtM(p.saldo)}</span></td>
+      <td>${esc(p.tipo_cobertura||'—')}</td>
+      <td>${esc(p.nombre_cliente||'—')}</td>
+      <td>${esc(p.telefono||'—')}</td>
+      <td>${esc(p.domicilio_particular||'—')}</td>
+      <td>${esc(p.cruces||'—')}</td>
+      <td>${esc(p.colonia||'—')}</td>
+      <td>${esc(p.cp||'—')}</td>
+      <td>${esc(p.municipio||'—')}</td>
+      <td>${esc(p.estado||'—')}</td>
+      <td>${esc(p.vehiculo||'—')}</td>
+      <td>${esc(p.modelo||'—')}</td>
+      <td>${esc(p.color||'—')}</td>
+      <td>${esc(p.placas||'—')}</td>
+      <td>${esc(p.numero_serie||'—')}</td>
+      <td style="text-align:center">${fmt(p.fecha_termino_vigencia)}</td>
+    </tr>`).join('');
+
+  const htmlDoc = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Renovaciones</title>
+  <style>
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:Arial,sans-serif; font-size:8px; padding:10px; color:#000; }
+    .filtros { text-align:center; font-size:9px; color:#555; margin-bottom:10px; font-weight:600; }
+    table { width:100%; border-collapse:collapse; }
+    th { background:#1B2A6B; color:#fff; padding:4px 5px; font-size:8px; text-align:left; white-space:nowrap; }
+    td { padding:3px 5px; border-bottom:1px solid #e0e0e0; font-size:8px; vertical-align:top; }
+    .total-row td { font-weight:bold; border-top:2px solid #1B2A6B; background:#eef0f8; }
+    @media print {
+      body { padding:6px; }
+      @page { size: legal landscape; margin: 8mm; }
+    }
+  </style>
+</head>
+<body>
+  <div class="filtros">${titulo}</div>
+  <table>
+    <thead>
+      <tr>
+        <th>ASESOR</th>
+        <th>PÓLIZA</th>
+        <th>ESTATUS</th>
+        <th>SALDO</th>
+        <th>COBERTURA</th>
+        <th>CLIENTE</th>
+        <th>TELÉFONO</th>
+        <th>DOMICILIO</th>
+        <th>CRUCES</th>
+        <th>COLONIA</th>
+        <th>CP</th>
+        <th>MUNICIPIO</th>
+        <th>ESTADO</th>
+        <th>VEHÍCULO</th>
+        <th>MODELO</th>
+        <th>COLOR</th>
+        <th>PLACAS</th>
+        <th>SERIE</th>
+        <th>VENCE</th>
+      </tr>
+    </thead>
+    <tbody>${filas}</tbody>
+    <tfoot>
+      <tr class="total-row">
+        <td colspan="19">Total: ${polizas.length} póliza${polizas.length !== 1 ? 's' : ''}</td>
+      </tr>
+    </tfoot>
+  </table>
+  <script>window.onload=function(){window.print();};<\/script>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank', 'width=1200,height=700');
   win.document.write(htmlDoc);
   win.document.close();
 }

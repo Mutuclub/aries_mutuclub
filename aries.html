@@ -2006,12 +2006,25 @@ tr:hover td { background: var(--gray50); }
       <!-- REPORTES (solo admin) -->
       <div class="vista" id="v-reportes">
         <div class="vista-titulo">Reportes</div>
-        <div class="vista-sub">Módulo en construcción — Fase 4</div>
-        <div class="card" style="max-width:420px;text-align:center;padding:40px">
-          <div style="font-size:48px;margin-bottom:16px">📊</div>
-          <div style="font-size:16px;font-weight:600;color:var(--navy)">Próximamente</div>
-          <div style="font-size:14px;color:var(--gray600);margin-top:8px">Cartera por empresa, vencimientos y cobranza.</div>
+
+        <!-- ── TARJETAS ASIGNADAS PARA COBRO ── -->
+        <div class="card" style="max-width:520px;margin-bottom:24px">
+          <div style="font-size:15px;font-weight:700;color:var(--navy);margin-bottom:16px">🗂 Tarjetas Asignadas para Cobro</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+            <div class="campo" style="margin:0">
+              <label>Cobrador</label>
+              <select id="rep-cobrador" style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none">
+                <option value="">— Todos —</option>
+              </select>
+            </div>
+            <div class="campo" style="margin:0">
+              <label>Envío a Cobro</label>
+              <input type="date" id="rep-envio-cobro" style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none">
+            </div>
+          </div>
+          <button class="btn-accion btn-azul" onclick="generarReporteTarjetas()">🖨 Generar reporte</button>
         </div>
+
       </div>
 
     </main>
@@ -2305,6 +2318,7 @@ function irA(vista) {
   if (vista === 'activaciones') iniciarActivaciones();
   if (vista === 'depositos')    iniciarDepositos();
   if (vista === 'catalogos') { catTab('empresas'); }
+  if (vista === 'reportes')  cargarCobradoresReporte();
 }
 
 // ── STATS DASHBOARD ───────────────────────────────────────
@@ -6183,3 +6197,108 @@ async function cargarHistorialAct() {
 
 </body>
 </html>
+<script>
+// ── REPORTE: TARJETAS ASIGNADAS PARA COBRO ───────────────
+async function cargarCobradoresReporte() {
+  const sel = document.getElementById('rep-cobrador');
+  if (!sel) return;
+  const res = await api({ accion: 'listar_cobradores', access_token: sesion.access_token });
+  if (!res.ok) return;
+  sel.innerHTML = '<option value="">— Todos —</option>' +
+    res.cobradores.map(c => `<option value="${esc(c.nombre)}">${esc(c.nombre)}</option>`).join('');
+}
+
+async function generarReporteTarjetas() {
+  const cobrador   = document.getElementById('rep-cobrador').value;
+  const envioCobro = document.getElementById('rep-envio-cobro').value;
+
+  if (!cobrador && !envioCobro) {
+    alerta('Selecciona al menos un cobrador o una fecha de envío a cobro.', 'rojo');
+    return;
+  }
+
+  const res = await api({
+    accion:       'reporte_tarjetas_cobro',
+    access_token: sesion.access_token,
+    cobrador:     cobrador || null,
+    envio_cobro:  envioCobro || null
+  });
+
+  if (!res.ok) { alerta(res.error || 'Error al generar reporte', 'rojo'); return; }
+
+  const polizas = res.polizas || [];
+  if (!polizas.length) { alerta('Sin resultados para los filtros seleccionados.', 'naranja'); return; }
+
+  const fmt  = f => f ? new Date(f + 'T12:00:00').toLocaleDateString('es-MX', { day:'2-digit', month:'2-digit', year:'numeric' }) : '—';
+  const fmtM = n => n != null && n !== '' ? '$' + Number(n).toLocaleString('es-MX', { minimumFractionDigits:2, maximumFractionDigits:2 }) : '—';
+
+  const filas = polizas.map((p, i) => `
+    <tr style="${i % 2 === 1 ? 'background:#f8f8f8' : ''}">
+      <td>${esc(p.id_poliza || '—')}</td>
+      <td>${esc(p.nombre_cliente || '—')}</td>
+      <td>${esc(p.asesor || '—')}</td>
+      <td style="text-align:right">${fmtM(p.monto)}</td>
+      <td style="text-align:center">${fmt(p.envio_cobro)}</td>
+      <td style="text-align:center">${fmt(p.retorno_cobro)}</td>
+    </tr>`).join('');
+
+  const titulo = [
+    cobrador   ? `Cobrador: ${cobrador}`     : '',
+    envioCobro ? `Envío a cobro: ${fmt(envioCobro)}` : ''
+  ].filter(Boolean).join('  |  ');
+
+  const totalMonto = polizas.reduce((s, p) => s + (parseFloat(p.monto) || 0), 0);
+
+  const htmlDoc = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Tarjetas Asignadas para Cobro</title>
+  <style>
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:Arial,sans-serif; font-size:11px; padding:18px; color:#000; }
+    h1 { font-size:14px; text-align:center; margin-bottom:2px; }
+    h2 { font-size:11px; text-align:center; color:#444; margin-bottom:4px; }
+    .filtros { text-align:center; font-size:10px; color:#555; margin-bottom:14px; }
+    table { width:100%; border-collapse:collapse; }
+    th { background:#1B2A6B; color:#fff; padding:5px 7px; font-size:10px; text-align:left; }
+    td { padding:4px 7px; border-bottom:1px solid #e0e0e0; font-size:10px; vertical-align:top; }
+    .r { text-align:right; }
+    .c { text-align:center; }
+    .total-row td { font-weight:bold; border-top:2px solid #1B2A6B; background:#eef0f8; }
+    @media print { body { padding:10px; } }
+  </style>
+</head>
+<body>
+  <h1>ARTS NOVA MUTUCLUB</h1>
+  <h2>Tarjetas Asignadas para Cobro</h2>
+  <div class="filtros">${titulo}</div>
+  <table>
+    <thead>
+      <tr>
+        <th>PÓLIZA</th>
+        <th>NOMBRE</th>
+        <th>ASESOR</th>
+        <th class="r">MONTO</th>
+        <th class="c">ENVÍO A COBRO</th>
+        <th class="c">RETORNO DE COBRO</th>
+      </tr>
+    </thead>
+    <tbody>${filas}</tbody>
+    <tfoot>
+      <tr class="total-row">
+        <td colspan="3">Total: ${polizas.length} póliza${polizas.length !== 1 ? 's' : ''}</td>
+        <td class="r">${fmtM(totalMonto)}</td>
+        <td colspan="2"></td>
+      </tr>
+    </tfoot>
+  </table>
+  <script>window.onload=function(){window.print();};<\/script>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank', 'width=900,height=650');
+  win.document.write(htmlDoc);
+  win.document.close();
+}
+</script>

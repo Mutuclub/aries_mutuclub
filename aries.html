@@ -932,10 +932,17 @@ tr:hover td { background: var(--gray50); }
                 </div>
                 <div class="campo" style="grid-column:1/-1">
                   <label>Colonia</label>
-                  <select id="fp-colonia" disabled
-                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;opacity:.5">
-                    <option value="">— Selecciona municipio —</option>
-                  </select>
+                  <div style="display:flex;gap:8px;align-items:center">
+                    <input type="text" id="fp-colonia" disabled
+                      list="dl-colonias" autocomplete="off" placeholder="— Selecciona municipio primero —"
+                      oninput="onColoniaChange()"
+                      style="flex:1;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box;opacity:.5">
+                    <button type="button" id="btn-nueva-colonia" onclick="abrirModalNuevaColonia()"
+                      style="display:none;padding:8px 14px;background:var(--navy);color:#fff;border:none;border-radius:var(--radius);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">
+                      + Nueva colonia
+                    </button>
+                  </div>
+                  <datalist id="dl-colonias"></datalist>
                 </div>
                 <div class="campo">
                   <label>C.P.</label>
@@ -1721,6 +1728,8 @@ tr:hover td { background: var(--gray50); }
           <div class="toolbar" style="margin-bottom:16px">
             <button class="btn-accion btn-verde" onclick="abrirModalAsesorCat(null)">+ Nuevo asesor</button>
             <button class="btn-accion btn-gris"  onclick="cargarAsesoresCat()">↺ Actualizar</button>
+            <button class="btn-accion" onclick="abrirModalDuplicados('asesor')"
+              style="background:#F5A623;color:#fff;border:none">🔍 Duplicados</button>
           </div>
           <div class="tabla-wrap">
             <table>
@@ -1735,6 +1744,8 @@ tr:hover td { background: var(--gray50); }
           <div class="toolbar" style="margin-bottom:16px">
             <button class="btn-accion btn-verde" onclick="abrirModalCobrador(null)">+ Nuevo cobrador</button>
             <button class="btn-accion btn-gris"  onclick="cargarCobradoresCat()">↺ Actualizar</button>
+            <button class="btn-accion" onclick="abrirModalDuplicados('cobrador')"
+              style="background:#F5A623;color:#fff;border:none">🔍 Duplicados</button>
           </div>
           <div class="tabla-wrap">
             <table>
@@ -1999,6 +2010,56 @@ tr:hover td { background: var(--gray50); }
           <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
             <button class="btn-accion btn-gris" onclick="cerrarModalCobrador()">Cancelar</button>
             <button class="btn-accion btn-verde" onclick="guardarCobradorCat()">Guardar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Duplicados Asesores/Cobradores -->
+      <div id="modal-duplicados" class="modal" style="display:none">
+        <div class="modal-box" style="max-width:600px;max-height:80vh;overflow-y:auto">
+          <div class="modal-titulo" id="modal-dup-titulo">Duplicados</div>
+          <p style="font-size:13px;color:var(--gray600);margin-bottom:16px">
+            Se muestran registros con nombres iguales o muy similares (ignorando acentos y mayúsculas).
+            Selecciona cuáles deseas eliminar — se conservará el de mayor ID por defecto.
+          </p>
+          <div id="modal-dup-contenido" style="font-size:13px"></div>
+          <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
+            <button class="btn-accion btn-gris" onclick="cerrarModalDuplicados()">Cerrar</button>
+            <button class="btn-accion" id="btn-dup-eliminar" onclick="eliminarDuplicadosSeleccionados()"
+              style="background:var(--red);color:#fff;border:none;display:none">🗑 Eliminar seleccionados</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Nueva Colonia -->
+      <div id="modal-nueva-colonia" class="modal" style="display:none">
+        <div class="modal-box" style="max-width:420px">
+          <div class="modal-titulo">Nueva Colonia</div>
+          <input type="hidden" id="ncol-estado">
+          <input type="hidden" id="ncol-municipio">
+          <div class="campo" style="margin-bottom:12px">
+            <label>Estado</label>
+            <input type="text" id="ncol-estado-label" disabled
+              style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray100);outline:none;box-sizing:border-box;opacity:.7">
+          </div>
+          <div class="campo" style="margin-bottom:12px">
+            <label>Municipio</label>
+            <input type="text" id="ncol-municipio-label" disabled
+              style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray100);outline:none;box-sizing:border-box;opacity:.7">
+          </div>
+          <div class="campo" style="margin-bottom:12px">
+            <label>Colonia *</label>
+            <input type="text" id="ncol-colonia" placeholder="Nombre de la colonia"
+              style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+          </div>
+          <div class="campo" style="margin-bottom:12px">
+            <label>Código Postal *</label>
+            <input type="text" id="ncol-cp" maxlength="5" placeholder="00000"
+              style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+          </div>
+          <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
+            <button class="btn-accion btn-gris" onclick="cerrarModalNuevaColonia()">Cancelar</button>
+            <button class="btn-accion btn-verde" onclick="guardarNuevaColonia()">Guardar</button>
           </div>
         </div>
       </div>
@@ -2745,6 +2806,16 @@ const VEHICULOS_MX = {
     "XC40": [], "XC60": [], "XC90": []
   },
   // ── MOTOS ────────────────────────────────────────────────────
+  "🏍 Bajaj": {
+    "Avenger 160": [], "Avenger 220": [], "Boxer CT 100": [],
+    "Boxer CT 150": [], "Discover 100": [], "Discover 125": [],
+    "Dominar 250": [], "Dominar 400": [], "NS 125": [],
+    "NS 160": [], "NS 200": [], "Platina 100": [], "Platina 110": [],
+    "Pulsar 125": [], "Pulsar 135 LS": [], "Pulsar 150": [],
+    "Pulsar 160 NS": [], "Pulsar 180": [], "Pulsar 200 NS": [],
+    "Pulsar 220F": [], "Pulsar RS 200": [], "Rouser NS 125": [],
+    "Rouser NS 160": [], "Rouser NS 200": []
+  },
   "🏍 Benelli": {
     "502C": [], "Imperiale 400": [], "Leoncino 500": [],
     "TNT 150": [], "TNT 150S": [], "TNT 25": [], "TRK 502": [],
@@ -2753,6 +2824,17 @@ const VEHICULOS_MX = {
   "🏍 CF Moto": {
     "150NK": [], "300NK": [], "400NK": [], "650MT": [],
     "650NK": [], "700CL-X": [], "800MT": []
+  },
+  "🏍 Carabela": {
+    "Bandit 200": [], "Classic 150": [], "Custom 200": [],
+    "Enduro 200": [], "Fury 150": [], "Hawk 200": [],
+    "Náutica 150": [], "R5 200": [], "Raptor 200": [],
+    "Storm 200": [], "Street 150": [], "Toro 200": []
+  },
+  "🏍 Dinamo": {
+    "Classic 125": [], "Classic 150": [], "Enduro 150": [],
+    "Maracaibo 125": [], "Maracaibo 150": [], "Moto-Taxi 150": [],
+    "Speed 150": [], "Storm 200": [], "Street 125": [], "Touring 150": []
   },
   "🏍 Honda": {
     "CB190R": [], "CB300R": [], "CB500F": [], "CB500X": [],
@@ -2777,6 +2859,19 @@ const VEHICULOS_MX = {
     "Cafe Racer 152": [], "CR 152": [], "Flash 150": [],
     "Hurricane 200": [], "RKS 125": [], "Superlight 200": [],
     "TX 200": []
+  },
+  "🏍 Islo": {
+    "Boreal 150": [], "Cóndor 150": [], "Cóndor 200": [],
+    "Dorado 150": [], "Mirlo 150": [], "Miura 200": [],
+    "Tláloc 150": [], "Turista 125": []
+  },
+  "🏍 Kiden": {
+    "Classic 125": [], "Cross 150": [], "Custom 150": [],
+    "Hawk 150": [], "Moto-Taxi 150": [], "Street 125": [], "Trail 150": []
+  },
+  "🏍 Lifan": {
+    "KP 150": [], "KP 200": [], "KPM 200": [], "LF 125": [],
+    "LF 150": [], "LF 200": [], "LF 250": [], "X-Pect 150": []
   },
   "🏍 KTM": {
     "200 Duke": [], "390 Adventure": [], "390 Duke": [],
@@ -2805,6 +2900,14 @@ const VEHICULOS_MX = {
   "🏍 Vento": {
     "Arcon 250": [], "Crossmax 250": [], "Phantom R9": [],
     "Rebellian 250": [], "V-Thunder 250": [], "Workman 150": []
+  },
+  "🏍 Veloci": {
+    "Centauro 150": [], "Classic 125": [], "Falcon 150": [],
+    "Hawk 200": [], "Shark 150": [], "Storm 200": [], "Turbo 150": []
+  },
+  "🏍 Voge": {
+    "300 AC": [], "300 DS": [], "300 R": [], "300 RR": [],
+    "525 DS R": [], "525 DSX": [], "650 DS": [], "650 DSX": []
   },
   "🏍 Yamaha": {
     "FZ 150": [], "FZ 250": [], "FZS 150": [], "FZS 250": [],
@@ -5054,6 +5157,113 @@ async function guardarCobradorCat() {
   cargarCobradoresCat();
 }
 
+// ── DUPLICADOS ASESORES / COBRADORES ─────────────────────────
+
+let _dupTipo = '';
+let _dupLista = [];
+
+function normalizarNombre(n) {
+  return String(n).toUpperCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')  // quitar acentos
+    .replace(/\s+/g, ' ').trim();
+}
+
+async function abrirModalDuplicados(tipo) {
+  _dupTipo  = tipo;
+  _dupLista = [];
+  const contenido = document.getElementById('modal-dup-contenido');
+  const titulo    = document.getElementById('modal-dup-titulo');
+  titulo.textContent = tipo === 'asesor' ? 'Duplicados — Asesores' : 'Duplicados — Cobradores';
+  contenido.innerHTML = '<p style="color:var(--gray300)">Buscando duplicados…</p>';
+  document.getElementById('btn-dup-eliminar').style.display = 'none';
+  document.getElementById('modal-duplicados').style.display = 'flex';
+
+  const accion = tipo === 'asesor' ? 'listar_asesores_admin' : 'listar_cobradores_admin';
+  const res = await api({ accion, access_token: sesion.access_token });
+  if (!res.ok) { contenido.innerHTML = '<p style="color:var(--red)">Error al cargar</p>'; return; }
+
+  const lista = (tipo === 'asesor' ? res.asesores : res.cobradores) || [];
+
+  // Agrupar por nombre normalizado
+  const grupos = {};
+  lista.forEach(r => {
+    const key = normalizarNombre(r.nombre);
+    if (!grupos[key]) grupos[key] = [];
+    grupos[key].push(r);
+  });
+
+  const duplicados = Object.values(grupos).filter(g => g.length > 1);
+
+  if (duplicados.length === 0) {
+    contenido.innerHTML = '<p style="color:var(--green);font-weight:600">✅ No se encontraron duplicados.</p>';
+    return;
+  }
+
+  _dupLista = duplicados;
+  document.getElementById('btn-dup-eliminar').style.display = 'inline-block';
+
+  contenido.innerHTML = duplicados.map((grupo, gi) => {
+    const filas = grupo.map(r => `
+      <tr>
+        <td style="padding:6px 8px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" class="dup-check" data-gi="${gi}" data-id="${r.id}"
+              style="width:15px;height:15px">
+            ${esc(r.nombre)}
+          </label>
+        </td>
+        <td style="padding:6px 8px;text-align:center;color:var(--gray600)">ID ${r.id}</td>
+        <td style="padding:6px 8px;text-align:center">
+          <span class="badge ${r.activo ? 'badge-agente' : ''}" style="font-size:11px">
+            ${r.activo ? 'Activo' : 'Inactivo'}
+          </span>
+        </td>
+      </tr>`).join('');
+    return `
+      <div style="margin-bottom:16px;border:1.5px solid var(--gray100);border-radius:var(--radius);overflow:hidden">
+        <div style="background:var(--gray100);padding:8px 12px;font-size:12px;font-weight:700;color:var(--navy)">
+          Grupo ${gi + 1} — "${normalizarNombre(grupo[0].nombre)}" (${grupo.length} registros)
+        </div>
+        <table style="width:100%;border-collapse:collapse">
+          <thead><tr style="font-size:11px;color:var(--gray300)">
+            <th style="padding:6px 8px;text-align:left">Nombre</th>
+            <th style="padding:6px 8px">ID</th>
+            <th style="padding:6px 8px">Estatus</th>
+          </tr></thead>
+          <tbody>${filas}</tbody>
+        </table>
+      </div>`;
+  }).join('');
+}
+
+function cerrarModalDuplicados() {
+  document.getElementById('modal-duplicados').style.display = 'none';
+}
+
+async function eliminarDuplicadosSeleccionados() {
+  const checks = Array.from(document.querySelectorAll('.dup-check:checked'));
+  if (checks.length === 0) { alerta('Selecciona al menos un registro para eliminar', 'rojo'); return; }
+
+  const ids = checks.map(c => Number(c.dataset.id));
+  const accion = _dupTipo === 'asesor' ? 'eliminar_asesor' : 'eliminar_cobrador';
+
+  let errores = 0;
+  for (const id of ids) {
+    const res = await api({ accion, access_token: sesion.access_token, id });
+    if (!res.ok) errores++;
+  }
+
+  if (errores > 0) {
+    alerta(`Se eliminaron ${ids.length - errores} registros. ${errores} no pudieron eliminarse (pueden estar en uso).`, 'rojo');
+  } else {
+    alerta(`${ids.length} registro(s) eliminado(s) correctamente`, 'verde');
+  }
+
+  cerrarModalDuplicados();
+  if (_dupTipo === 'asesor') cargarAsesoresCat();
+  else cargarCobradoresCat();
+}
+
 // ── COBERTURAS ────────────────────────────────────────────────
 let coberturaSeleccionadaId = null;
 let coberturasCache = [];
@@ -5352,9 +5562,12 @@ function onEstadoChange() {
   selMun.style.opacity = estado ? '1' : '.5';
 
   // Reset colonia
-  selCol.innerHTML = '<option value="">— Selecciona municipio —</option>';
+  const dlCol = document.getElementById('dl-colonias');
+  selCol.value = '';
+  if (dlCol) dlCol.innerHTML = '';
   selCol.disabled = true;
   selCol.style.opacity = '.5';
+  selCol.placeholder = '— Selecciona municipio primero —';
 
   if (!estado) return;
   const municipios = Object.keys(DATOS_GEO[estado] || {}).sort();
@@ -5369,15 +5582,20 @@ function onEstadoChange() {
 async function onMunicipioChange() {
   const estado    = document.getElementById('fp-estado').value;
   const municipio = document.getElementById('fp-municipio').value;
-  const selCol    = document.getElementById('fp-colonia');
+  const inpCol    = document.getElementById('fp-colonia');
+  const dlCol     = document.getElementById('dl-colonias');
 
-  selCol.innerHTML = '<option value="">— Selecciona colonia —</option>';
-  selCol.disabled = !municipio;
-  selCol.style.opacity = municipio ? '1' : '.5';
+  inpCol.value = '';
+  dlCol.innerHTML = '';
+  inpCol.disabled = !municipio;
+  inpCol.style.opacity = municipio ? '1' : '.5';
+  inpCol.placeholder = municipio ? 'Escribe o selecciona colonia' : '— Selecciona municipio primero —';
+  const btnNuevaCol = document.getElementById('btn-nueva-colonia');
+  if (btnNuevaCol) btnNuevaCol.style.display = municipio ? 'inline-block' : 'none';
 
   if (!estado || !municipio) return;
 
-  // Intentar primero desde Supabase
+  // Cargar desde Supabase
   try {
     const res = await api({
       accion:       'listar_colonias',
@@ -5389,21 +5607,71 @@ async function onMunicipioChange() {
       res.colonias.forEach(c => {
         const opt = document.createElement('option');
         opt.value = c.colonia;
-        opt.textContent = c.colonia;
-        selCol.appendChild(opt);
+        opt.dataset.cp = c.cp || '';
+        dlCol.appendChild(opt);
       });
       return;
     }
   } catch(e) {}
 
-  // Fallback: catálogo local si Supabase no responde o no tiene datos
+  // Fallback: catálogo local
   const colonias = (DATOS_GEO[estado]?.[municipio] || []).sort();
   colonias.forEach(col => {
     const opt = document.createElement('option');
     opt.value = col;
-    opt.textContent = col;
-    selCol.appendChild(opt);
+    dlCol.appendChild(opt);
   });
+}
+
+function onColoniaChange() {
+  const val   = document.getElementById('fp-colonia').value.trim();
+  const dlCol = document.getElementById('dl-colonias');
+  const opts  = dlCol ? Array.from(dlCol.options) : [];
+  const match = opts.find(o => o.value === val);
+  if (match && match.dataset.cp) {
+    document.getElementById('fp-cp').value = match.dataset.cp;
+  }
+}
+
+function abrirModalNuevaColonia() {
+  const estado    = document.getElementById('fp-estado').value;
+  const municipio = document.getElementById('fp-municipio').value;
+  if (!estado || !municipio) { alerta('Selecciona estado y municipio primero', 'rojo'); return; }
+  document.getElementById('ncol-estado').value         = estado;
+  document.getElementById('ncol-municipio').value      = municipio;
+  document.getElementById('ncol-estado-label').value   = estado;
+  document.getElementById('ncol-municipio-label').value = municipio;
+  document.getElementById('ncol-colonia').value        = document.getElementById('fp-colonia').value.trim();
+  document.getElementById('ncol-cp').value             = '';
+  document.getElementById('modal-nueva-colonia').style.display = 'flex';
+  document.getElementById('ncol-colonia').focus();
+}
+function cerrarModalNuevaColonia() {
+  document.getElementById('modal-nueva-colonia').style.display = 'none';
+}
+
+async function guardarNuevaColonia() {
+  const colonia   = document.getElementById('ncol-colonia').value.trim().toUpperCase();
+  const cp        = document.getElementById('ncol-cp').value.trim();
+  const estado    = document.getElementById('ncol-estado').value;
+  const municipio = document.getElementById('ncol-municipio').value;
+  if (!colonia) { alerta('Escribe el nombre de la colonia', 'rojo'); return; }
+  if (!cp || cp.length !== 5) { alerta('El C.P. debe tener 5 dígitos', 'rojo'); return; }
+
+  const res = await api({
+    accion:    'registrar_colonia',
+    access_token: sesion.access_token,
+    estado, municipio, colonia, cp
+  });
+  if (!res.ok) { alerta(res.error || 'Error al registrar colonia', 'rojo'); return; }
+
+  alerta('Colonia registrada', 'verde');
+  cerrarModalNuevaColonia();
+
+  // Recargar catálogo y seleccionar la nueva colonia
+  await onMunicipioChange();
+  document.getElementById('fp-colonia').value = colonia;
+  document.getElementById('fp-cp').value = cp;
 }
 
 function autoTerminoVigencia() {
@@ -5489,8 +5757,11 @@ async function abrirFormPoliza(datos, placasPreCargadas, prefillRenovacion, poli
   const selCol = document.getElementById('fp-colonia');
   selMun.innerHTML = '<option value="">— Selecciona estado —</option>';
   selMun.disabled = true; selMun.style.opacity = '.5';
-  selCol.innerHTML = '<option value="">— Selecciona municipio —</option>';
+  selCol.value = '';
+  const dlColReset = document.getElementById('dl-colonias');
+  if (dlColReset) dlColReset.innerHTML = '';
   selCol.disabled = true; selCol.style.opacity = '.5';
+  selCol.placeholder = '— Selecciona municipio primero —';
   document.getElementById('fp-id-poliza').disabled = false;
 
   // ── CANDADO 4: deshabilitar todos los campos si hay atraso y no es admin ──
@@ -5571,9 +5842,9 @@ async function abrirFormPoliza(datos, placasPreCargadas, prefillRenovacion, poli
         selMun.disabled = false; selMun.style.opacity = '1';
       }
       if (c.colonia) {
-        const selCol = document.getElementById('fp-colonia');
-        selCol.innerHTML = `<option value="${c.colonia}">${c.colonia}</option>`;
-        selCol.disabled = false; selCol.style.opacity = '1';
+        const inpColViejo = document.getElementById('fp-colonia');
+        inpColViejo.value = c.colonia;
+        inpColViejo.disabled = false; inpColViejo.style.opacity = '1';
       }
     }
     document.getElementById('fp-dom-cobro').value = c.domicilio_cobro || '';

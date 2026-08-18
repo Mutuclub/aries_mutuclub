@@ -5487,12 +5487,29 @@ async function cargarEmpresasForm() {
 }
 
 async function onCoberturaChange() {
+  // Preservar empresa y tipo póliza — no deben borrarse al cambiar cobertura
+  const empresaVal    = document.getElementById('fp-empresa').value;
+  const tipoPolizaVal = document.getElementById('fp-tipo-poliza').value;
+
   const sel   = document.getElementById('fp-tipo-cobertura');
   const opt   = sel.options[sel.selectedIndex];
   const idCob = opt?.dataset?.id;
   const preview = document.getElementById('fp-cob-preview');
-  if (!idCob) { preview.style.display = 'none'; return; }
+
+  if (!idCob) {
+    preview.style.display = 'none';
+    // Restaurar por si acaso
+    if (empresaVal)    document.getElementById('fp-empresa').value     = empresaVal;
+    if (tipoPolizaVal) document.getElementById('fp-tipo-poliza').value = tipoPolizaVal;
+    return;
+  }
+
   const res = await api({ accion: 'detalle_cobertura', access_token: sesion.access_token, id_cobertura: Number(idCob) });
+
+  // Restaurar empresa y tipo póliza después del await (pueden haberse limpiado por efectos secundarios)
+  if (empresaVal)    document.getElementById('fp-empresa').value     = empresaVal;
+  if (tipoPolizaVal) document.getElementById('fp-tipo-poliza').value = tipoPolizaVal;
+
   if (!res.ok || !res.conceptos?.length) { preview.style.display = 'none'; return; }
   document.getElementById('fp-cob-preview-titulo').textContent = res.cobertura.nombre;
   document.getElementById('fp-cob-preview-body').innerHTML = res.conceptos.map(c => `
@@ -5502,7 +5519,7 @@ async function onCoberturaChange() {
       <td style="padding:3px 8px;border-bottom:1px solid var(--gray100)">${esc(c.deducible || '—')}</td>
     </tr>`).join('');
   preview.style.display = 'block';
-  // Intentar autocompletar tarifa si ya hay tipo de vehículo seleccionado
+  // Autocompletar tarifa si ya hay tipo de vehículo seleccionado
   autocompletarTarifa();
 }
 
@@ -5529,12 +5546,28 @@ async function autocompletarTarifa() {
   else if (nom.includes('AMPL'))    coberturaKey = 'Amplia';
   else return;
 
+  // Caso especial: Terceros Pasajeros → costo requiere cotización previa
+  if (coberturaKey === 'Terceros' && tipoVeh === 'Pasajeros') {
+    document.getElementById('fp-costo').value        = '';
+    document.getElementById('fp-pago-inicial').value = '';
+    document.getElementById('fp-pagos-de').value     = '';
+    document.getElementById('fp-costo').placeholder        = 'Previa Cotización';
+    document.getElementById('fp-pago-inicial').placeholder = '0.00';
+    document.getElementById('fp-pagos-de').placeholder     = '0.00';
+    return;
+  }
+
+  // Restaurar placeholder normal en caso de que venga de Pasajeros
+  document.getElementById('fp-costo').placeholder        = '0.00';
+  document.getElementById('fp-pago-inicial').placeholder = '0.00';
+  document.getElementById('fp-pagos-de').placeholder     = '0.00';
+
   const tarifa = tarifasFormCache.find(t =>
     t.cobertura === coberturaKey && t.tipo_vehiculo === tipoVeh
   );
   if (!tarifa) return;
 
-  // Siempre sobreescribir al seleccionar cobertura o tipo de vehículo
+  // Autocompletar — el usuario puede editarlos después
   document.getElementById('fp-costo').value        = tarifa.costo;
   document.getElementById('fp-pago-inicial').value = tarifa.pago_inicial;
   document.getElementById('fp-pagos-de').value     = tarifa.mensualidad;

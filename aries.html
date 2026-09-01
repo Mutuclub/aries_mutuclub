@@ -571,6 +571,9 @@ tr:hover td { background: var(--gray50); }
       <div class="nav-item" onclick="irA('reportes')" id="nav-reportes" style="display:none">
         <span class="nav-icon">📊</span> Reportes
       </div>
+      <div class="nav-item" onclick="irA('bitacora')" id="nav-bitacora" style="display:none">
+        <span class="nav-icon">📋</span> Bitácora
+      </div>
     </nav>
 
     <!-- CONTENIDO -->
@@ -653,6 +656,7 @@ tr:hover td { background: var(--gray50); }
               </div>
               <div class="detalle-grid">
                 <span class="dl">Empresa</span><span id="d-empresa">—</span>
+                <span class="dl">Fecha de captura</span><span id="d-fecha-captura">—</span>
                 <span class="dl">Asesor</span><span id="d-asesor">—</span>
                 <span class="dl">Cobrador</span><span id="d-cobrador">—</span>
                 <span class="dl">Tipo cobertura</span><span id="d-cobertura">—</span>
@@ -770,6 +774,11 @@ tr:hover td { background: var(--gray50); }
                   <label>No. Póliza *</label>
                   <input type="text" id="fp-id-poliza" placeholder="Ej. 12345"
                     style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray50);outline:none;box-sizing:border-box">
+                </div>
+                <div class="campo" style="grid-column:1/-1">
+                  <label>Fecha de captura</label>
+                  <input type="date" id="fp-fecha-captura" readonly
+                    style="width:100%;padding:10px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;background:var(--gray100);outline:none;box-sizing:border-box;color:var(--gray300);cursor:default">
                 </div>
                 <div class="campo">
                   <label>Empresa</label>
@@ -2064,6 +2073,66 @@ tr:hover td { background: var(--gray50); }
         </div>
       </div>
 
+      <!-- BITÁCORA (solo admin) -->
+      <div class="vista" id="v-bitacora">
+        <div class="vista-titulo">Bitácora de Movimientos</div>
+
+        <!-- Filtros -->
+        <div style="display:flex;gap:10px;margin-bottom:16px;align-items:flex-end;flex-wrap:wrap">
+          <div class="campo" style="margin:0">
+            <label>Desde</label>
+            <input type="date" id="bit-desde" style="padding:9px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;outline:none">
+          </div>
+          <div class="campo" style="margin:0">
+            <label>Hasta</label>
+            <input type="date" id="bit-hasta" style="padding:9px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;outline:none">
+          </div>
+          <div class="campo" style="margin:0">
+            <label>Usuario</label>
+            <input type="text" id="bit-usuario" placeholder="Nombre…" style="padding:9px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;outline:none;width:140px">
+          </div>
+          <div class="campo" style="margin:0">
+            <label>Acción</label>
+            <select id="bit-accion" style="padding:9px 14px;border:1.5px solid var(--gray100);border-radius:var(--radius);font-size:14px;outline:none;background:var(--gray50)">
+              <option value="">— Todas —</option>
+              <option value="LOGIN">Login</option>
+              <option value="CREAR_POLIZA">Crear póliza</option>
+              <option value="EDITAR_POLIZA">Editar póliza</option>
+              <option value="GUARDAR_RECEPCION_COBRANZA">Recepción cobranza</option>
+              <option value="ANULAR_RECEPCION_COBRANZA">Anular recepción cobranza</option>
+              <option value="GUARDAR_RECEPCION_OFICINA">Recepción oficina</option>
+              <option value="ANULAR_RECEPCION_OFICINA">Anular recepción oficina</option>
+              <option value="GUARDAR_DEPOSITO">Depósito</option>
+              <option value="ANULAR_DEPOSITO">Anular depósito</option>
+            </select>
+          </div>
+          <button class="btn-accion btn-verde" onclick="cargarBitacora()" style="padding:9px 18px">Buscar</button>
+          <button class="btn-accion" onclick="exportarBitacora()" style="padding:9px 18px;background:var(--gray100);color:var(--navy)">⬇ Exportar</button>
+        </div>
+
+        <!-- Resumen -->
+        <div id="bit-resumen" style="font-size:13px;color:var(--gray600);margin-bottom:12px"></div>
+
+        <!-- Tabla -->
+        <div class="tabla-wrap" style="overflow-x:auto">
+          <table style="min-width:900px">
+            <thead>
+              <tr>
+                <th>Fecha y hora</th>
+                <th>Usuario</th>
+                <th>Rol</th>
+                <th>Acción</th>
+                <th>Detalle</th>
+                <th>Referencia</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-bitacora">
+              <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--gray300)">Selecciona un rango de fechas y presiona Buscar</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- REPORTES (solo admin) -->
       <div class="vista" id="v-reportes">
         <div class="vista-titulo">Reportes</div>
@@ -2412,6 +2481,7 @@ function configurarUI(usuario) {
   setVisible('nav-siniestros', !!p.siniestros);
   setVisible('nav-catalogos',  !!p.catalogos || esAdmin);
   setVisible('nav-reportes',   !!p.reportes  || esAdmin);
+  setVisible('nav-bitacora',   esAdmin);
 
   // Clientes: admin y operaciones siempre
   setVisible('nav-clientes', esAdmin || usuario.rol === 'operaciones');
@@ -2445,6 +2515,7 @@ function irA(vista) {
   if (vista === 'depositos')    iniciarDepositos();
   if (vista === 'catalogos') { catTab('empresas'); }
   if (vista === 'reportes')  cargarCobradoresReporte();
+  if (vista === 'bitacora')  iniciarBitacora();
 }
 
 // ── STATS DASHBOARD ───────────────────────────────────────
@@ -3415,7 +3486,7 @@ async function verDetalle(id_poliza) {
   document.getElementById('poliza-detalle').style.display = 'block';
 
   // Limpiar
-  ['d-id-poliza','d-empresa','d-asesor','d-cobrador','d-cobertura','d-tipo-poliza','d-tipo-cobro',
+  ['d-id-poliza','d-empresa','d-fecha-captura','d-asesor','d-cobrador','d-cobertura','d-tipo-poliza','d-tipo-cobro',
    'd-inicio','d-termino','d-estatus-header','d-expira-header',
    'd-costo','d-pago-inicial','d-pagos-de','d-pagado',
    'd-saldo','d-saldo-por-pagar','d-meses-atraso','d-prox-pago','d-nombre','d-tel1','d-tel2',
@@ -3504,9 +3575,10 @@ async function verDetalle(id_poliza) {
   const ce = paletaEstatus[estatus.clase] || paletaEstatus['cancelada-manual'];
 
   // ── Póliza ────────────────────────────────────────────────
-  document.getElementById('d-id-poliza').textContent   = p.id_poliza;
-  document.getElementById('d-empresa').textContent     = e.nombre || '—';
-  document.getElementById('d-asesor').textContent      = p.asesor || '—';
+  document.getElementById('d-id-poliza').textContent      = p.id_poliza;
+  document.getElementById('d-empresa').textContent        = e.nombre || '—';
+  document.getElementById('d-fecha-captura').textContent  = fmtFecha(p.fecha_captura) || '—';
+  document.getElementById('d-asesor').textContent         = p.asesor || '—';
   document.getElementById('d-cobrador').textContent    = p.cobrador || '—';
   document.getElementById('d-cobertura').textContent   = p.tipo_cobertura || p.tipo_de_cobertura || '—';
   document.getElementById('d-tipo-poliza').textContent = p.tipo_poliza || '—';
@@ -5772,6 +5844,8 @@ async function abrirFormPoliza(datos, placasPreCargadas, prefillRenovacion, poli
    'fp-envio-cobro','fp-retorno-cobro',
    'fp-fecha-activacion','fp-act-recibo','fp-act-monto','fp-act-notas']
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  // Fecha de captura: hoy en nueva póliza
+  document.getElementById('fp-fecha-captura').value = new Date().toISOString().split('T')[0];
   // reset selects póliza
   document.getElementById('fp-empresa').value          = '';
   document.getElementById('fp-tipo-poliza').value      = '';
@@ -5838,6 +5912,7 @@ async function abrirFormPoliza(datos, placasPreCargadas, prefillRenovacion, poli
     document.getElementById('fp-pago-inicial').value     = p.pago_inicial || '';
     document.getElementById('fp-pagos-de').value         = p.pagos_de || '';
     // Datos Varios
+    document.getElementById('fp-fecha-captura').value    = p.fecha_captura || '';
     document.getElementById('fp-fecha-asesor').value     = p.fecha_entrega_asesor || '';
     document.getElementById('fp-fecha-impresion').value  = p.fecha_impresion_tarjeta || '';
     document.getElementById('fp-fecha-cobranza').value   = p.fecha_envio_cobranza || '';
@@ -6371,6 +6446,93 @@ async function quitarExcepcion(uid, modulo) {
   const rol = sel.options[sel.selectedIndex].dataset.rol;
   renderTablaUsuario(uid, rol);
   alerta('Excepción eliminada — el usuario hereda el permiso de su rol', 'verde');
+}
+
+// ── BITÁCORA ──────────────────────────────────────────────────
+
+function iniciarBitacora() {
+  const hoy = new Date().toISOString().split('T')[0];
+  document.getElementById('bit-desde').value = hoy;
+  document.getElementById('bit-hasta').value = hoy;
+}
+
+const ACCION_LABELS = {
+  'LOGIN':                       { label: 'Login',                    color: '#E8F5EE', text: '#1A6B3C' },
+  'CREAR_POLIZA':                { label: 'Crear póliza',             color: '#E0F0FF', text: '#1B2A6B' },
+  'EDITAR_POLIZA':               { label: 'Editar póliza',            color: '#FEF9C3', text: '#92400E' },
+  'GUARDAR_RECEPCION_COBRANZA':  { label: 'Recepción cobranza',       color: '#E8F5EE', text: '#1A6B3C' },
+  'ANULAR_RECEPCION_COBRANZA':   { label: 'Anular recep. cobranza',   color: '#FEEEEE', text: '#C0392B' },
+  'GUARDAR_RECEPCION_OFICINA':   { label: 'Recepción oficina',        color: '#E8F5EE', text: '#1A6B3C' },
+  'ANULAR_RECEPCION_OFICINA':    { label: 'Anular recep. oficina',    color: '#FEEEEE', text: '#C0392B' },
+  'GUARDAR_DEPOSITO':            { label: 'Depósito',                 color: '#E8ECF5', text: '#2C3E7A' },
+  'ANULAR_DEPOSITO':             { label: 'Anular depósito',          color: '#FEEEEE', text: '#C0392B' },
+};
+
+let _bitacoraData = [];
+
+async function cargarBitacora() {
+  const desde   = document.getElementById('bit-desde').value;
+  const hasta   = document.getElementById('bit-hasta').value;
+  const usuario = document.getElementById('bit-usuario').value.trim();
+  const accion  = document.getElementById('bit-accion').value;
+  const tbody   = document.getElementById('tbody-bitacora');
+
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--gray300)">Cargando…</td></tr>';
+  document.getElementById('bit-resumen').textContent = '';
+
+  const res = await api({
+    accion:        'historial_bitacora',
+    access_token:  sesion.access_token,
+    fecha_inicio:  desde,
+    fecha_fin:     hasta,
+    usuario:       usuario || null,
+    accion:        accion  || null
+  });
+
+  if (!res.ok) { alerta(res.error, 'rojo'); tbody.innerHTML = ''; return; }
+
+  _bitacoraData = res.registros || [];
+
+  if (_bitacoraData.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--gray300)">Sin registros en ese período</td></tr>';
+    document.getElementById('bit-resumen').textContent = '0 registros encontrados';
+    return;
+  }
+
+  document.getElementById('bit-resumen').textContent = `${_bitacoraData.length} registro(s) encontrado(s)`;
+
+  tbody.innerHTML = _bitacoraData.map(r => {
+    const meta  = ACCION_LABELS[r.accion] || { label: r.accion || '—', color: '#F3F4F6', text: '#374151' };
+    const badge = `<span style="background:${meta.color};color:${meta.text};padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap">${meta.label}</span>`;
+    const fecha = r.fecha ? new Date(r.fecha).toLocaleString('es-MX', { dateStyle:'short', timeStyle:'short' }) : '—';
+    return `<tr>
+      <td style="font-size:12px;white-space:nowrap">${fecha}</td>
+      <td style="font-weight:600;font-size:13px">${esc(r.usuario || '—')}</td>
+      <td style="font-size:12px;color:var(--gray600)">${esc(r.rol || '—')}</td>
+      <td>${badge}</td>
+      <td style="font-size:12px;color:var(--gray600)">${esc(r.descripcion || r.detalle || '—')}</td>
+      <td style="font-size:12px;color:var(--gray600)">${esc(r.referencia || '—')}</td>
+    </tr>`;
+  }).join('');
+}
+
+function exportarBitacora() {
+  if (!_bitacoraData.length) { alerta('No hay datos para exportar', 'rojo'); return; }
+  const headers = ['Fecha','Usuario','Rol','Acción','Detalle','Referencia'];
+  const rows = _bitacoraData.map(r => {
+    const fecha = r.fecha ? new Date(r.fecha).toLocaleString('es-MX') : '';
+    const meta  = ACCION_LABELS[r.accion] || { label: r.accion || '' };
+    return [fecha, r.usuario||'', r.rol||'', meta.label, r.descripcion||r.detalle||'', r.referencia||'']
+      .map(v => `"${String(v).replace(/"/g,'""')}"`).join(',');
+  });
+  const csv  = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `bitacora_${document.getElementById('bit-desde').value}_${document.getElementById('bit-hasta').value}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 // ── ACTIVACIONES ──────────────────────────────────────────

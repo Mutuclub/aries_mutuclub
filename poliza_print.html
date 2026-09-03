@@ -6,590 +6,443 @@
 <style>
   @page { size: letter; margin: 0; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: Arial, sans-serif;
-    font-size: 9pt;
-    color: #000;
-    background: #fff;
-  }
-
-  /* Cada página (frente o reverso) ocupa exactamente una hoja */
-  .pagina {
-    width: 216mm;
-    min-height: 279mm;
-    max-height: 279mm;
-    overflow: hidden;
-    page-break-after: always;
-    position: relative;
-    padding: 6mm 8mm;
-  }
+  body { font-family: Arial, sans-serif; font-size: 9pt; color: #000; background: #fff; }
+  .pagina { width: 216mm; min-height: 279mm; max-height: 279mm; overflow: hidden; page-break-after: always; position: relative; padding: 6mm 8mm; }
   .pagina:last-child { page-break-after: auto; }
-
-  /* ── FRENTE ─────────────────────────────────────────── */
   .frente { display: flex; flex-direction: column; gap: 3mm; }
-
-  /* Encabezado */
   .header { display: flex; align-items: flex-start; justify-content: space-between; gap: 4mm; }
-  .tel-box {
-    border: 1.5px solid #1B2A6B;
-    padding: 3mm;
-    min-width: 38mm;
-    font-size: 7.5pt;
-    line-height: 1.5;
-    color: #1B2A6B;
-    font-weight: 700;
-  }
+  .tel-box { border: 1.5px solid #1B2A6B; padding: 3mm; min-width: 38mm; font-size: 7.5pt; line-height: 1.5; color: #1B2A6B; font-weight: 700; }
   .tel-box .titulo { font-size: 7pt; margin-bottom: 1mm; }
   .logo-box { flex: 1; text-align: center; }
-  .logo-box img { max-height: 22mm; max-width: 55mm; }
-  .logo-text {
-    font-size: 10pt; font-weight: 900; color: #1B2A6B;
-    line-height: 1.1; text-align: center;
-  }
+  .logo-text { font-size: 10pt; font-weight: 900; color: #1B2A6B; line-height: 1.1; text-align: center; }
   .logo-sub { font-size: 7pt; color: #555; }
-  .folio-box {
-    border: 1.5px solid #1B2A6B;
-    padding: 3mm;
-    min-width: 45mm;
-    font-size: 7.5pt;
-    text-align: center;
-  }
-  .folio-box .folio-titulo {
-    background: #1B2A6B; color: #fff;
-    font-size: 7pt; font-weight: 700;
-    padding: 1mm 2mm; margin: -3mm -3mm 2mm -3mm;
-    letter-spacing: 1px;
-  }
+  .folio-box { border: 1.5px solid #1B2A6B; padding: 3mm; min-width: 45mm; font-size: 7.5pt; text-align: center; }
+  .folio-box .folio-titulo { background: #1B2A6B; color: #fff; font-size: 7pt; font-weight: 700; padding: 1mm 2mm; margin: -3mm -3mm 2mm -3mm; letter-spacing: 1px; }
   .folio-box .folio-num { font-size: 13pt; font-weight: 900; color: #1B2A6B; margin: 1mm 0; }
   .folio-box .rfc { font-size: 6.5pt; color: #333; }
-
-  /* Datos del asociado */
-  .seccion-titulo {
-    background: #1B2A6B; color: #fff;
-    font-size: 7pt; font-weight: 700;
-    padding: 1.5mm 3mm;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-  }
-  .datos-asociado {
-    border: 1px solid #1B2A6B;
-  }
-  .datos-asociado .campo-linea {
-    display: flex;
-    border-bottom: 1px solid #ccc;
-    min-height: 6mm;
-    align-items: center;
-  }
+  .folio-box .tipo-cod { font-size: 8pt; font-weight: 700; color: #1B2A6B; margin-top: 1mm; }
+  .seccion-titulo { background: #1B2A6B; color: #fff; font-size: 7pt; font-weight: 700; padding: 1.5mm 3mm; letter-spacing: 0.5px; text-transform: uppercase; }
+  .datos-asociado { border: 1px solid #1B2A6B; }
+  .datos-asociado .campo-linea { display: flex; border-bottom: 1px solid #ccc; min-height: 6mm; align-items: center; }
   .datos-asociado .campo-linea:last-child { border-bottom: none; }
-  .datos-asociado .etiq {
-    font-size: 6.5pt; font-weight: 700; color: #1B2A6B;
-    padding: 1mm 2mm; min-width: 22mm; white-space: nowrap;
-  }
-  .datos-asociado .val {
-    font-size: 8pt; padding: 1mm 2mm; flex: 1;
-    border-left: 1px solid #ccc;
-  }
+  .datos-asociado .etiq { font-size: 6.5pt; font-weight: 700; color: #1B2A6B; padding: 1mm 2mm; min-width: 22mm; white-space: nowrap; }
+  .datos-asociado .val { font-size: 8pt; padding: 1mm 2mm; flex: 1; border-left: 1px solid #ccc; }
   .datos-dos { display: flex; }
   .datos-dos .campo-linea { flex: 1; }
-  .vigencia-box {
-    border: 1px solid #1B2A6B;
-    min-width: 42mm;
-    font-size: 7pt;
-    text-align: center;
-    margin-left: 3mm;
-  }
-  .vigencia-box .vig-titulo {
-    background: #1B2A6B; color: #fff;
-    font-size: 6.5pt; font-weight: 700;
-    padding: 1mm;
-  }
-  .vigencia-box .vig-row {
-    display: flex; justify-content: space-between;
-    padding: 1mm 2mm; border-bottom: 1px solid #ddd;
-    font-size: 7pt;
-  }
-  .vigencia-box .vig-row:last-child { border-bottom: none; }
-  .vigencia-box .vig-row .h { font-size: 5.5pt; color: #666; }
-
-  /* Título cobertura */
-  .cob-titulo-wrap {
-    border: 2px solid #1B2A6B;
-    text-align: center;
-    padding: 1.5mm;
-  }
-  .cob-titulo {
-    font-size: 11pt; font-weight: 900;
-    color: #1B2A6B; letter-spacing: 0.5px;
-    text-transform: uppercase;
-  }
-
-  /* Datos del vehículo */
-  .vehiculo-box {
-    border: 1px solid #1B2A6B;
-  }
-  .vehiculo-box .veh-row {
-    display: flex; border-bottom: 1px solid #ccc; min-height: 6mm; align-items: center;
-  }
+  .cob-titulo-wrap { border: 2px solid #1B2A6B; text-align: center; padding: 1.5mm; }
+  .cob-titulo { font-size: 11pt; font-weight: 900; color: #1B2A6B; letter-spacing: 0.5px; text-transform: uppercase; }
+  .vehiculo-box { border: 1px solid #1B2A6B; }
+  .vehiculo-box .veh-row { display: flex; border-bottom: 1px solid #ccc; min-height: 6mm; align-items: center; }
   .vehiculo-box .veh-row:last-child { border-bottom: none; }
-  .vehiculo-box .etiq {
-    font-size: 6.5pt; font-weight: 700; color: #1B2A6B;
-    padding: 1mm 2mm; min-width: 18mm; white-space: nowrap;
-  }
-  .vehiculo-box .val {
-    font-size: 8pt; padding: 1mm 2mm; flex: 1;
-    border-left: 1px solid #ccc;
-  }
+  .vehiculo-box .etiq { font-size: 6.5pt; font-weight: 700; color: #1B2A6B; padding: 1mm 2mm; min-width: 18mm; white-space: nowrap; }
+  .vehiculo-box .val { font-size: 8pt; padding: 1mm 2mm; flex: 1; border-left: 1px solid #ccc; }
   .veh-triple { display: flex; }
   .veh-triple .campo { flex: 1; display: flex; border-right: 1px solid #ccc; }
   .veh-triple .campo:last-child { border-right: none; }
-
-  /* Tabla de cobertura */
   .cob-table { width: 100%; border-collapse: collapse; }
-  .cob-table thead tr {
-    background: #1B2A6B; color: #fff;
-    font-size: 7.5pt; font-weight: 700;
-  }
+  .cob-table thead tr { background: #1B2A6B; color: #fff; font-size: 7.5pt; font-weight: 700; }
   .cob-table th { padding: 2mm 3mm; text-align: center; }
-  .cob-table td {
-    padding: 1.5mm 3mm;
-    font-size: 7.5pt;
-    text-align: center;
-    border: 1px solid #ccc;
-    font-weight: 700;
-  }
+  .cob-table td { padding: 1.5mm 3mm; font-size: 7.5pt; text-align: center; border: 1px solid #ccc; font-weight: 700; }
   .cob-table td:first-child { text-align: left; }
-
-  /* Pie frente */
-  .pie-frente {
-    font-size: 6.5pt; color: #333;
-    text-align: center; line-height: 1.5;
-    border-top: 1px solid #ccc;
-    padding-top: 2mm;
-  }
-  .firma-row {
-    display: flex; align-items: flex-end;
-    justify-content: space-between;
-    margin-top: 3mm; gap: 4mm;
-  }
+  .pie-frente { font-size: 6.5pt; color: #333; text-align: center; line-height: 1.5; border-top: 1px solid #ccc; padding-top: 2mm; }
+  .firma-row { display: flex; align-items: flex-end; justify-content: space-between; margin-top: 3mm; gap: 4mm; }
   .firma-box { text-align: center; font-size: 7pt; }
   .firma-linea { border-top: 1px solid #000; width: 40mm; margin: 1mm auto 0; }
-  .agente-box {
-    border: 1px solid #999;
-    width: 45mm; height: 10mm;
-    display: flex; align-items: center;
-    padding: 1mm 2mm; font-size: 6.5pt; color: #999;
-  }
-
-  /* Sello de la mutualidad */
-  .frase-pie {
-    font-size: 6pt; color: #333;
-    text-align: center; margin-top: 2mm;
-    font-style: italic;
-  }
-  .direccion-pie {
-    background: #1B2A6B; color: #fff;
-    font-size: 6.5pt; text-align: center;
-    padding: 1.5mm; margin-top: 2mm;
-  }
-
-  /* ── REVERSO ─────────────────────────────────────────── */
-  .reverso {
-    display: flex;
-    flex-direction: column;
-    gap: 2mm;
-  }
-  .rev-header {
-    display: flex; justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid #1B2A6B;
-    padding-bottom: 2mm; margin-bottom: 2mm;
-  }
-  .rev-header .logo-text { font-size: 9pt; }
-  .rev-cols {
-    display: flex; gap: 4mm; flex: 1;
-  }
+  .agente-box { border: 1px solid #999; width: 45mm; height: 10mm; display: flex; align-items: center; padding: 1mm 2mm; font-size: 6.5pt; color: #999; }
+  .frase-pie { font-size: 6pt; color: #333; text-align: center; margin-top: 2mm; font-style: italic; }
+  .direccion-pie { background: #1B2A6B; color: #fff; font-size: 6.5pt; text-align: center; padding: 1.5mm; margin-top: 2mm; }
+  .reverso { display: flex; flex-direction: column; gap: 2mm; }
+  .rev-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #1B2A6B; padding-bottom: 2mm; margin-bottom: 1mm; }
+  .rev-cols { display: flex; gap: 4mm; flex: 1; }
   .rev-col { flex: 1; }
-  .rev-col h3 {
-    font-size: 8pt; font-weight: 700;
-    color: #1B2A6B;
-    border-bottom: 1px solid #1B2A6B;
-    padding-bottom: 1mm; margin-bottom: 1.5mm;
-    margin-top: 2mm;
-    text-transform: uppercase;
-  }
-  .rev-col p {
-    font-size: 7pt; line-height: 1.4;
-    margin-bottom: 1mm; color: #222;
-  }
-  .rev-col p.bullet {
-    padding-left: 3mm;
-    text-indent: -3mm;
-  }
-
-  /* Inbursa / formas de pago */
-  .pago-box {
-    border: 1px solid #ccc;
-    padding: 2mm 3mm;
-    font-size: 7pt;
-    background: #f9f9f9;
-    margin-top: 1mm;
-  }
-  .pago-box .pago-titulo { font-weight: 700; color: #1B2A6B; margin-bottom: 1mm; }
-  .pago-box table { width: 100%; font-size: 6.5pt; }
-  .pago-box td { padding: 0.5mm 1mm; }
-
-  .aviso-amarillo {
-    background: #FFFF00;
-    font-size: 6.5pt; font-weight: 700;
-    padding: 1mm 2mm; text-align: center;
-    margin-top: 1mm;
-  }
-
-  @media print {
-    .pagina { page-break-after: always; }
-    .pagina:last-child { page-break-after: auto; }
-  }
+  .rev-col h3 { font-size: 7.5pt; font-weight: 700; color: #1B2A6B; border-bottom: 1px solid #1B2A6B; padding-bottom: 0.5mm; margin-bottom: 1mm; margin-top: 1.5mm; text-transform: uppercase; }
+  .rev-col p { font-size: 6.5pt; line-height: 1.35; margin-bottom: 0.8mm; color: #222; }
+  .rev-col p.bullet { padding-left: 3mm; text-indent: -3mm; }
+  .procar-frente { display: flex; flex-direction: column; gap: 3mm; }
+  .procar-titulo { font-family: 'Arial Black', Arial, sans-serif; font-size: 16pt; font-weight: 900; font-style: italic; color: #cc0000; letter-spacing: 1px; }
+  .procar-dir { font-size: 7.5pt; color: #333; margin-top: 1mm; }
+  .pc-campo { border: 2px solid #cc0000; padding: 2mm 4mm; min-width: 40mm; text-align: center; }
+  .pc-campo .pc-label { font-size: 7pt; font-weight: 700; color: #333; margin-bottom: 1mm; }
+  .pc-campo .pc-val { font-size: 9pt; font-weight: 900; color: #cc0000; }
+  .procar-seccion-titulo { font-size: 8pt; font-weight: 700; color: #cc0000; text-align: center; text-transform: uppercase; border-bottom: 1px solid #cc0000; padding-bottom: 1mm; margin: 1mm 0; }
+  .procar-datos-box { border: 2px solid #cc0000; padding: 2mm; }
+  .procar-campo-row { display: flex; border-bottom: 1px solid #ccc; min-height: 7mm; align-items: center; gap: 4mm; }
+  .procar-campo-row:last-child { border-bottom: none; }
+  .pc-etiq { font-size: 7pt; font-weight: 700; color: #000; min-width: 22mm; }
+  .pc-sub { border-bottom: 1px solid #000; flex: 1; min-height: 4mm; font-size: 7.5pt; }
+  .procar-tels { font-size: 8pt; font-weight: 700; color: #1B2A6B; text-align: right; line-height: 1.6; }
+  .procar-tels .tel-titulo { font-size: 7pt; color: #cc0000; }
+  .tc-linea { border-bottom: 2px solid #cc0000; min-width: 5mm; align-self: flex-end; margin-bottom: 1mm; }
+  .procar-reverso { display: flex; flex-direction: column; gap: 1mm; }
+  .procar-rev-cols { display: flex; gap: 4mm; }
+  .procar-rev-col { flex: 1; }
+  .procar-rev-col h3 { font-size: 7.5pt; font-weight: 700; color: #000; margin-bottom: 0.8mm; margin-top: 1.5mm; }
+  .procar-rev-col p { font-size: 6.5pt; line-height: 1.35; color: #222; margin-bottom: 0.5mm; }
+  @media print { .pagina { page-break-after: always; } .pagina:last-child { page-break-after: auto; } }
 </style>
 </head>
 <body>
-
 <script>
-// ── DATOS DE LA PÓLIZA (inyectados desde aries.html via window.open + postMessage) ──
-// ── CONFIGURACIÓN SUPABASE ──────────────────────────────────────
-const SB_URL  = 'https://arkhmgvlmkofghsdffjf.supabase.co';
-const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFya2htZ3ZsbWtvZmdoc2RmZmpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwOTUwNjEsImV4cCI6MjA5ODY3MTA2MX0.1nfTTqIXct-LNaaPZhxu5lXrjKil6SIdz8I9OpImY28';
+// ════════════════════════════════════════════════════
+// MAPA: nombre de cobertura → clave interna
+// ════════════════════════════════════════════════════
+const MAPA_FORMATO = {
+  "DAÑOS A TERCEROS AUTO Y PICK UP":"DT_AUTO","COBERTURA DAÑOS A TERCEROS AUTO Y PICK UP":"DT_AUTO","TERCEROS AUTO Y PICK UP":"DT_AUTO","PÓLIZA 2021 - TERCEROS AUTO - PROCAR":"DT_AUTO",
+  "DAÑOS A TERCEROS MOTOCICLETA":"DT_MOTO","COBERTURA DAÑOS A TERCEROS MOTOCICLETA":"DT_MOTO","PÓLIZA 2021 - TERCEROS MOTOCICLETA - PROCAR":"DT_MOTO",
+  "DAÑOS A TERCEROS MOTO TAXI":"DT_MOTO_TAXI","TERCEROS MOTO TAXI - PREVISIÓN FUNERARIA":"DT_MOTO_TAXI","COBERTURA DAÑOS A TERCEROS MOTO TAXI":"DT_MOTO_TAXI",
+  "DAÑOS A TERCEROS LOCAL":"DT_PLATAFORMA","COBERTURA DAÑOS A TERCEROS LOCAL":"DT_PLATAFORMA","PÓLIZA 2021 - TERCEROS TRANSPORTE PÚBLICO - PROCAR":"DT_PLATAFORMA",
+  "DAÑOS A TERCEROS VEHICULO DE CARGA":"DT_CARGA","COBERTURA DAÑOS A TERCEROS VEHICULO DE CARGA":"DT_CARGA","PÓLIZA 2021 - TERCEROS CARGA - PROCAR":"DT_CARGA",
+  "DAÑOS A TERCEROS REMOLQUE":"DT_REMOLQUE","COBERTURA DAÑOS A TERCEROS REMOLQUE":"DT_REMOLQUE","TERCEROS REMOLQUE":"DT_REMOLQUE","PÓLIZA 2021 - TERCEROS REMOLQUE - PROCAR":"DT_REMOLQUE",
+  "LIMITADA AUTO Y PICK UP":"LIM_AUTO","LIMITADA LOCAL":"LIM_AUTO","COBERTURA LIMITADA 2026":"LIM_AUTO","COBERTURA LIMITADA LOCAL":"LIM_AUTO","2026 - LIMITADA 2026":"LIM_AUTO",
+  "LIMITADA MOTOCICLETA":"LIM_MOTO","COBERTURA LIMITADA MOTOCICLETA":"LIM_MOTO","PÓLIZA 2021 - LIMITADA MOTOCICLETA - PROCAR":"LIM_MOTO",
+  "LIMITADA MOTO TAXI":"LIM_MOTO_TAXI","COBERTURA LIMITADA MOTO TAXI":"LIM_MOTO_TAXI","LIMITADA - MOTO TAXI":"LIM_MOTO_TAXI",
+  "LIMITADA PLATAFORMA":"LIM_PLATAFORMA","COBERTURA LIMITADA PLATAFORMA":"LIM_PLATAFORMA","PÓLIZA 2021 - LIMITADA PLATAFORMA - PROCAR":"LIM_PLATAFORMA",
+  "LIMITADA VEHICULOS DE CARGA":"LIM_CARGA","COBERTURA LIMITADA VEHICULOS DE CARGA":"LIM_CARGA","PÓLIZA 2021 - LIMITADA CARGA - PROCAR":"LIM_CARGA",
+  "AMPLIA AUTO Y PICK UP":"AMP_AUTO","AMPLIA LOCAL":"AMP_AUTO","AMPLIA 100":"AMP_AUTO","AMPLIA AUTO 100":"AMP_AUTO","COBERTURA AMPLIA AUTO 100":"AMP_AUTO","COBERTURA AMPLIA LOCAL":"AMP_AUTO",
+  "AMPLIA MOTOCICLETA":"AMP_MOTO","COBERTURA AMPLIA MOTOCICLETA":"AMP_MOTO",
+  "AMPLIA MOTO TAXI":"AMP_MOTO_TAXI","COBERTURA AMPLIA MOTO TAXI":"AMP_MOTO_TAXI",
+  "AMPLIA PLATAFORMA":"AMP_PLATAFORMA","AMPLIA PLATAFORMA PF":"AMP_PLATAFORMA","AMPLIA PLATAFORMA PF (RESPALDO 21 11 2025)":"AMP_PLATAFORMA","COBERTURA AMPLIA PLATAFORMA":"AMP_PLATAFORMA",
+  "AMPLIA MULTIPLATAFORMA":"AMP_MULTIPLATAFORMA","COBERTURA MULTIPLATAFORMA":"AMP_MULTIPLATAFORMA",
+  "AMPLIA CERO DEDUCIBLE":"AMP_CERO_DED","AMPLIA CERO DEDUCIBLE PLATAFORMA":"AMP_CERO_DED","2026 CERO DEDUCIBLE":"AMP_CERO_DED","CERO DEDUCIBLE":"AMP_CERO_DED",
+  "JUDA TERCEROS":"JUDA_TERCEROS","JUDA LIMITADA":"JUDA_LIMITADA","JUDA AMPLIA":"JUDA_AMPLIA"
+};
 
-// ── MAPA de nombre de cobertura → clave interna ──────────────────
-// Cubre nombres de Aries (Supabase), nombres de Access (histórico) e informe
-const MAPA_REVERSO = {"AMPLIA AUTO Y PICK UP": "AMPLIA_AUTO_Y_PICK_UP", "AMPLIA AUTO 100": "AMPLIA_AUTO_Y_PICK_UP", "AMPLIA LOCAL": "AMPLIA_AUTO_Y_PICK_UP", "AMPLIA UNION": "AMPLIA_UNION", "AMPLIA PLATAFORMA": "AMPLIA_PLATAFORMA", "AMPLIA CERO DEDUCIBLE PLATAFORMA": "AMPLIA_CERO_DEDUCIBLE_PLATAFORMA", "AMPLIA MULTIPLATAFORMA": "AMPLIA_MULTIPLATAFORMA", "AMPLIA MOTO TAXI": "AMPLIA_MOTO_TAXI", "LIMITADA AUTO Y PICK UP": "LIMITADA_AUTO_Y_PICK_UP", "LIMITADA LOCAL": "LIMITADA_AUTO_Y_PICK_UP", "LIMITADA VEHICULOS DE CARGA": "LIMITADA_CARGA", "LIMITADA PLATAFORMA": "LIMITADA_PLATAFORMA", "LIMITADA MOTOCICLETA": "LIMITADA_MOTOCICLETA", "LIMITADA MOTO TAXI": "LIMITADA_MOTO_TAXI", "DAÑOS A TERCEROS AUTO Y PICK UP": "TERCEROS_AUTO_Y_PICK_UP", "DAÑOS A TERCEROS LOCAL": "TERCEROS_PLATAFORMA", "DAÑOS A TERCEROS VEHICULO DE CARGA": "TERCEROS_CARGA", "DAÑOS A TERCEROS REMOLQUE": "TERCEROS_REMOLQUE", "DAÑOS A TERCEROS MOTOCICLETA": "TERCEROS_MOTOCICLETA", "DAÑOS A TERCEROS MOTO TAXI": "TERCEROS_MOTO_TAXI", "JUDA AMPLIA": "JUDA_AMPLIA", "JUDA LIMITADA": "JUDA_LIMITADA", "JUDA TERCEROS": "JUDA_TERCEROS", "AMPLIA MOTOCICLETA": "AMPLIA_MOTOCICLETA", "AMPLIA 100": "AMPLIA_AUTO_Y_PICK_UP", "TERCEROS AUTO Y PICK UP": "TERCEROS_AUTO_Y_PICK_UP", "AMPLIA PLATAFORMA PF": "AMPLIA_PLATAFORMA", "AMPLIA PLATAFORMA PF (RESPALDO 21 11 2025)": "AMPLIA_PLATAFORMA", "2026 CERO DEDUCIBLE": "AMPLIA_CERO_DEDUCIBLE_PLATAFORMA", "LIMITADA - MOTO TAXI": "LIMITADA_MOTO_TAXI", "2026 - LIMITADA 2026": "LIMITADA_AUTO_Y_PICK_UP", "PÓLIZA 2021 - LIMITADA CARGA - PROCAR": "LIMITADA_CARGA", "PÓLIZA 2021 - LIMITADA MOTOCICLETA - PROCAR": "LIMITADA_MOTOCICLETA", "PÓLIZA 2021 - LIMITADA PLATAFORMA - PROCAR": "LIMITADA_PLATAFORMA", "PÓLIZA 2021 - TERCEROS AUTO - PROCAR": "TERCEROS_AUTO_Y_PICK_UP", "PÓLIZA 2021 - TERCEROS CARGA - PROCAR": "TERCEROS_CARGA", "PÓLIZA 2021 - TERCEROS REMOLQUE - PROCAR": "TERCEROS_REMOLQUE", "PÓLIZA 2021 - TERCEROS MOTOCICLETA - PROCAR": "TERCEROS_MOTOCICLETA", "PÓLIZA 2021 - TERCEROS TRANSPORTE PÚBLICO - PROCAR": "TERCEROS_PLATAFORMA", "TERCEROS MOTO TAXI - PREVISIÓN FUNERARIA": "TERCEROS_MOTO_TAXI", "TERCEROS REMOLQUE": "TERCEROS_REMOLQUE"};
+// Código de tipo e identificador de asociado por clave
+const TIPO_COD = {DT_AUTO:"TIPO DT-A",DT_MOTO:"TIPO DT-M",DT_MOTO_TAXI:"TIPO DT-MTPF",DT_PLATAFORMA:"TIPO DT-TP",DT_CARGA:"TIPO DT-C",DT_REMOLQUE:"TIPO DT-R",LIM_AUTO:"TIPO L-AP-.53",LIM_MOTO:"TIPO L-M",LIM_MOTO_TAXI:"TIPO L-MT",LIM_PLATAFORMA:"TIPO L-A",LIM_CARGA:"TIPO L-C",AMP_AUTO:"TIPO CAA100",AMP_MOTO:"TIPO A-MTC",AMP_MOTO_TAXI:"TIPO A-MT",AMP_PLATAFORMA:"TIPO CAP",AMP_MULTIPLATAFORMA:"TIPO CAP",AMP_CERO_DED:"TIPO CAP"};
+const COD_ASOC = {DT_AUTO:"CT-A/",DT_MOTO:"CT-M/",DT_MOTO_TAXI:"DT-MTPF/",DT_PLATAFORMA:"CT-TP/",DT_CARGA:"CT-C/",DT_REMOLQUE:"CT-R/",LIM_AUTO:"CL-AP.53/",LIM_MOTO:"CL-M/",LIM_MOTO_TAXI:"CL-MT/",LIM_PLATAFORMA:"CL-A/",LIM_CARGA:"CL-C/",AMP_AUTO:"CAA100/",AMP_MOTO:"CA-MTC/",AMP_MOTO_TAXI:"CA-MT/",AMP_PLATAFORMA:"CAP-A/",AMP_MULTIPLATAFORMA:"CMP/",AMP_CERO_DED:"CAP-A/"};
 
-// ── REVERSOS cargados dinámicamente desde Supabase ───────────────
-// Se puebla en cargarReversos() al recibir el mensaje IMPRIMIR_POLIZA
-let REVERSOS = {};
-let reversosCargados = false;
-let datosPendientes  = null;  // guarda datos si llegan antes de que carguen los reversos
+// ════════════════════════════════════════════════════
+// BLOQUES REUTILIZABLES DE REVERSO
+// ════════════════════════════════════════════════════
+const A=`<h3>Activación de Póliza</h3><p class="bullet">* Identificación Oficial Vigente del titular de la póliza (Credencial de Elector).</p><p class="bullet">* Tarjeta de Circulación o Pago de Refrendo Legible.</p><p class="bullet">* Comprobante de Domicilio, con una antigüedad no mayor a 90 días.</p><p>Su asesor debe llenar de forma completa su Contrato y usted firmar de aceptación y conformidad.</p>`;
+const DED=`<h3>Deducibles</h3><p class="bullet">* Los deducibles se consideran conforme al valor comercial y se pagará a la compra bajo lo estipulado en el libro azul.</p>`;
+const G6=`<h3>Grúas</h3><p class="bullet">* Se darán dos bonos de grúa de $600.00 cada uno, no acumulables, ni el mismo día. En caso de que se requiera maniobras o exceda los $600.00 se aplicará un cargo indicado por el operador del servicio de grúas mismo que debe cubrir el cliente.</p><p class="bullet">* Las grúas son aplicables únicamente para los vehículos afiliados.</p>`;
+const G15=`<h3>Grúas</h3><p class="bullet">* Se darán dos servicios de grúa de $1,500.00 cada uno, no acumulables, ni el mismo día. En caso de que se requiera maniobras o exceda los $1,500.00 se aplicará un cargo indicado por el operador del servicio de grúas mismo que debe cubrir el cliente.</p><p class="bullet">* Las grúas son aplicables únicamente para los vehículos afiliados.</p>`;
+const GM=`<h3>Grúas</h3><p class="bullet">* Se dará un servicio de grúa al 50%. En caso de que se requiera maniobras se aplicará un cargo indicado por el operador del servicio de grúas, mismo que debe cubrir el cliente.</p><p class="bullet">* Las grúas son aplicables únicamente para los vehículos afiliados.</p>`;
+const SG=`<h3>Grúas</h3><p class="bullet">* Esta póliza no cuenta con servicio de grúas.</p>`;
+const CH=`<h3>En caso de choque</h3><p>El afiliado deberá llamar de inmediato a la mutualidad y proporcionar: Nombre Completo, Número de Teléfono, Datos de la Póliza (Folio o Contrato), Datos del Vehículo (Marca, Modelo, Placas, Color y Número de Serie), y Ubicación (Calle y sus entrecalles, Colonia y Municipio).</p>`;
+const GPS=`<h3>GPS</h3><p class="bullet">* Para activar la cobertura de robo se debe contar con el equipo GPS con historial visible. El equipo GPS es responsabilidad del afiliado. Sin GPS la empresa se deslinda de responsabilidad.</p><p class="bullet">* Sin estar al corriente de pagos al momento del siniestro, la intervención de la mutualidad será nula.</p><h3>En caso de robo</h3><p class="bullet">* Dar aviso de inmediato a las autoridades y a la mutualidad; de no hacerlo se deslinda toda responsabilidad. Sujeto a investigación de fraude.</p><p class="bullet">* Se requiere evidencia GPS desde 48 horas antes del robo; sin este requisito queda nulo todo derecho de reclamación.</p>`;
+const CRIST=`<h3>Cristales</h3><p class="bullet">* Para hacer válida esta cobertura la póliza debe estar cubierta al 50% y al corriente de sus pagos.</p><p class="bullet">* Si requiere cambio de cristal antes del 50%, deberá cubrir el porcentaje faltante más su deducible.</p><p class="bullet">* Deducible por rotura: 20%; por preexistencias: 50%; en ambos casos sobre el valor comercial del cristal.</p>`;
+const PT=`<h3>Pérdida Total</h3><p class="bullet">* Se considerará pérdida total cuando los daños excedan del 51% de la suma asegurada conforme al Libro Azul.</p>`;
+const EXC=`<h3>Exclusiones</h3><p class="bullet">* Póliza con atraso en pagos al momento del siniestro.</p><p class="bullet">* Conductor en estado de ebriedad o bajo sustancias psicotrópicas.</p><p class="bullet">* Cambio de conductor detectado por el ajustador.</p><p class="bullet">* Cuando terceros intervengan en funciones de nuestros abogados.</p><p class="bullet">* Vehículos de servicio público federal.</p><p class="bullet">* Sin licencia o permiso para conducir.</p><p class="bullet">* Conductor Menor de Edad.</p><p class="bullet">* Siniestro reportado con 24 horas o más de ocurrido.</p><p class="bullet">* Daños no ocasionados por choque (Riña, Vandalismo, Sismo, Inundación, Eventos Hidrometeorológicos, etc.)</p><p class="bullet">* Ocupantes que excedan la capacidad de pasajeros.</p><p class="bullet">* Sentido Contrario · Vuelta Prohibida · Exceso de Velocidad · Cambio de Conductor · Cambio de Declaración.</p><p class="bullet">* Adaptaciones o accesorios: Tumbaburros, Arnés, Extensiones, Tubos, Aditamentos, Caja Seca, Camper, etc.</p>`;
+const EXCM=EXC+`<p class="bullet">* El carecer del equipo de seguridad indicado en el apartado de obligaciones.</p>`;
+const OBLM=`<h3>Obligaciones — Equipo de Seguridad</h3><p class="bullet">* Casco avalado por la OMS / DOT / ECE.</p><p class="bullet">* Chaleco reflejante.</p><p class="bullet">* Licencia de Motociclista.</p><p class="bullet">* Ser mayor de edad.</p>`;
+const OBLMB=`<h3>Obligaciones — Equipo de Seguridad</h3><p class="bullet">* Casco.</p><p class="bullet">* Licencia de Motociclista.</p><p class="bullet">* Ser mayor de edad.</p>`;
+const PAG=`<h3>Formas de Pago</h3><p class="bullet">* Una vez realizado su pago, enviar comprobante vía WhatsApp al 33.13.51.32.16.</p><p>BANORTE Cta. 0486430586 / SCOTIABANK Cta. 01000956789</p><p>Clabe BANORTE: 072 320 00486430586 2 / SCOTIABANK: 044 320 010009567898</p><p>OXXO: Tarjeta Scotiabank 5579.2091.5003.3980 / 5579.2091.1373.7875</p><p>SEVEN ELEVEN / FARMACIA GUADALAJARA: Cta Banorte 0486430586</p><p class="bullet">* Depósitos a cuentas diferentes no serán reconocidos como válidos.</p>`;
+const PAGI=`<h3>Formas de Pago — Solo INBURSA</h3><p>Depósito en Banco INBURSA: Cta 50076374776</p><p>OXXO (Tarjeta): 5399.7594.0702.7399</p><p>Transferencia Interbancaria: 036320500763747760 (Referencia: Nº de Póliza)</p><p class="bullet">* Enviar comprobante vía WhatsApp al 33.13.51.32.16.</p><p class="bullet" style="background:#FFFF00;font-weight:700">* Depósitos a cuentas diferentes no serán reconocidos como válidos.</p>`;
+const NOT=`<h3>Notas</h3><p class="bullet">* En este contrato no existe dolo ni ventaja de ambas partes.</p><p class="bullet">* Valor unitario de $1,000.00 sujeto a venta por paquete.</p><p class="bullet">* Los servicios legales los otorga Procar.</p><p class="bullet">* Si el cobrador no acude a los 2 días siguientes de su fecha de pago, notificar a la oficina de 10:00 am a 4:00 pm.</p>`;
+const ABR=`<h3>Abreviaturas</h3><p>VLA = Valor Libro Azul &nbsp; VC = Valor Comercial</p>`;
 
-async function cargarReversos() {
-  try {
-    const res = await fetch(
-      SB_URL + '/rest/v1/cobertura_reverso?select=id_cobertura,html&order=id_cobertura',
-      { headers: { apikey: SB_ANON, Authorization: 'Bearer ' + SB_ANON } }
-    );
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const rows = await res.json();
+// ════════════════════════════════════════════════════
+// REVERSOS (null = sin reverso, solo frente — JUDA)
+// ════════════════════════════════════════════════════
+const REVERSOS = {
+  DT_AUTO:         A+DED+G6+CH+PAG+EXC+NOT+ABR,
+  DT_MOTO:         A+OBLMB+SG+CH+PAG+EXCM+NOT+ABR,
+  DT_MOTO_TAXI:    A+SG+CH+PAG+EXC+NOT+ABR,
+  DT_PLATAFORMA:   A+DED+G6+CH+PAG+EXC+NOT+ABR,
+  DT_CARGA:        A+SG+CH+PAG+EXC+NOT+ABR,
+  DT_REMOLQUE:     A+DED+SG+CH+PAG+EXC+NOT+ABR,
+  LIM_AUTO:        A+DED+G6+CH+PAG+EXC+CRIST+NOT+ABR,
+  LIM_MOTO:        A+OBLMB+DED+SG+CH+PAG+EXCM+NOT+ABR,
+  LIM_MOTO_TAXI:   A+DED+SG+CH+PAG+EXC+CRIST+NOT+ABR,
+  LIM_PLATAFORMA:  A+DED+G6+CH+PAG+EXC+CRIST+NOT+ABR,
+  LIM_CARGA:       A+DED+SG+CH+PAG+EXC+CRIST+NOT+ABR,
+  AMP_AUTO:        A+GPS+DED+G15+CH+CRIST+PT+PAG+EXC+NOT+ABR,
+  AMP_MOTO:        A+OBLM+GPS+DED+GM+CH+PT+PAG+EXCM+NOT+ABR,
+  AMP_MOTO_TAXI:   A+GPS+DED+SG+CH+CRIST+PT+PAG+EXC+NOT+ABR,
+  AMP_PLATAFORMA:  A+GPS+DED+G15+CH+CRIST+PT+PAG+EXC+NOT+ABR,
+  AMP_MULTIPLATAFORMA: A+GPS+DED+G15+CH+CRIST+PT+PAG+EXC+NOT+ABR,
+  AMP_CERO_DED:    A+`<h3>GPS</h3><p class="bullet">* Para activar la cobertura de robo se debe contar con el equipo GPS con historial visible. Sin GPS la empresa se deslinda de responsabilidad.</p><p class="bullet">* Sin estar al corriente de pagos al momento del siniestro, la intervención será nula.</p><h3>Deducibles</h3><p class="bullet">* Los deducibles se consideran conforme al valor comercial y al libro azul.</p><p class="bullet">* Para Cero Deducible: estar al corriente de pagos y pagar únicamente mediante INBURSA: Cta 50076374776 / Transferencia 036320500763747760 / OXXO Tarjeta 5399.7594.0702.7399 (Referencia: Nº de Póliza).</p><h3>Daños Materiales</h3><p class="bullet">* En Cero Deducible, el monto máximo para reparación de daños materiales propios es de $15,000.00.</p>`+G15+`<h3>En caso de robo</h3><p class="bullet">* GPS Obligatorio. Dar aviso inmediato a autoridades y a la mutualidad; de no hacerlo queda nulo todo derecho. Sujeto a investigación de fraude.</p><p class="bullet">* Se requiere evidencia GPS desde 48 horas antes del robo; sin este requisito queda nulo todo derecho de reclamación.</p>`+CH+CRIST+PT+EXC+PAGI+NOT+ABR,
+  JUDA_TERCEROS:   null,
+  JUDA_LIMITADA:   null,
+  JUDA_AMPLIA:     null
+};
 
-    // Construir lookup id_cobertura → html
-    const porId = {};
-    rows.forEach(r => { porId[r.id_cobertura] = r.html; });
+// ════════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════════
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function fmtFecha(f){if(!f)return'—';const[y,m,d]=f.split('-');return d&&m&&y?`${d}/${m}/${y}`:f;}
 
-    // Construir REVERSOS{} indexado por clave interna (igual que antes)
-    // usando el mapa inverso: clave → id via MAPA_REVERSO + tabla coberturas
-    // Simplificado: también cargamos coberturas para el mapeo nombre→id
-    const res2 = await fetch(
-      SB_URL + '/rest/v1/coberturas?select=id,nombre&order=id',
-      { headers: { apikey: SB_ANON, Authorization: 'Bearer ' + SB_ANON } }
-    );
-    const cobs = await res2.json();
-
-    // nombre_supabase → id
-    const nombreAId = {};
-    cobs.forEach(c => { nombreAId[c.nombre.toUpperCase()] = c.id; });
-
-    // clave_interna (ej AMPLIA_AUTO_Y_PICK_UP) → html
-    // Recorremos MAPA_REVERSO: valor es la clave interna; buscamos su id via nombre en coberturas
-    const claveANombre = {};  // inverso: AMPLIA_AUTO_Y_PICK_UP → "AMPLIA AUTO Y PICK UP" (primer match)
-    Object.entries(MAPA_REVERSO).forEach(([nombre, clave]) => {
-      if (!claveANombre[clave]) claveANombre[clave] = nombre;
-    });
-
-    // Construir REVERSOS por clave interna
-    Object.entries(claveANombre).forEach(([clave, nombre]) => {
-      // buscar id de cobertura por nombre en Supabase
-      // La clave interna tiene _ en lugar de espacio; convertir para buscar
-      const nombreNorm = clave.replace(/_/g, ' ');
-      const id = nombreAId[nombreNorm] || nombreAId[nombre.toUpperCase()];
-      if (id && porId[id]) {
-        REVERSOS[clave] = porId[id];
-      }
-    });
-
-    reversosCargados = true;
-
-    // Si ya había datos esperando, imprimir ahora
-    if (datosPendientes) {
-      renderPoliza(datosPendientes);
-      datosPendientes = null;
-    }
-  } catch(err) {
-    console.error('Error cargando reversos desde Supabase:', err);
-    reversosCargados = true; // continuar aunque sea sin reversos
-    if (datosPendientes) {
-      renderPoliza(datosPendientes);
-      datosPendientes = null;
-    }
-  }
+function getFormato(nombre){
+  if(!nombre)return null;
+  const u=nombre.trim().toUpperCase();
+  for(const[k,v]of Object.entries(MAPA_FORMATO)){if(u===k.toUpperCase())return v;}
+  for(const[k,v]of Object.entries(MAPA_FORMATO)){if(u.includes(k.toUpperCase())||k.toUpperCase().includes(u))return v;}
+  return null;
 }
 
-// Iniciar carga de reversos inmediatamente al abrir la página
-cargarReversos();
-
-function esc(s) {
-  if (!s) return '';
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function dividirReverso(html){
+  const t=document.createElement('div');t.innerHTML=html;
+  const n=[...t.children];const m=Math.ceil(n.length/2);
+  return[n.slice(0,m).map(x=>x.outerHTML).join(''),n.slice(m).map(x=>x.outerHTML).join('')];
 }
 
-function fmtFecha(f) {
-  if (!f) return '—';
-  const [y,m,d] = f.split('-');
-  return d && m && y ? `${d}/${m}/${y}` : f;
-}
+function esJuda(empresa){return empresa&&empresa.toUpperCase().includes('JUDA');}
 
-function getReversoHTML(nombreCobertura) {
-  const clave = MAPA_REVERSO[nombreCobertura] || MAPA_REVERSO[nombreCobertura?.toUpperCase()];
-  if (!clave) return '<p>Sin reverso disponible para esta cobertura.</p>';
-  return REVERSOS[clave] || '<p>Sin reverso disponible.</p>';
-}
-
-function dividirReverso(html) {
-  // Divide el HTML del reverso en dos columnas más o menos equilibradas
-  const temp = document.createElement('div');
-  temp.innerHTML = html;
-  const nodos = [...temp.children];
-  const mitad = Math.ceil(nodos.length / 2);
-  const col1 = nodos.slice(0, mitad).map(n => n.outerHTML).join('');
-  const col2 = nodos.slice(mitad).map(n => n.outerHTML).join('');
-  return [col1, col2];
-}
-
-function esJuda(empresa) {
-  return empresa && empresa.toUpperCase().includes('JUDA');
-}
-
-function renderPoliza(datos) {
-  const p = datos.poliza  || {};
-  const c = datos.cliente || {};
-  const e = datos.empresa || {};
-  const v = (datos.vehiculos || [])[0] || {};
-  const conceptos = datos.conceptos || [];
-
-  const esJ = esJuda(e.nombre || '');
-  const nombreCob = p.tipo_cobertura || p.tipo_de_cobertura || '';
-
-  // Frente
-  const frente = `
-  <div class="pagina">
-    <div class="frente">
-
-      <!-- ENCABEZADO -->
-      <div class="header">
-        <div class="tel-box">
-          <div class="titulo">TELEFONOS DE EMERGENCIA<br>LAS 24 HORAS</div>
-          33.10.85.46.70<br>
-          33.18.23.28.06<br>
-          33.18.01.00.75<br>
-          33.38.20.21.17
-        </div>
-        <div class="logo-box">
-          ${esJ
-            ? `<div class="logo-text" style="font-size:14pt;letter-spacing:2px">MUTUALIDAD JUDA</div>
-               <div class="logo-sub">PROTECCION AUTOMOVILISTICA</div>
-               <div style="font-size:7.5pt;font-weight:700;color:#1B2A6B;margin-top:2mm">CONTRATO DE RESPONSABILIDAD CIVIL</div>`
-            : `<div class="logo-text" style="font-size:16pt">Arts</div>
-               <div class="logo-text" style="font-size:18pt;color:#0070C0">Nova</div>
-               <div class="logo-text" style="font-size:11pt">MutuClub</div>
-               <div class="logo-sub">Mutualidad A.C.</div>`
-          }
-        </div>
-        <div class="folio-box">
-          <div class="folio-titulo">FOLIO</div>
-          <div class="folio-num">${esc(p.id_poliza)}</div>
-          <div class="rfc">${esJ ? 'RFC SARJ770302BC2' : 'R.F.C. MAN160622V9A'}</div>
-        </div>
-      </div>
-
-      <!-- DATOS DEL ASOCIADO -->
-      <div class="seccion-titulo">Datos del Asociado</div>
-      <div style="display:flex;gap:3mm">
-        <div class="datos-asociado" style="flex:1">
-          <div class="campo-linea">
-            <span class="etiq">NOMBRE:</span>
-            <span class="val">${esc(c.nombre)}</span>
-          </div>
-          <div class="campo-linea">
-            <span class="etiq">DOMICILIO:</span>
-            <span class="val">${esc(c.domicilio_particular)}</span>
-          </div>
-          <div class="datos-dos">
-            <div class="campo-linea">
-              <span class="etiq">COL.</span>
-              <span class="val">${esc(c.colonia)}</span>
-            </div>
-            <div class="campo-linea">
-              <span class="etiq">C.P.</span>
-              <span class="val">${esc(c.cp)}</span>
-            </div>
-          </div>
-          <div class="campo-linea">
-            <span class="etiq">CIUDAD:</span>
-            <span class="val" style="flex:1">${esc(c.municipio)}</span>
-            <span class="etiq" style="border-left:1px solid #ccc">TEL.</span>
-            <span class="val">${esc(c.telefono_01)}</span>
-          </div>
-        </div>
-        <div class="vigencia-box">
-          <div class="vig-titulo">VIGENCIA</div>
-          <div class="vig-row">
-            <span>DEL</span>
-            <span class="h">DESDE LAS<br>12:00 HORAS</span>
-          </div>
-          <div class="vig-row" style="font-weight:700;font-size:8pt">${fmtFecha(p.fecha_inicio_vigencia)}</div>
-          <div class="vig-row">
-            <span>AL</span>
-            <span class="h">HASTA LAS<br>12:00 HORAS</span>
-          </div>
-          <div class="vig-row" style="font-weight:700;font-size:8pt">${fmtFecha(p.fecha_termino_vigencia)}</div>
-        </div>
-      </div>
-
-      <!-- TÍTULO COBERTURA -->
-      <div class="cob-titulo-wrap">
-        <div class="cob-titulo">${esc(nombreCob)}</div>
-      </div>
-
-      <!-- DATOS DEL VEHÍCULO -->
-      <div class="seccion-titulo">Datos del Vehículo</div>
-      <div class="vehiculo-box">
-        <div class="veh-row">
-          <span class="etiq">MARCA:</span>
-          <span class="val" style="font-weight:700;font-size:9pt">${esc(v.vehiculo?.split(' ')[0])}</span>
-          <span class="etiq" style="border-left:1px solid #ccc">No. DE SERIE:</span>
-          <span class="val">${esc(v.numero_serie)}</span>
-        </div>
-        <div class="veh-row">
-          <span class="etiq">PLACAS:</span>
-          <span class="val">${esc(v.placas)}</span>
-          <span class="etiq" style="border-left:1px solid #ccc">No. DE MOTOR:</span>
-          <span class="val">${esc(v.motor)}</span>
-        </div>
-        <div class="veh-triple">
-          <div class="campo">
-            <span class="etiq">MODELO:</span>
-            <span class="val">${esc(v.modelo)}</span>
-          </div>
-          <div class="campo">
-            <span class="etiq">SUBMARCA:</span>
-            <span class="val">${esc(v.vehiculo?.split(' ').slice(1,-1).join(' '))}</span>
-          </div>
-          <div class="campo">
-            <span class="etiq">COLOR:</span>
-            <span class="val">${esc(v.color)}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- TABLA COBERTURA -->
-      <div class="seccion-titulo" style="text-align:center">Cobertura</div>
-      <table class="cob-table">
-        <thead>
-          <tr>
-            <th style="width:45%;text-align:left">COBERTURA</th>
-            <th style="width:35%">SUMA ASEGURADA</th>
-            <th style="width:20%">DEDUCIBLE</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${conceptos.map(con => `
-            <tr>
-              <td>${esc(con.concepto)}</td>
-              <td>${esc(con.suma_asegurada || '')}</td>
-              <td>${esc(con.deducible || '')}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-
-      <!-- PIE -->
-      <div class="pie-frente">
-        PARA RECIBIR LOS BENEFICIOS EL ASOCIADO DEBERÁ DE ESTAR AL CORRIENTE DE LAS APORTACIONES<br>
-        NO CONDUCIR EN ESTADO DE EBRIEDAD O BAJO EL EFECTO DE SUSTANCIAS PSICOTROPICAS (DROGAS)<br>
-        CONDUCIRSE CON TODA LA VERDAD CON EL AJUSTADOR DE LA MUTUALIDAD
-      </div>
-
-      <div style="text-align:center;font-size:9pt;font-style:italic;color:#1B2A6B;margin:2mm 0">
-        "Una Mutualidad Diferente"
-      </div>
-
-      <div class="firma-row">
-        <div class="agente-box">AGENTE</div>
-        <div class="firma-box">
-          <div style="font-size:7pt;color:#999">SELLO</div>
-        </div>
-        <div class="firma-box">
-          <div class="firma-linea"></div>
-          <div>GERENTE GENERAL</div>
-        </div>
-      </div>
-
-      <div class="frase-pie">
-        DE MANERA QUE PODEMOS DECIR CONFIADAMENTE, EL SEÑOR ES MI AYUDADOR NO TEMERE LO QUE ME PUEDA HACER EL HOMBRE
-      </div>
-      <div class="direccion-pie">
-        ${esJ
-          ? 'Miguel Alemán No. 95, Colonia Centro Tonalá, Jalisco. C.P. 45400. Teléfono 3316568350 — Horario de lunes a viernes de 9:00 am a 3:00 pm'
-          : 'Emilio Rabaza No. 1820, Colonia Huerta Baeza, Guadalajara, Jalisco. Teléfono 3336171494 Horario de 9:00 am a 3:00 pm'
-        }
-      </div>
-
+// ════════════════════════════════════════════════════
+// FRENTE JUDA
+// ════════════════════════════════════════════════════
+function frenteJuda(p,c,v,conceptos,nombreCob){
+  return `<div class="pagina"><div class="frente">
+  <div class="header">
+    <div style="border:1.5px solid #1B2A6B;padding:2mm 3mm;min-width:30mm;font-size:7pt;font-weight:700;color:#1B2A6B;line-height:1.6">
+      <div style="font-size:6.5pt;margin-bottom:1mm">NÚMEROS DE EMERGENCIA<br>24 HORAS 365 DÍAS</div>
+      33.38.20.21.17<br>33.10.85.46.70<br>33.18.23.28.06<br>33.18.01.00.75
     </div>
-  </div>`;
+    <div class="logo-box">
+      <div style="font-size:15pt;font-weight:900;color:#1B2A6B;letter-spacing:3px">MUTUALIDAD JUDA</div>
+      <div style="font-size:8pt;font-weight:700;color:#1B2A6B">PROTECCION AUTOMOVILISTICA</div>
+      <div style="font-size:8pt;font-weight:700;color:#1B2A6B;margin-top:1mm">CONTRATO DE RESPONSABILIDAD CIVIL</div>
+      <div style="font-size:6.5pt;color:#555;margin-top:1mm">RFC SARJ770302BC2</div>
+    </div>
+    <div class="folio-box"><div class="folio-titulo" style="letter-spacing:3px">POLIZA</div><div class="folio-num">${esc(p.id_poliza)}</div></div>
+  </div>
+  <div style="font-size:7pt;font-weight:700;color:#1B2A6B;margin-top:1mm">DATOS DEL ASOCIADO</div>
+  <div style="display:flex;gap:3mm">
+    <div style="border:1px solid #ccc;flex:1;padding:1mm 2mm;font-size:7.5pt">
+      <div style="border-bottom:1px solid #ccc;padding:1mm 0"><b style="font-size:6.5pt">NOMBRE </b>${esc(c.nombre)}</div>
+      <div style="border-bottom:1px solid #ccc;padding:1mm 0"><b style="font-size:6.5pt">DOMICILIO </b>${esc(c.domicilio_particular)}</div>
+      <div style="display:flex;border-bottom:1px solid #ccc">
+        <div style="flex:2;padding:1mm 0"><b style="font-size:6.5pt">COLONIA </b>${esc(c.colonia)}</div>
+        <div style="flex:1;padding:1mm 0;border-left:1px solid #ccc;padding-left:2mm"><b style="font-size:6.5pt">CP </b>${esc(c.cp)}</div>
+      </div>
+      <div style="display:flex;padding:1mm 0">
+        <div style="flex:2"><b style="font-size:6.5pt">CIUDAD </b>${esc(c.municipio)}</div>
+        <div style="flex:1;border-left:1px solid #ccc;padding-left:2mm"><b style="font-size:6.5pt">TEL </b>${esc(c.telefono_01)}</div>
+      </div>
+    </div>
+    <div style="border:1px solid #1B2A6B;min-width:38mm;text-align:center;font-size:7pt">
+      <div style="font-size:6pt;font-weight:700;padding:1mm;border-bottom:1px solid #ccc;color:#555">ASOCIADO</div>
+      <div style="font-size:13pt;font-weight:900;color:#1B2A6B;padding:2mm 1mm">${esc(p.codigo_asociado||'JT/')}</div>
+      <div style="font-size:5.5pt;color:#666;padding:0.3mm">VIGENCIA</div>
+      <div style="font-size:6pt;padding:0.5mm 2mm;text-align:left;border-top:1px solid #ddd">DEL <span style="float:right;font-size:5pt;color:#666">DESDE LAS<br>12:00 HRS</span></div>
+      <div style="font-weight:700;font-size:8pt;padding:0.5mm 2mm">${fmtFecha(p.fecha_inicio_vigencia)}</div>
+      <div style="font-size:6pt;padding:0.5mm 2mm;text-align:left;border-top:1px solid #ddd">AL <span style="float:right;font-size:5pt;color:#666">HASTA LAS<br>12:00 HRS</span></div>
+      <div style="font-weight:700;font-size:8pt;padding:0.5mm 2mm">${fmtFecha(p.fecha_termino_vigencia)}</div>
+    </div>
+  </div>
+  <div style="border:1.5px solid #1B2A6B;text-align:center;padding:1.5mm;margin-top:1mm"><div class="cob-titulo">${esc(nombreCob)}</div></div>
+  <div style="font-size:7pt;font-weight:700;color:#1B2A6B;margin-top:1mm">DATOS DEL VEHÍCULO</div>
+  <div class="vehiculo-box">
+    <div class="veh-row"><span class="etiq">MARCA:</span><span class="val" style="font-weight:700;font-size:9pt">${esc((v.vehiculo||'').split(' ')[0])}</span><span class="etiq" style="border-left:1px solid #ccc">NO. SERIE:</span><span class="val">${esc(v.numero_serie)}</span></div>
+    <div class="veh-row"><span class="etiq">PLACAS:</span><span class="val">${esc(v.placas)}</span><span class="etiq" style="border-left:1px solid #ccc">MOTOR:</span><span class="val">${esc(v.motor)}</span></div>
+    <div class="veh-triple">
+      <div class="campo"><span class="etiq">MODELO:</span><span class="val">${esc(v.modelo)}</span></div>
+      <div class="campo"><span class="etiq">SUBMARCA:</span><span class="val">${esc((v.vehiculo||'').split(' ').slice(1,-1).join(' '))}</span></div>
+      <div class="campo"><span class="etiq">COLOR:</span><span class="val">${esc(v.color)}</span></div>
+    </div>
+  </div>
+  <div style="background:#1B2A6B;color:#fff;font-size:7.5pt;font-weight:700;text-align:center;padding:1.5mm 3mm">COBERTURA</div>
+  <table class="cob-table"><thead><tr><th style="width:45%;text-align:left">COBERTURA</th><th style="width:35%">SUMA ASEGURADA</th><th style="width:20%">DEDUCIBLE</th></tr></thead><tbody>
+    ${conceptos.map(con=>`<tr><td>${esc(con.concepto)}</td><td>${esc(con.suma_asegurada||'')}</td><td>${esc(con.deducible||'')}</td></tr>`).join('')}
+  </tbody></table>
+  <div class="pie-frente" style="font-size:6.5pt">PARA RECIBIR LOS BENEFICIOS EL ASOCIADO DEBERÁ ESTAR AL CORRIENTE DE LAS APORTACIONES, NO CONDUCIR EN ESTADO DE EBRIEDAD O BAJO EL EFECTO DE SUSTANCIAS PSICOTROPICAS (DROGAS) Y CONDUCIRSE CON LA VERDAD CON EL AJUSTADOR DE LA MUTUALIDAD</div>
+  <div class="firma-row" style="margin-top:4mm">
+    <div class="agente-box">AGENTE</div>
+    <div class="firma-box"><div class="firma-linea"></div><div>GERENTE GENERAL</div></div>
+  </div>
+  <div class="direccion-pie">Miguel Alemán No. 95, Colonia Centro Tonalá, Jalisco. C.P. 45400. Teléfono 3316568350 — Horario de lunes a viernes de 9:00 am a 3:00 pm</div>
+  </div></div>`;
+}
 
-  // Reverso
-  const revHTML = getReversoHTML(nombreCob);
-  const [col1, col2] = dividirReverso(revHTML);
+// ════════════════════════════════════════════════════
+// FRENTE ARTS NOVA
+// ════════════════════════════════════════════════════
+function frenteArtsNova(p,c,v,conceptos,nombreCob,clave){
+  const tc=TIPO_COD[clave]||'';
+  const ca=COD_ASOC[clave]||'';
+  return `<div class="pagina"><div class="frente">
+  <div class="header">
+    <div class="tel-box"><div class="titulo">TELEFONOS DE EMERGENCIA<br>LAS 24 HORAS</div>33.10.85.46.70<br>33.18.23.28.06<br>33.18.01.00.75<br>33.38.20.21.17</div>
+    <div class="logo-box">
+      <div class="logo-text" style="font-size:16pt">Arts</div>
+      <div class="logo-text" style="font-size:18pt;color:#0070C0">Nova</div>
+      <div class="logo-text" style="font-size:11pt">MutuClub</div>
+      <div class="logo-sub">Mutualidad A.C.</div>
+    </div>
+    <div class="folio-box"><div class="folio-titulo">FOLIO</div><div class="folio-num">${esc(p.id_poliza)}</div><div class="rfc">R.F.C. MAN160622V9A</div><div class="tipo-cod">${tc}</div></div>
+  </div>
+  <div class="seccion-titulo">Datos del Asociado</div>
+  <div style="display:flex;gap:3mm">
+    <div class="datos-asociado" style="flex:1">
+      <div class="campo-linea"><span class="etiq">NOMBRE:</span><span class="val">${esc(c.nombre)}</span></div>
+      <div class="campo-linea"><span class="etiq">DOMICILIO:</span><span class="val">${esc(c.domicilio_particular)}</span></div>
+      <div class="datos-dos">
+        <div class="campo-linea"><span class="etiq">COL.</span><span class="val">${esc(c.colonia)}</span></div>
+        <div class="campo-linea"><span class="etiq">C.P.</span><span class="val">${esc(c.cp)}</span></div>
+      </div>
+      <div class="campo-linea"><span class="etiq">CIUDAD:</span><span class="val" style="flex:1">${esc(c.municipio)}</span><span class="etiq" style="border-left:1px solid #ccc">TEL.</span><span class="val">${esc(c.telefono_01)}</span></div>
+    </div>
+    <div>
+      <div style="font-size:6pt;font-weight:700;color:#555;text-align:center">ASOCIADO</div>
+      <div style="border:1px solid #1B2A6B;min-width:42mm;text-align:center;font-size:13pt;font-weight:900;color:#1B2A6B;padding:1mm 3mm">${ca}</div>
+      <div style="font-size:5.5pt;color:#666;text-align:center;margin-top:0.5mm">VIGENCIA</div>
+      <div style="border:1px solid #1B2A6B;min-width:42mm;font-size:7pt">
+        <div style="display:flex;justify-content:space-between;padding:1mm 2mm;border-bottom:1px solid #ddd"><span>DEL</span><span style="font-size:5.5pt;color:#666">DESDE LAS<br>12:00 HORAS</span></div>
+        <div style="font-weight:700;font-size:8pt;padding:1mm 2mm;border-bottom:1px solid #ddd">${fmtFecha(p.fecha_inicio_vigencia)}</div>
+        <div style="display:flex;justify-content:space-between;padding:1mm 2mm;border-bottom:1px solid #ddd"><span>AL</span><span style="font-size:5.5pt;color:#666">HASTA LAS<br>12:00 HORAS</span></div>
+        <div style="font-weight:700;font-size:8pt;padding:1mm 2mm">${fmtFecha(p.fecha_termino_vigencia)}</div>
+      </div>
+    </div>
+  </div>
+  <div class="cob-titulo-wrap"><div class="cob-titulo">${esc(nombreCob)}</div></div>
+  <div class="seccion-titulo">Datos del Vehículo</div>
+  <div class="vehiculo-box">
+    <div class="veh-row"><span class="etiq">MARCA:</span><span class="val" style="font-weight:700;font-size:9pt">${esc((v.vehiculo||'').split(' ')[0])}</span><span class="etiq" style="border-left:1px solid #ccc">No. DE SERIE:</span><span class="val">${esc(v.numero_serie)}</span></div>
+    <div class="veh-row"><span class="etiq">PLACAS:</span><span class="val">${esc(v.placas)}</span><span class="etiq" style="border-left:1px solid #ccc">No. DE MOTOR:</span><span class="val">${esc(v.motor)}</span></div>
+    <div class="veh-triple">
+      <div class="campo"><span class="etiq">MODELO:</span><span class="val">${esc(v.modelo)}</span></div>
+      <div class="campo"><span class="etiq">SUBMARCA:</span><span class="val">${esc((v.vehiculo||'').split(' ').slice(1,-1).join(' '))}</span></div>
+      <div class="campo"><span class="etiq">COLOR:</span><span class="val">${esc(v.color)}</span></div>
+    </div>
+  </div>
+  <div class="seccion-titulo" style="text-align:center">Cobertura</div>
+  <table class="cob-table"><thead><tr><th style="width:45%;text-align:left">COBERTURA</th><th style="width:35%">SUMA ASEGURADA</th><th style="width:20%">DEDUCIBLE</th></tr></thead><tbody>
+    ${conceptos.map(con=>`<tr><td>${esc(con.concepto)}</td><td>${esc(con.suma_asegurada||'')}</td><td>${esc(con.deducible||'')}</td></tr>`).join('')}
+  </tbody></table>
+  <div class="pie-frente">PARA RECIBIR LOS BENEFICIOS EL ASOCIADO DEBERÁ DE ESTAR AL CORRIENTE DE LAS APORTACIONES<br>NO CONDUCIR EN ESTADO DE EBRIEDAD O BAJO EL EFECTO DE SUSTANCIAS PSICOTROPICAS (DROGAS)<br>CONDUCIRSE CON TODA LA VERDAD CON EL AJUSTADOR DE LA MUTUALIDAD</div>
+  <div style="text-align:center;font-size:9pt;font-style:italic;color:#1B2A6B;margin:2mm 0">"Una Mutualidad Diferente"</div>
+  <div class="firma-row">
+    <div class="agente-box">AGENTE</div>
+    <div class="firma-box"><div style="font-size:7pt;color:#999">SELLO</div></div>
+    <div class="firma-box"><div class="firma-linea"></div><div>GERENTE GENERAL</div></div>
+  </div>
+  <div class="frase-pie">DE MANERA QUE PODEMOS DECIR CONFIADAMENTE, EL SEÑOR ES MI AYUDADOR NO TEMERE LO QUE ME PUEDA HACER EL HOMBRE</div>
+  <div class="direccion-pie">Emilio Rabaza No. 1820, Colonia Huerta Baeza, Guadalajara, Jalisco. Teléfono 3336171494 Horario de 9:00 am a 3:00 pm</div>
+  </div></div>`;
+}
 
-  const reverso = `
-  <div class="pagina">
-    <div class="reverso">
+// ════════════════════════════════════════════════════
+// HOJA 2 FRENTE — Pro-Car
+// ════════════════════════════════════════════════════
+function hoja2F(p,c,v){
+  return `<div class="pagina"><div class="procar-frente">
+  <div style="border-bottom:2px solid #cc0000;padding-bottom:2mm">
+    <div style="display:flex;align-items:flex-start;gap:4mm">
+      <div style="width:28mm"><div class="procar-titulo" style="font-size:12pt">Pro-Car</div><div style="font-size:6.5pt;color:#666">R.F.C. SOVC660217MT8</div></div>
+      <div style="flex:1;text-align:center">
+        <div class="procar-titulo">SINIESTROS AUTOMOVILISTICOS</div>
+        <div class="procar-dir">Emilio Rabaza No. 1820, Colonia Huerta Baeza, C.P. 44730, Guadalajara, Jalisco. Teléfono 33.36.17.14.94</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:4mm;margin-top:2mm;justify-content:center">
+      <div class="pc-campo"><div class="pc-label">CONTRATO</div><div class="pc-val">${esc(p.id_poliza)}</div></div>
+      <div class="pc-campo" style="min-width:70mm"><div class="pc-label">VIGENCIA</div><div class="pc-val">${fmtFecha(p.fecha_inicio_vigencia)} AL ${fmtFecha(p.fecha_termino_vigencia)}</div></div>
+    </div>
+  </div>
+  <div class="procar-seccion-titulo">Datos del Cliente</div>
+  <div class="procar-datos-box">
+    <div class="procar-campo-row"><span class="pc-etiq">NOMBRE</span><div class="pc-sub" style="flex:2">${esc(c.nombre)}</div><span class="pc-etiq" style="min-width:20mm">NO. LICENCIA</span><div class="pc-sub"></div><span class="pc-etiq" style="min-width:8mm">RFC</span><div class="pc-sub"></div><span class="pc-etiq" style="min-width:10mm">CURP</span><div class="pc-sub"></div></div>
+    <div class="procar-campo-row"><span class="pc-etiq">CALLE</span><div class="pc-sub" style="flex:2">${esc(c.domicilio_particular)}</div><span class="pc-etiq" style="min-width:15mm">CRUCES</span><div class="pc-sub"></div></div>
+    <div class="procar-campo-row"><span class="pc-etiq">COLONIA</span><div class="pc-sub">${esc(c.colonia)}</div><span class="pc-etiq" style="min-width:18mm">MUNICIPIO</span><div class="pc-sub">${esc(c.municipio)}</div><span class="pc-etiq" style="min-width:13mm">ESTADO</span><div class="pc-sub">${esc(c.estado)}</div><span class="pc-etiq" style="min-width:8mm">C.P.</span><div class="pc-sub">${esc(c.cp)}</div></div>
+    <div class="procar-campo-row"><span class="pc-etiq">TELÉFONO</span><div class="pc-sub">${esc(c.telefono_01)}</div><span class="pc-etiq" style="min-width:28mm">FECHA NACIMIENTO</span><div class="pc-sub"></div></div>
+  </div>
+  <div class="procar-seccion-titulo">Datos del Vehículo</div>
+  <div class="procar-datos-box">
+    <div class="procar-campo-row"><span class="pc-etiq">MARCA</span><div class="pc-sub">${esc((v.vehiculo||'').split(' ')[0])}</div><span class="pc-etiq" style="min-width:13mm">MODELO</span><div class="pc-sub">${esc(v.modelo)}</div><span class="pc-etiq" style="min-width:8mm">TIPO</span><div class="pc-sub"></div></div>
+    <div class="procar-campo-row"><span class="pc-etiq">PLACAS</span><div class="pc-sub">${esc(v.placas)}</div><span class="pc-etiq" style="min-width:16mm">NO. SERIE</span><div class="pc-sub">${esc(v.numero_serie)}</div><span class="pc-etiq" style="min-width:12mm">COLOR</span><div class="pc-sub">${esc(v.color)}</div></div>
+  </div>
+  <div class="procar-seccion-titulo">Tipo de Contrato</div>
+  <div style="display:flex;gap:4mm;align-items:flex-start">
+    <div style="flex:1;font-size:7pt">
+      <div style="display:flex;gap:2mm;align-items:flex-start;margin-bottom:2mm"><span style="font-size:8pt;font-weight:900;text-decoration:underline">XX</span><span>Colectivo, es aquel donde la compañía se obliga a ofrecer todos los servicios en este contrato a cualquier persona que conduzca el vehículo.</span></div>
+      <div style="display:flex;gap:2mm;align-items:flex-start"><div class="tc-linea"></div><span>Personal, es aquel por el cual la compañía se obliga a proporcionar al afiliado todos los servicios mencionados en este contrato, sin importar que el vehículo que maneja sea o no de su propiedad.</span></div>
+    </div>
+    <div style="min-width:45mm;text-align:right">
+      <div style="font-size:8pt;font-weight:700;color:#1B2A6B;line-height:1.6">33.10.85.46.70<br>33.18.23.28.06<br>33.18.01.00.75<br>33.38.20.21.17</div>
+      <div style="font-size:7pt;color:#cc0000;font-weight:700">TELEFONOS DE EMERGENCIA<br>LAS 24 HORAS</div>
+      <div style="margin-top:3mm;text-align:center">
+        <div style="font-size:6.5pt;font-weight:700;margin-bottom:1mm">ASESOR</div>
+        <div style="border:1.5px solid #cc0000;width:38mm;height:10mm;display:flex;align-items:center;padding:1mm 2mm;font-size:8pt;font-weight:700">${esc(p.asesor||'')}</div>
+      </div>
+    </div>
+  </div>
+  </div></div>`;
+}
+
+// ════════════════════════════════════════════════════
+// HOJA 2 REVERSO — Pro-Car cláusulas (idéntico en todos)
+// ════════════════════════════════════════════════════
+function hoja2R(){
+  const cl=[
+    ['Servicios Generales y Cláusulas.','PRIMERA; PRO CAR con esta fecha se obliga y se compromete a prestar sus servicios Profesionales y Administrativos en cualquier percance automovilístico, representando los intereses y garantías de nuestros clientes, gestionando de inmediato su libertad y promoviendo el incidente de recuperación de daños.'],
+    ['Libertad Bajo Caución.','SEGUNDA; cuando el beneficiario de este contrato, ya sea por imprudencia y con motivo de tránsito de vehículos, se llegara a involucrar en: a) Daños a las cosas; b) Lesiones; c) Homicidio imprudencial; o d) Ataque a las vías generales de comunicación, y por la misma causa fuese privado de su libertad, PRO CAR de inmediato le pondrá a su disposición un abogado (penalista) competente para tramitar su libertad bajo caución (fianza), pagando las primas de la misma con un límite de fianza de $100,000.00 (Cien Mil Pesos 00/100 m.n.), la compañía cubrirá todos los gastos necesarios del mismo juicio hasta su terminación.'],
+    ['Trámite de Amparo.','TERCERA; si por necesidad misma de conductor se retirara del lugar del siniestro por razón de seguridad personal, PRO CAR gestionará si es necesario el o los amparos ante las autoridades competentes para garantizar su libertad.'],
+    ['Asesoramiento en Pago de Daños.','CUARTA; cuando en un accidente automovilístico el cliente es responsable (previo peritaje de autoridad competente) PRO CAR le asignará un abogado a fin de que lo asesore y represente ante la contraparte o autoridad correspondiente para que el pago de daños resulte lo más favorable y económico para nuestro cliente, entendiéndose que PRO CAR no cubre los daños.'],
+    ['Recuperación del Vehículo.','QUINTA; PRO CAR se obliga a promover el incidente de devolución de su vehículo detenido a consecuencia de accidente de tránsito, ya sea ante la secretaría de vialidad, agencias del ministerio público, procuraduría, etc. Sin importar si es culpable o inocente, además se harán los trámites si el vehículo fuera robado y localizado por las autoridades, quedando por cuenta del cliente el pago de multas, pensiones, y concepto de tipo fiscal.'],
+    ['Recuperación de Daños.','SEXTA; si en el accidente de tránsito resultare dañado el vehículo de nuestro cliente sin ser el responsable, nuestros abogados intervendrán en la reclamación de daños o lesiones, y si es necesario por medios legales exigiremos la reparación del daño, por lo cual el cliente deberá proporcionar datos tales como el número de placas del vehículo que le ocasionó los daños.'],
+    ['Obligaciones del Cliente.','SÉPTIMA; Notificar el accidente de inmediato. En caso de ser afianzado deberá otorgar la garantía colateral a entera satisfacción de la compañía afianzadora. Presentar en regla documentación del vehículo o personal. Pagar puntualmente sus pagos si es a crédito. Avisar si cambia de domicilio.'],
+    ['Exclusiones.','OCTAVA; cuando el conductor se encuentre bajo efectos de bebidas embriagantes (NOTA: Ni en este caso lo abandonaremos, solo que usted pagará los gastos). El no estar corriente de sus pagos, PRO CAR se reservará el derecho de otorgar el servicio. El no contar con licencia o permiso para conducir. Vehículos de servicio público federal. Nos reservamos el derecho de asesorarlo cuando terceros intervengan en las funciones de nuestros abogados. Este contrato en ningún caso ampara: daños a terceros, lesiones, homicidios o daños a su vehículo (solo su responsabilidad penal).'],
+    ['Cláusula de Garantía.','NOVENA; PRO CAR autoriza a sus clientes cuando por necesidad inmediata y siendo ajenos a su problema, sea por motivo que no funcionen los teléfonos, o que no se localicen a nuestros abogados, para que nuestros clientes contraten un abogado para asesorarle de inmediato, bajo la condición de notificar a PRO CAR en 24 horas, apreciable cliente ayúdenos a servirle.'],
+    ['Contrato Individual.','• Le protegemos en cualquier vehículo que maneje, sea o no de su propiedad.'],
+    ['Contrato Múltiple.','• Le ampara cualquiera que maneje el vehículo registrado.'],
+    ['Nota.','* Este contrato es de común acuerdo entre ambas partes y para su mejor interpretación y garantía de cumplimiento acepta someterse a los tribunales competentes de la ciudad de Guadalajara, Jalisco.'],
+  ];
+  const m=Math.ceil(cl.length/2);
+  const c1=cl.slice(0,m).map(([t,x])=>`<h3>${t}</h3><p>${x}</p>`).join('');
+  const c2=cl.slice(m).map(([t,x])=>`<h3>${t}</h3><p>${x}</p>`).join('');
+  return `<div class="pagina"><div class="procar-reverso">
+    <div style="text-align:center;border-bottom:1px solid #ccc;padding-bottom:2mm;margin-bottom:2mm">
+      <div class="procar-titulo" style="font-size:14pt">Pro-Car</div>
+      <div style="font-size:7pt;color:#666">R.F.C. SOVC660217MT8</div>
+    </div>
+    <div class="procar-rev-cols">
+      <div class="procar-rev-col">${c1}</div>
+      <div class="procar-rev-col">${c2}</div>
+    </div>
+  </div></div>`;
+}
+
+// ════════════════════════════════════════════════════
+// RENDER PRINCIPAL
+// ════════════════════════════════════════════════════
+function renderPoliza(datos){
+  const p=datos.poliza||{};
+  const c=datos.cliente||{};
+  const e=datos.empresa||{};
+  const v=(datos.vehiculos||[])[0]||{};
+  const conceptos=datos.conceptos||[];
+  const esJ=esJuda(e.nombre||p.empresa||'');
+  const nombreCob=(p.tipo_cobertura||p.tipo_de_cobertura||'').trim();
+  const clave=getFormato(nombreCob);
+
+  let paginas='';
+
+  if(esJ){
+    // Juda: solo frente, sin reverso
+    paginas=frenteJuda(p,c,v,conceptos,nombreCob);
+  } else {
+    // Arts Nova: frente + reverso hoja 1 + hoja 2 (frente+reverso)
+    paginas=frenteArtsNova(p,c,v,conceptos,nombreCob,clave);
+
+    // Reverso hoja 1
+    const revHTML=clave&&REVERSOS[clave]?REVERSOS[clave]:'<p>Sin reverso disponible para esta cobertura.</p>';
+    const[col1,col2]=dividirReverso(revHTML);
+    paginas+=`<div class="pagina"><div class="reverso">
       <div class="rev-header">
-        <div>
-          ${esJ
-            ? `<div class="logo-text">MUTUALIDAD JUDA</div><div class="logo-sub">RFC SARJ770302BC2</div>`
-            : `<div class="logo-text">Arts Nova MutuClub</div><div class="logo-sub">R.F.C. MAN160622V9A</div>`
-          }
-        </div>
-        <div style="text-align:right;font-size:7pt">
-          <strong>No. Póliza:</strong> ${esc(p.id_poliza)}&nbsp;&nbsp;
-          <strong>Asociado:</strong> ${esc(c.nombre)}
-        </div>
+        <div><div class="logo-text" style="font-size:9pt">Arts Nova MutuClub</div><div class="logo-sub">R.F.C. MAN160622V9A</div></div>
+        <div style="text-align:right;font-size:7pt"><strong>No. Póliza:</strong> ${esc(p.id_poliza)}&nbsp;&nbsp;<strong>Asociado:</strong> ${esc(c.nombre)}</div>
       </div>
-      <div class="rev-cols">
-        <div class="rev-col">${col1}</div>
-        <div class="rev-col">${col2}</div>
-      </div>
-    </div>
-  </div>`;
+      <div class="rev-cols"><div class="rev-col">${col1}</div><div class="rev-col">${col2}</div></div>
+    </div></div>`;
 
-  document.body.innerHTML = frente + reverso;
-  setTimeout(() => window.print(), 400);
-}
-
-// Recibir datos del padre
-window.addEventListener('message', function(e) {
-  if (e.data && e.data.tipo === 'IMPRIMIR_POLIZA') {
-    if (reversosCargados) {
-      renderPoliza(e.data.datos);
-    } else {
-      datosPendientes = e.data.datos; // esperar a que carguen los reversos
-    }
+    // Hoja 2
+    paginas+=hoja2F(p,c,v)+hoja2R();
   }
-});
 
-// Avisar al padre que esta página ya está lista para recibir datos
-if (window.opener) {
-  window.opener.postMessage('POLIZA_PRINT_LISTO', '*');
+  document.body.innerHTML=paginas;
+  setTimeout(()=>window.print(),500);
 }
-</script>
 
+// ════════════════════════════════════════════════════
+// COMUNICACIÓN CON ARIES
+// ════════════════════════════════════════════════════
+window.addEventListener('message',function(e){
+  if(e.data&&e.data.tipo==='IMPRIMIR_POLIZA') renderPoliza(e.data.datos);
+});
+if(window.opener) window.opener.postMessage('POLIZA_PRINT_LISTO','*');
+</script>
 </body>
 </html>

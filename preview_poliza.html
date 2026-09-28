@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Vista Previa — Pólizas</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #e8e8e8; margin: 0; padding: 0; }
+  
+  /* Controles */
+  #controles {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1B2A6B; color: #fff;
+    padding: 8px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  #controles label { font-size: 12px; font-weight: 700; }
+  #controles select { padding: 4px 8px; font-size: 12px; border-radius: 4px; border: none; min-width: 280px; }
+  #controles span { font-size: 11px; color: #aad; }
+  .nav-btn {
+    background: #fff; color: #1B2A6B; border: none; border-radius: 4px;
+    padding: 5px 14px; font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .nav-btn:hover { background: #dde; }
+  #pag-info { font-size: 12px; color: #cce; min-width: 80px; text-align: center; }
+
+  /* Contenedor de páginas */
+  #visor { margin-top: 60px; display: flex; flex-direction: column; align-items: center; padding: 20px; gap: 20px; }
+
+  /* Página */
+  .pagina-preview {
+    width: 816px; /* 216mm a 96dpi aprox */
+    min-height: 1056px; /* 279mm */
+    background: #fff;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    border-radius: 2px;
+    display: none;
+    position: relative;
+  }
+  .pagina-preview.activa { display: block; }
+  .pag-label {
+    position: absolute; top: -24px; left: 0;
+    font-size: 11px; color: #666; font-weight: 700;
+  }
+
+  /* Iframe que contiene cada página */
+  .pagina-preview iframe {
+    width: 100%; height: 1056px; border: none; display: block;
+  }
+</style>
+</head>
+<body>
+
+<div id="controles">
+  <label>Cobertura:</label>
+  <select id="sel-cobertura" onchange="cambiarCobertura()">
+    <optgroup label="── TERCEROS ──">
+      <option value="DT_AUTO">Daños a Terceros Auto y Pick Up</option>
+      <option value="DT_MOTO">Daños a Terceros Motocicleta</option>
+      <option value="DT_MOTO_TAXI">Daños a Terceros Moto Taxi</option>
+      <option value="DT_PLATAFORMA">Daños a Terceros Local (Plataforma)</option>
+      <option value="DT_CARGA">Daños a Terceros Vehículo de Carga</option>
+      <option value="DT_REMOLQUE">Daños a Terceros Remolque</option>
+    </optgroup>
+    <optgroup label="── LIMITADA ──">
+      <option value="LIM_AUTO">Limitada Auto y Pick Up</option>
+      <option value="LIM_MOTO">Limitada Motocicleta</option>
+      <option value="LIM_MOTO_TAXI">Limitada Moto Taxi</option>
+      <option value="LIM_PLATAFORMA">Limitada Plataforma</option>
+      <option value="LIM_CARGA">Limitada Vehículos de Carga</option>
+    </optgroup>
+    <optgroup label="── AMPLIA ──">
+      <option value="AMP_AUTO">Amplia Auto y Pick Up (CAA100)</option>
+      <option value="AMP_MOTO">Amplia Motocicleta</option>
+      <option value="AMP_MOTO_TAXI">Amplia Moto Taxi</option>
+      <option value="AMP_PLATAFORMA">Amplia Plataforma (CAP)</option>
+      <option value="AMP_MULTIPLATAFORMA">Amplia Multiplataforma (CMP)</option>
+      <option value="AMP_CERO_DED">Amplia Cero Deducible</option>
+    </optgroup>
+    <optgroup label="── JUDA ──">
+      <option value="JUDA_TERCEROS">Juda Terceros</option>
+      <option value="JUDA_LIMITADA">Juda Limitada</option>
+      <option value="JUDA_AMPLIA">Juda Amplia</option>
+    </optgroup>
+  </select>
+  <button class="nav-btn" onclick="navPag(-1)">&#9664; Anterior</button>
+  <span id="pag-info">Pág 1 / 4</span>
+  <button class="nav-btn" onclick="navPag(1)">Siguiente &#9654;</button>
+  <span id="pag-nombre" style="font-size:11px;color:#ffe"></span>
+</div>
+
+<div id="visor">
+  <!-- Las páginas se generan dinámicamente -->
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// DATOS DE EJEMPLO
+// ══════════════════════════════════════════════
+const DATOS_EJEMPLO = {
+  poliza: {
+    id_poliza: '2026-04857',
+    tipo_cobertura: '',      // se sobreescribe al seleccionar
+    fecha_inicio_vigencia: '2026-01-15',
+    fecha_termino_vigencia: '2027-01-15',
+    asesor: 'MIGUEL ÁNGEL TORRES',
+    empresa: '',             // se sobreescribe
+    codigo_asociado: ''      // se sobreescribe
+  },
+  cliente: {
+    nombre: 'JUAN CARLOS HERNÁNDEZ MARTÍNEZ',
+    domicilio_particular: 'AV. VALLARTA 3233, INT. 4',
+    colonia: 'VALLARTA NORTE',
+    cp: '44690',
+    municipio: 'GUADALAJARA',
+    estado: 'JALISCO',
+    telefono_01: '33 1234 5678'
+  },
+  empresa: { nombre: '' },  // se sobreescribe
+  vehiculos: [{
+    vehiculo: 'NISSAN VERSA 2022',
+    modelo: '2022',
+    placas: 'JKL-23-45',
+    numero_serie: '3N1CN7AP6NL850432',
+    motor: 'HR12DE123456',
+    color: 'BLANCO'
+  }],
+  conceptos: []  // se llena según cobertura
+};
+
+// Conceptos por clave de cobertura
+const CONCEPTOS = {
+  DT_AUTO: [
+    {concepto:'ASISTENCIA LEGAL', suma_asegurada:'$500,000.00', deducible:''},
+    {concepto:'R.C.A. TERCEROS', suma_asegurada:'$350,000.00', deducible:'10%'},
+    {concepto:'R.C. POR FALLECIMIENTO IMPRUDENCIAL EN CHOQUE', suma_asegurada:'$100,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS TERCEROS', suma_asegurada:'$30,000.00', deducible:''},
+    {concepto:'GRUAS', suma_asegurada:'DOS BONOS DE $600.00 CADA UNO', deducible:''},
+  ],
+  DT_MOTO: [
+    {concepto:'ASISTENCIA LEGAL', suma_asegurada:'$500,000.00', deducible:''},
+    {concepto:'R.C.A. TERCEROS', suma_asegurada:'$350,000.00', deducible:''},
+    {concepto:'R.C. POR FALLECIMIENTO IMPRUDENCIAL EN CHOQUE', suma_asegurada:'$100,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS TERCEROS', suma_asegurada:'$30,000.00', deducible:''},
+    {concepto:'GRUAS', suma_asegurada:'SIN SERVICIO DE GRUAS', deducible:''},
+  ],
+  DT_MOTO_TAXI: [
+    {concepto:'PROTECCION LEGAL', suma_asegurada:'$500,000.00', deducible:''},
+    {concepto:'SERVICIO DE PREVISIÓN FUNERARIO (AL TITULAR)', suma_asegurada:'TRES MESES GRATIS (SOLO UNO POR CLIENTE)', deducible:''},
+    {concepto:'R.C.A. TERCEROS', suma_asegurada:'$350,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS TERCEROS', suma_asegurada:'$10,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS OCUPANTES', suma_asegurada:'$10,000.00', deducible:''},
+    {concepto:'R.C. POR FALLECIMIENTO IMPRUDENCIAL EN CHOQUE', suma_asegurada:'$100,000.00', deducible:''},
+    {concepto:'GRUAS', suma_asegurada:'SIN SERVICIO DE GRUAS', deducible:''},
+  ],
+  DT_PLATAFORMA: [
+    {concepto:'ASISTENCIA LEGAL', suma_asegurada:'$500,000.00', deducible:''},
+    {concepto:'R.C.A. TERCEROS', suma_asegurada:'$350,000.00', deducible:'10%'},
+    {concepto:'R.C. POR FALLECIMIENTO IMPRUDENCIAL EN CHOQUE', suma_asegurada:'$100,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS TERCEROS', suma_asegurada:'$30,000.00', deducible:''},
+    {concepto:'GRUAS', suma_asegurada:'DOS BONOS DE $600.00 CADA UNO', deducible:''},
+  ],
+  DT_CARGA: [
+    {concepto:'ASISTENCIA LEGAL', suma_asegurada:'$500,000.00', deducible:''},
+    {concepto:'R.C.A. TERCEROS', suma_asegurada:'$350,000.00', deducible:'10%'},
+    {concepto:'R.C. POR FALLECIMIENTO IMPRUDENCIAL EN CHOQUE', suma_asegurada:'$100,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS TERCEROS', suma_asegurada:'$30,000.00', deducible:''},
+    {concepto:'GRUAS', suma_asegurada:'SIN SERVICIO DE GRUAS', deducible:''},
+  ],
+  DT_REMOLQUE: [
+    {concepto:'ASISTENCIA LEGAL', suma_asegurada:'$500,000.00', deducible:''},
+    {concepto:'R.C.A. TERCEROS', suma_asegurada:'$350,000.00', deducible:'10%'},
+    {concepto:'R.C. POR FALLECIMIENTO IMPRUDENCIAL EN CHOQUE', suma_asegurada:'$100,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS TERCEROS', suma_asegurada:'$30,000.00', deducible:''},
+    {concepto:'GRUAS', suma_asegurada:'SIN SERVICIO DE GRUAS', deducible:''},
+  ],
+  LIM_AUTO: [
+    {concepto:'ASISTENCIA LEGAL', suma_asegurada:'$500,000.00', deducible:''},
+    {concepto:'DAÑOS MATERIALES', suma_asegurada:'$50,000.00', deducible:'10%'},
+    {concepto:'R.C.A. TERCEROS', suma_asegurada:'$350,000.00', deducible:'10%'},
+    {concepto:'R.C. POR FALLECIMIENTO IMPRUDENCIAL EN CHOQUE', suma_asegurada:'$100,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS TERCEROS', suma_asegurada:'$30,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS OCUPANTES', suma_asegurada:'$10,000.00', deducible:''},
+    {concepto:'GRUAS', suma_asegurada:'DOS BONOS DE $600.00', deducible:''},
+  ],
+  LIM_MOTO: [
+    {concepto:'ASISTENCIA LEGAL', suma_asegurada:'$500,000.00', deducible:''},
+    {concepto:'DAÑOS MATERIALES', suma_asegurada:'$20,000.00', deducible:'20% VC'},
+    {concepto:'R.C.A. TERCEROS**', suma_asegurada:'$350,000.00', deducible:'**'},
+    {concepto:'R.C. POR FALLECIMIENTO IMPRUDENCIAL EN CHOQUE', suma_asegurada:'$100,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS TERCEROS', suma_asegurada:'$30,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS OCUPANTES', suma_asegurada:'$10,000.00', deducible:''},
+    {concepto:'GRUAS', suma_asegurada:'SIN SERVICIO DE GRUAS', deducible:''},
+  ],
+  LIM_MOTO_TAXI: [
+    {concepto:'ASISTENCIA LEGAL', suma_asegurada:'$500,000.00', deducible:''},
+    {concepto:'DAÑOS MATERIALES', suma_asegurada:'$50,000.00', deducible:'10%'},
+    {concepto:'R.C.A. TERCEROS', suma_asegurada:'$350,000.00', deducible:''},
+    {concepto:'R.C. POR FALLECIMIENTO IMPRUDENCIAL EN CHOQUE', suma_asegurada:'$100,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS TERCEROS', suma_asegurada:'$30,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS OCUPANTES', suma_asegurada:'$10,000.00', deducible:''},
+    {concepto:'GRUAS', suma_asegurada:'SIN SERVICIO DE GRUA', deducible:''},
+  ],
+  LIM_PLATAFORMA: [
+    {concepto:'ASISTENCIA LEGAL', suma_asegurada:'$500,000.00', deducible:''},
+    {concepto:'DAÑOS MATERIALES', suma_asegurada:'$50,000.00', deducible:'10%'},
+    {concepto:'R.C.A. TERCEROS', suma_asegurada:'$350,000.00', deducible:'10%'},
+    {concepto:'R.C. POR FALLECIMIENTO IMPRUDENCIAL EN CHOQUE', suma_asegurada:'$100,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS TERCEROS', suma_asegurada:'$30,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS OCUPANTES', suma_asegurada:'$10,000.00', deducible:''},
+    {concepto:'GRUAS', suma_asegurada:'DOS BONOS DE $600.00', deducible:''},
+  ],
+  LIM_CARGA: [
+    {concepto:'ASISTENCIA LEGAL', suma_asegurada:'$500,000.00', deducible:''},
+    {concepto:'DAÑOS MATERIALES', suma_asegurada:'$50,000.00', deducible:'10%'},
+    {concepto:'R.C.A. TERCEROS', suma_asegurada:'$350,000.00', deducible:'10%'},
+    {concepto:'R.C. POR FALLECIMIENTO IMPRUDENCIAL EN CHOQUE', suma_asegurada:'$100,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS TERCEROS', suma_asegurada:'$30,000.00', deducible:''},
+    {concepto:'GRUAS', suma_asegurada:'SIN SERVICIO DE GRUAS', deducible:''},
+  ],
+  AMP_AUTO: [
+    {concepto:'ASISTENCIA LEGAL', suma_asegurada:'$500,000.00', deducible:''},
+    {concepto:'ROBO TOTAL', suma_asegurada:'$100,000.00', deducible:'10%'},
+    {concepto:'DAÑOS MATERIALES', suma_asegurada:'$70,000.00', deducible:'10%'},
+    {concepto:'CRISTALES', suma_asegurada:'AMPARADA', deducible:'20%'},
+    {concepto:'R.C.A. TERCEROS', suma_asegurada:'$350,000.00', deducible:''},
+    {concepto:'R.C. POR FALLECIMIENTO IMPRUDENCIAL EN CHOQUE', suma_asegurada:'$100,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS TERCEROS', suma_asegurada:'$40,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS OCUPANTES', suma_asegurada:'$40,000.00', deducible:''},
+    {concepto:'GRUAS', suma_asegurada:'DOS SERVICIOS (MAXIMO $1,500.00 CADA UNO)', deducible:''},
+    {concepto:'GESTORIA AUTOMOTRIZ', suma_asegurada:'AMPARADA', deducible:''},
+  ],
+  AMP_MOTO: [
+    {concepto:'ASISTENCIA LEGAL', suma_asegurada:'$100,000.00', deducible:''},
+    {concepto:'DAÑOS MATERIALES', suma_asegurada:'$10,000.00', deducible:'10%'},
+    {concepto:'R.C.A. TERCEROS', suma_asegurada:'$200,000.00', deducible:'10%'},
+    {concepto:'R.C. POR FALLECIMIENTO IMPRUDENCIAL EN CHOQUE', suma_asegurada:'$100,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS TERCEROS', suma_asegurada:'$30,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS OCUPANTES', suma_asegurada:'$30,000.00', deducible:''},
+    {concepto:'ROBO TOTAL', suma_asegurada:'$10,000.00', deducible:'30%'},
+    {concepto:'GRUAS', suma_asegurada:'UN SERVICIO AL 50%', deducible:''},
+    {concepto:'GESTORIA AUTOMOTRIZ', suma_asegurada:'AMPARADA', deducible:''},
+  ],
+  AMP_MOTO_TAXI: [
+    {concepto:'ASISTENCIA LEGAL', suma_asegurada:'$500,000.00', deducible:''},
+    {concepto:'ROTURA DE CRISTALES', suma_asegurada:'AMPARADA (NO APLICA PREEXISTENCIA)', deducible:'20%'},
+    {concepto:'DAÑOS MATERIALES', suma_asegurada:'$10,000.00', deducible:'10%'},
+    {concepto:'R.C.A. TERCEROS', suma_asegurada:'$350,000.00', deducible:''},
+    {concepto:'R.C. POR FALLECIMIENTO IMPRUDENCIAL EN CHOQUE', suma_asegurada:'$100,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS TERCEROS', suma_asegurada:'$10,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS OCUPANTES', suma_asegurada:'$10,000.00', deducible:''},
+    {concepto:'ROBO TOTAL', suma_asegurada:'$30,000.00', deducible:'10%'},
+    {concepto:'GRUAS', suma_asegurada:'SIN SERVICIO DE GRUAS', deducible:''},
+  ],
+  AMP_PLATAFORMA: [
+    {concepto:'ASISTENCIA LEGAL', suma_asegurada:'$500,000.00', deducible:''},
+    {concepto:'ROBO TOTAL', suma_asegurada:'$100,000.00', deducible:'10%'},
+    {concepto:'DAÑOS MATERIALES', suma_asegurada:'$70,000.00', deducible:'10%'},
+    {concepto:'CRISTALES', suma_asegurada:'AMPARADA', deducible:'20%'},
+    {concepto:'R.C.A. TERCEROS', suma_asegurada:'$1,000,000.00', deducible:''},
+    {concepto:'R.C. POR FALLECIMIENTO IMPRUDENCIAL EN CHOQUE', suma_asegurada:'$100,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS TERCEROS', suma_asegurada:'$40,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS OCUPANTES', suma_asegurada:'$40,000.00', deducible:''},
+    {concepto:'GRUAS', suma_asegurada:'DOS SERVICIOS (MAXIMO $1,500.00 CADA UNO)', deducible:''},
+    {concepto:'GESTORIA AUTOMOTRIZ', suma_asegurada:'AMPARADA', deducible:''},
+  ],
+  AMP_MULTIPLATAFORMA: [
+    {concepto:'ASISTENCIA LEGAL', suma_asegurada:'$1,000,000.00', deducible:''},
+    {concepto:'ROBO TOTAL', suma_asegurada:'$200,000.00', deducible:'10%'},
+    {concepto:'DAÑOS MATERIALES', suma_asegurada:'$70,000.00', deducible:'5%'},
+    {concepto:'CRISTALES', suma_asegurada:'AMPARADA', deducible:'20%'},
+    {concepto:'R.C.A. TERCEROS', suma_asegurada:'$1,000,000.00', deducible:''},
+    {concepto:'MUERTE AL CONDUCTOR', suma_asegurada:'$100,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS TERCEROS', suma_asegurada:'$100,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS OCUPANTES', suma_asegurada:'$100,000.00', deducible:''},
+    {concepto:'GRUAS', suma_asegurada:'DOS SERVICIOS (MAXIMO $1,800.00 CADA UNO)', deducible:''},
+    {concepto:'GESTORIA AUTOMOTRIZ', suma_asegurada:'AMPARADA', deducible:''},
+    {concepto:'PAQUETE FUNERARIO', suma_asegurada:'OTORGADO POR CASA PROVIDENCIA', deducible:''},
+  ],
+  AMP_CERO_DED: [
+    {concepto:'ASISTENCIA LEGAL', suma_asegurada:'$500,000.00', deducible:''},
+    {concepto:'ROBO TOTAL', suma_asegurada:'$200,000.00', deducible:'10%'},
+    {concepto:'CRISTALES', suma_asegurada:'AMPARADA', deducible:'20%'},
+    {concepto:'DAÑOS MATERIALES', suma_asegurada:'$100,000.00', deducible:'Cero Deducible al estar al corriente de sus aportaciones'},
+    {concepto:'R.C.A. TERCEROS', suma_asegurada:'$1,000,000.00', deducible:''},
+    {concepto:'R.C. POR FALLECIMIENTO IMPRUDENCIAL EN CHOQUE', suma_asegurada:'$100,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS TERCEROS', suma_asegurada:'$100,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS OCUPANTES', suma_asegurada:'$100,000.00', deducible:''},
+    {concepto:'GRUAS', suma_asegurada:'DOS SERVICIOS (MAXIMO $1,500.00 CADA UNO)', deducible:''},
+    {concepto:'GESTORIA AUTOMOTRIZ', suma_asegurada:'AMPARADA', deducible:''},
+  ],
+  JUDA_TERCEROS: [
+    {concepto:'ASISTENCIA LEGAL', suma_asegurada:'$100,000.00', deducible:''},
+    {concepto:'R.C.A. TERCEROS', suma_asegurada:'$250,000.00', deducible:''},
+    {concepto:'R.C. POR FALLECIMIENTO IMPRUDENCIAL EN CHOQUE', suma_asegurada:'$100,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS TERCEROS', suma_asegurada:'$30,000.00', deducible:''},
+    {concepto:'GRUAS', suma_asegurada:'DOS BONOS DE $600.00 CADA UNO', deducible:''},
+  ],
+  JUDA_LIMITADA: [
+    {concepto:'ASISTENCIA LEGAL', suma_asegurada:'$100,000.00', deducible:''},
+    {concepto:'DAÑOS MATERIALES', suma_asegurada:'$50,000.00', deducible:'10%'},
+    {concepto:'R.C.A. TERCEROS', suma_asegurada:'$200,000.00', deducible:''},
+    {concepto:'R.C. POR FALLECIMIENTO IMPRUDENCIAL EN CHOQUE', suma_asegurada:'$100,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS TERCEROS', suma_asegurada:'$30,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS OCUPANTES', suma_asegurada:'$10,000.00', deducible:''},
+    {concepto:'GRUAS', suma_asegurada:'DOS BONOS DE $600.00', deducible:''},
+  ],
+  JUDA_AMPLIA: [
+    {concepto:'ASISTENCIA LEGAL', suma_asegurada:'$200,000.00', deducible:''},
+    {concepto:'ROBO TOTAL', suma_asegurada:'$100,000.00', deducible:'10% - VLA*'},
+    {concepto:'DAÑOS MATERIALES', suma_asegurada:'$70,000.00', deducible:'10% - VC*'},
+    {concepto:'CRISTALES', suma_asegurada:'AMPARADA', deducible:'20% - VC*'},
+    {concepto:'R.C.A. TERCEROS', suma_asegurada:'$300,000.00', deducible:''},
+    {concepto:'R.C. POR FALLECIMIENTO IMPRUDENCIAL EN CHOQUE', suma_asegurada:'$100,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS TERCEROS', suma_asegurada:'$40,000.00', deducible:''},
+    {concepto:'GASTOS MEDICOS OCUPANTES', suma_asegurada:'$40,000.00', deducible:''},
+    {concepto:'GRUAS', suma_asegurada:'DOS SERVICIOS (MAXIMO $1,500.00 CADA UNO)', deducible:''},
+    {concepto:'GESTORIA AUTOMOTRIZ', suma_asegurada:'AMPARADA', deducible:''},
+  ],
+};
+
+const JUDA_KEYS = ['JUDA_TERCEROS','JUDA_LIMITADA','JUDA_AMPLIA'];
+const COD_ASOC_MAP = {
+  DT_AUTO:'CT-A/',DT_MOTO:'CT-M/',DT_MOTO_TAXI:'DT-MTPF/',DT_PLATAFORMA:'CT-TP/',
+  DT_CARGA:'CT-C/',DT_REMOLQUE:'CT-R/',LIM_AUTO:'CL-AP.53/',LIM_MOTO:'CL-M/',
+  LIM_MOTO_TAXI:'CL-MT/',LIM_PLATAFORMA:'CL-A/',LIM_CARGA:'CL-C/',
+  AMP_AUTO:'CAA100/',AMP_MOTO:'CA-MTC/',AMP_MOTO_TAXI:'CA-MT/',
+  AMP_PLATAFORMA:'CAP-A/',AMP_MULTIPLATAFORMA:'CMP/',AMP_CERO_DED:'CAP-A/',
+  JUDA_TERCEROS:'JT/',JUDA_LIMITADA:'JL/',JUDA_AMPLIA:'JA/'
+};
+const NOMBRES_COB = {
+  DT_AUTO:'COBERTURA DAÑOS A TERCEROS AUTO Y PICK UP',DT_MOTO:'COBERTURA DAÑOS A TERCEROS MOTOCICLETA',
+  DT_MOTO_TAXI:'COBERTURA DAÑOS A TERCEROS MOTO TAXI',DT_PLATAFORMA:'COBERTURA DAÑOS A TERCEROS LOCAL',
+  DT_CARGA:'COBERTURA DAÑOS A TERCEROS VEHICULO DE CARGA',DT_REMOLQUE:'COBERTURA DAÑOS A TERCEROS REMOLQUE',
+  LIM_AUTO:'COBERTURA LIMITADA LOCAL',LIM_MOTO:'COBERTURA LIMITADA MOTOCICLETA',
+  LIM_MOTO_TAXI:'COBERTURA LIMITADA MOTO TAXI',LIM_PLATAFORMA:'COBERTURA LIMITADA PLATAFORMA',
+  LIM_CARGA:'COBERTURA LIMITADA VEHICULOS DE CARGA',AMP_AUTO:'COBERTURA AMPLIA AUTO 100',
+  AMP_MOTO:'COBERTURA AMPLIA MOTOCICLETA',AMP_MOTO_TAXI:'COBERTURA AMPLIA MOTO TAXI',
+  AMP_PLATAFORMA:'COBERTURA AMPLIA LOCAL',AMP_MULTIPLATAFORMA:'COBERTURA MULTIPLATAFORMA',
+  AMP_CERO_DED:'CERO DEDUCIBLE',JUDA_TERCEROS:'JUDA TERCEROS',
+  JUDA_LIMITADA:'JUDA LIMITADA',JUDA_AMPLIA:'JUDA AMPLIA'
+};
+
+// ══════════════════════════════════════════════
+// ESTADO
+// ══════════════════════════════════════════════
+let paginaActual = 0;
+let totalPaginas = 4;
+
+// ══════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════
+function cambiarCobertura() {
+  paginaActual = 0;
+  renderPreview();
+}
+
+function navPag(dir) {
+  paginaActual = Math.max(0, Math.min(totalPaginas - 1, paginaActual + dir));
+  mostrarPagina();
+}
+
+function renderPreview() {
+  const clave = document.getElementById('sel-cobertura').value;
+  const esJuda = JUDA_KEYS.includes(clave);
+  totalPaginas = esJuda ? 1 : 4;
+
+  // Preparar datos
+  const datos = JSON.parse(JSON.stringify(DATOS_EJEMPLO));
+  datos.poliza.tipo_cobertura = NOMBRES_COB[clave] || clave;
+  datos.poliza.codigo_asociado = COD_ASOC_MAP[clave] || '';
+  datos.poliza.empresa = esJuda ? 'MUTUALIDAD JUDA' : 'ARTS NOVA';
+  datos.empresa.nombre = esJuda ? 'MUTUALIDAD JUDA' : 'ARTS NOVA';
+  datos.conceptos = CONCEPTOS[clave] || [];
+
+  const visor = document.getElementById('visor');
+  visor.innerHTML = '';
+
+  const pagNames = esJuda
+    ? ['Hoja 1 — Frente Juda']
+    : ['Hoja 1 — Frente Arts Nova','Hoja 1 — Reverso','Hoja 2 — Frente Pro-Car','Hoja 2 — Reverso Pro-Car'];
+
+  // Crear iframes con srcDoc para cada página
+  pagNames.forEach((nombre, idx) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'pagina-preview';
+    wrap.id = 'pag-' + idx;
+
+    const label = document.createElement('div');
+    label.className = 'pag-label';
+    label.textContent = nombre;
+    wrap.appendChild(label);
+
+    const iframe = document.createElement('iframe');
+    iframe.srcdoc = buildPageHTML(datos, clave, esJuda, idx);
+    wrap.appendChild(iframe);
+    visor.appendChild(wrap);
+  });
+
+  mostrarPagina();
+  document.getElementById('pag-nombre').textContent =
+    '(' + (NOMBRES_COB[clave] || clave) + ')';
+}
+
+function mostrarPagina() {
+  const wraps = document.querySelectorAll('.pagina-preview');
+  wraps.forEach((w, i) => {
+    w.classList.toggle('activa', i === paginaActual);
+  });
+  document.getElementById('pag-info').textContent =
+    'Pág ' + (paginaActual + 1) + ' / ' + totalPaginas;
+}
+
+// Construye el HTML de una página individual para mostrar en iframe
+function buildPageHTML(datos, clave, esJuda, pagIdx) {
+  // Inyectamos los datos como mensaje al iframe que carga poliza_print.html
+  // Pero como es preview local, construimos el HTML inline con los estilos base
+  const msg = JSON.stringify({tipo:'IMPRIMIR_POLIZA', datos});
+
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>
+    html,body{margin:0;padding:0;background:#fff;overflow:hidden;}
+  </style>
+  </head>
+  <body>
+  <script>
+    // Cargamos poliza_print en un div oculto y extraemos la página que queremos
+    const PAG_IDX = ${pagIdx};
+    const DATOS = ${JSON.stringify(datos)};
+
+    // Trick: crear iframe invisible con poliza_print.html, esperar render, clonar la página
+    const hidden = document.createElement('iframe');
+    hidden.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:816px;height:1056px;border:none;';
+    document.body.appendChild(hidden);
+
+    hidden.onload = function() {
+      // Enviar datos
+      hidden.contentWindow.postMessage({tipo:'IMPRIMIR_POLIZA', datos: DATOS}, '*');
+      // Escuchar cuando termine de renderizar
+      setTimeout(function() {
+        try {
+          const doc = hidden.contentDocument;
+          const pages = doc.querySelectorAll('.pagina');
+          if(pages[PAG_IDX]) {
+            // Clonar estilos + página
+            const styles = [...doc.querySelectorAll('style')].map(s=>s.outerHTML).join('');
+            const pageHTML = pages[PAG_IDX].outerHTML;
+            document.head.innerHTML = '<meta charset="UTF-8">' + styles +
+              '<style>html,body{margin:0;padding:0;background:#fff;overflow:hidden;}</style>';
+            document.body.innerHTML = '<div style="transform-origin:top left;">' + pageHTML + '</div>';
+            // Escalar para que quepa en el iframe
+            const pg = document.querySelector('.pagina');
+            if(pg) {
+              const scaleX = window.innerWidth / pg.offsetWidth;
+              document.querySelector('div').style.transform = 'scale(' + scaleX + ')';
+            }
+          }
+        } catch(err) {
+          document.body.innerHTML = '<p style="color:red;padding:10px">Error: ' + err.message + '</p>';
+        }
+      }, 800);
+    };
+
+    hidden.src = 'poliza_print.html';
+  <\/script>
+  </body></html>`;
+}
+
+// Arrancar
+renderPreview();
+</script>
+</body>
+</html>
